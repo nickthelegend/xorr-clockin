@@ -72,7 +72,8 @@ function validKey(text: string): string | undefined {
 /** Rounded DOWN at `digits`, so an amount handed to Send is never a hair more than is held. */
 function floorTo(n: number, digits: number): string {
   const f = 10 ** digits;
-  return (Math.floor(n * f) / f).toFixed(digits).replace(/\.?0+$/, '');
+  // A plain decimal string for Send's amount field, not a displayed price.
+  return (Math.floor(n * f) / f).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: digits });
 }
 
 function StepHead({ n, title, done }: { n: number; title: string; done: boolean }) {
@@ -81,7 +82,7 @@ function StepHead({ n, title, done }: { n: number; title: string; done: boolean 
       <Text variant="secondary" style={{ flex: 1 }}>
         {n}. {title}
       </Text>
-      <Tag label={done ? 'Done ✓' : 'To do'} tone={done ? 'up' : 'neutral'} small />
+      <Tag label={done ? 'Done' : 'To do'} tone={done ? 'up' : 'neutral'} small />
     </View>
   );
 }
@@ -282,7 +283,7 @@ export default function ReturnFunds() {
                 </Text>
               ) : listed?.usable ? (
                 <Text variant="secondarySm" color={colors.up}>
-                  On your allowlist ✓
+                  On your allowlist
                 </Text>
               ) : listed ? (
                 <Text variant="secondarySm" color={colors.ink55}>

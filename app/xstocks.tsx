@@ -51,8 +51,10 @@ import {
   sectorOptions,
   unpricedNote,
 } from '@/markets/catalog';
+import { useDesktop } from '@/desktop/useDesktop';
+import { DesktopMarkets } from '@/desktop/pages/DesktopMarkets';
 
-export default function XStocks() {
+function MobileXStocks() {
   const goBack = useGoBack();
   const router = useRouter();
   const { data, loading, error, reload } = useAsync(() => system.xstocks(), []);
@@ -175,4 +177,9 @@ function XStockListRow({
       deltaTone={row.change24hPct !== null ? pnlTone(row.change24hPct) : undefined}
     />
   );
+}
+
+/** The route: the desktop layout from the desktop width up on web, the phone screen below it (2026-10-01). */
+export default function XStocksRoute() {
+  return useDesktop() ? <DesktopMarkets /> : <MobileXStocks />;
 }

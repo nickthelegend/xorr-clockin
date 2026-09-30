@@ -84,6 +84,8 @@ import { actionSentence, type CorporateActionNotice } from '@/markets/corporateA
 import { DUST_USD } from '@/markets/ticket';
 import { useLiveRead } from '@/markets/useLiveRead';
 import { useNow } from '@/state/useNow';
+import { useDesktop } from '@/desktop/useDesktop';
+import { DesktopAsset } from '@/desktop/pages/DesktopAsset';
 
 /**
  * The ranges, each as long as its label.
@@ -127,7 +129,7 @@ const RUNS_WINDOW = 200;
 /** The most fills listed under the chart. The rest are still marked on it, and counted in a line below the list. */
 const LISTED_FILLS = 5;
 
-export default function AssetDetail() {
+function MobileAssetDetail() {
   const { symbol } = useLocalSearchParams<{ symbol: string }>();
   const router = useRouter();
   const goBack = useGoBack();
@@ -817,4 +819,9 @@ export default function AssetDetail() {
       </View>
     </Screen>
   );
+}
+
+/** The route: the desktop layout from the desktop width up on web, the phone screen below it (2026-10-01). */
+export default function AssetDetailRoute() {
+  return useDesktop() ? <DesktopAsset /> : <MobileAssetDetail />;
 }

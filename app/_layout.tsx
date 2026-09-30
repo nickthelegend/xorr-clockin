@@ -12,6 +12,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppPrivyProvider } from '@/auth/PrivyProvider';
 import { PhoneFrame, colors } from '@/ui';
+import { DesktopShell } from '@/desktop/DesktopShell';
+import { useDesktop } from '@/desktop/useDesktop';
 import { useRegisterDevice } from '@/notifications/useRegisterDevice';
 import { useNotificationRoute } from '@/notifications/useNotificationRoute';
 import { useAgentTradeAlerts } from '@/notifications/useAgentTradeAlerts';
@@ -171,18 +173,27 @@ export default function RootLayout() {
           both position themselves against their parent, and a per-screen fix would have left them
           spanning the whole window.
         */}
-        <PhoneFrame>
+        <Frame>
         <AppRoutes />
         {/* After the Stack, so `useRouter` resolves against a mounted navigator. */}
         <NotificationRouting />
         <SolanaRouteGuard />
         <ChatDrawer />
-        </PhoneFrame>
+        </Frame>
         </ReachabilityProvider>
       </SafeAreaProvider>
       </AppPrivyProvider>
     </GestureHandlerRootView>
   );
+}
+
+/**
+ * A laptop-sized browser window gets the desktop web app — sidebar, top bar, wide pages; anything narrower keeps the
+ * phone layout in its column (2026-10-01). See `src/desktop/useDesktop.ts`.
+ */
+function Frame({ children }: { children: React.ReactNode }) {
+  const desktop = useDesktop();
+  return desktop ? <DesktopShell>{children}</DesktopShell> : <PhoneFrame>{children}</PhoneFrame>;
 }
 
 /** The navigator itself, so a hidden route can render nothing while the guard navigates away. */

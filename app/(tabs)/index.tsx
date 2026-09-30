@@ -83,6 +83,8 @@ import { lastLookHeadline } from '@/state/tradingNow';
 import { usePoll } from '@/data/usePoll';
 import { strategyLibrary } from '@/data/strategyLibrary';
 import { StrategyRows } from '@/ui/StrategyRows';
+import { useDesktop } from '@/desktop/useDesktop';
+import { DesktopHome } from '@/desktop/pages/DesktopHome';
 
 type SheetTab = 'agents' | 'gainers' | 'stocks' | 'strategies' | 'futures';
 
@@ -456,7 +458,18 @@ function AgentsAtWork({ roster, onOpen }: { roster: Agent[]; onOpen: (id: string
   );
 }
 
+/**
+ * `/` on a laptop draws the desktop dashboard; everywhere else, the phone's Home exactly as it was (2026-10-01).
+ *
+ * Chosen in a component of its own, so neither layout's hooks sit behind the other's early return, and a browser
+ * resized across the desktop width swaps one for the other cleanly rather than calling a different set of hooks.
+ */
 export default function Home() {
+  const desktop = useDesktop();
+  return desktop ? <DesktopHome /> : <MobileHome />;
+}
+
+function MobileHome() {
   const router = useRouter();
   const hydrated = useHasHydrated();
   const wallet = useStore((s) => s.wallet);

@@ -173,12 +173,11 @@ export default function RootLayout() {
           both position themselves against their parent, and a per-screen fix would have left them
           spanning the whole window.
         */}
-        <Frame>
+        <Frame overlay={<ChatDrawer />}>
         <AppRoutes />
         {/* After the Stack, so `useRouter` resolves against a mounted navigator. */}
         <NotificationRouting />
         <SolanaRouteGuard />
-        <ChatDrawer />
         </Frame>
         </ReachabilityProvider>
       </SafeAreaProvider>
@@ -191,9 +190,17 @@ export default function RootLayout() {
  * A laptop-sized browser window gets the desktop web app — sidebar, top bar, wide pages; anything narrower keeps the
  * phone layout in its column (2026-10-01). See `src/desktop/useDesktop.ts`.
  */
-function Frame({ children }: { children: React.ReactNode }) {
+function Frame({ children, overlay }: { children: React.ReactNode; overlay: React.ReactNode }) {
   const desktop = useDesktop();
-  return desktop ? <DesktopShell>{children}</DesktopShell> : <PhoneFrame>{children}</PhoneFrame>;
+  // The chat drawer rides over the whole window on desktop, not inside a page's panel; on a phone it stays in the column.
+  return desktop ? (
+    <DesktopShell overlay={overlay}>{children}</DesktopShell>
+  ) : (
+    <PhoneFrame>
+      {children}
+      {overlay}
+    </PhoneFrame>
+  );
 }
 
 /** The navigator itself, so a hidden route can render nothing while the guard navigates away. */

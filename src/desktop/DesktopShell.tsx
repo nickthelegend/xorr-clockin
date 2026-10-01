@@ -262,7 +262,7 @@ function Panel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function DesktopShell({ children }: { children: React.ReactNode }) {
+export function DesktopShell({ children, overlay }: { children: React.ReactNode; overlay?: React.ReactNode }) {
   const path = usePathname() || '/';
   const wallet = useStore((s) => s.wallet);
 
@@ -275,6 +275,7 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
         <View style={{ width: PANEL_WIDTH + 96, paddingHorizontal: 48 }}>
           <Panel>{children}</Panel>
         </View>
+        {overlay}
       </View>
     );
   }
@@ -290,6 +291,7 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
           <Panel>{children}</Panel>
         )}
       </View>
+      {overlay}
     </View>
   );
 }

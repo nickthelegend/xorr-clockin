@@ -345,7 +345,9 @@ function Pitch() {
 /** A soft glow behind the sign-in panel, so a centred column on a wide screen reads as designed. */
 function Backdrop() {
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', inset: 0 } as never}>
+    // Clipped: the 900pt glow reached past the bottom of a laptop window, and focusing a control scrolled the whole
+    // document to show it, white page behind (2026-10-01).
+    <View pointerEvents="none" style={{ position: 'absolute', inset: 0, overflow: 'hidden' } as never}>
       <View
         style={{
           position: 'absolute',

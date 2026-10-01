@@ -3,6 +3,7 @@
  * Don't author custom ones."
  */
 import React, { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { Stack, router, usePathname } from 'expo-router';
 import { hiddenOn, solanaRedirect } from '@/nav/solanaRoutes';
 import { useFonts } from 'expo-font';
@@ -22,6 +23,15 @@ import { useHydrateDelegation } from '@/wallet/useHydrateDelegation';
 import { ReachabilityProvider } from '@/net/Reachability';
 import { ChatSheet } from '@/chat/ChatSheet';
 import { useChatDrawer } from '@/chat/chatDrawer';
+
+/*
+ * The page under the app is the app's black on the web (2026-10-01). Expo's page leaves html and body unpainted, so an
+ * overscroll — Safari's rubber band on a phone, or a focus that scrolls the document — showed white behind it.
+ */
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  document.documentElement.style.backgroundColor = colors.bg;
+  document.body.style.backgroundColor = colors.bg;
+}
 
 /**
  * Hold the splash until the typefaces are ready.

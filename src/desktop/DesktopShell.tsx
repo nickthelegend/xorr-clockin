@@ -170,7 +170,7 @@ function TopBar({ path }: { path: string }) {
             gap: 10,
             height: 40,
             paddingLeft: 6,
-            paddingRight: 14,
+            paddingRight: width >= 1200 ? 14 : 6,
             borderRadius: 20,
             backgroundColor: colors.surface,
             borderWidth: 1,
@@ -180,9 +180,11 @@ function TopBar({ path }: { path: string }) {
           <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="assets" size={15} color={colors.bg} />
           </View>
-          <Text variant="control" color={colors.ink70}>
-            {wallet ? short(wallet.address) : 'Sign in'}
-          </Text>
+          {width >= 1200 ? (
+            <Text variant="control" color={colors.ink70}>
+              {wallet ? short(wallet.address) : 'Sign in'}
+            </Text>
+          ) : null}
         </Pressable>
       </View>
     </View>

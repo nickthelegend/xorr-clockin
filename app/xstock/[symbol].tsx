@@ -238,6 +238,9 @@ export default function XStockTicket() {
    * an answered read is none. Undefined until the chain has answered.
    */
   const usdc = tokens.data ? (tokens.data.tokens.find((t) => t.symbol === 'USDC')?.units ?? 0) : undefined;
+  /** A buy larger than the USDC the chain says this wallet holds. Unknown until the chain answers, so not short. */
+  const shortOf = (usd: number) => side === 'buy' && usdc !== undefined && usd > usdc + 1e-9;
+  const short = shortOf(amount);
   /** What the chips are sized to: the USDC for a buy, the holding's worth for a sale. */
   const quick = quickAmounts(side === 'buy' ? usdc : tokens.data ? heldUsd : undefined);
 
@@ -269,14 +272,17 @@ export default function XStockTicket() {
    * a trade that could not happen. Only once the chain has answered — until then the typed amount stands.
    */
   const cappedToHolding = side === 'sell' && !!tokens.data && heldUsd > 0 && quoted > heldUsd;
+  /** A sale with nothing held, once the chain has said so. */
+  const nothingToSell = side === 'sell' && !!tokens.data && !(heldUnits > 0);
   const quoteUsd = cappedToHolding ? heldUsd : quoted;
   const quote = useAsync(
     () =>
       // A quote is drawn for a session; signed out it is not asked for, and the sheet says why.
-      quoteUsd > 0 && listed && !signedOut
+      // No sale is quoted for a holding of nothing (2026-10-01): it drew "You pay 1.0851 NVDAx" over an empty wallet.
+      quoteUsd > 0 && listed && !signedOut && !nothingToSell
         ? system.xstockQuote({ symbol, side, usd: quoteUsd })
         : Promise.resolve(null),
-    [symbol, side, quoteUsd, listed, signedOut],
+    [symbol, side, quoteUsd, listed, signedOut, nothingToSell],
   );
   const { sell: sellShares, selling, ready: canSell } = useXStockSell();
   const [sold, setSold] = useState<XStockSellOutcome>();
@@ -462,6 +468,10 @@ export default function XStockTicket() {
             would read as a free trade.
           */
           <FailureNote error={quote.error} light style={{ marginTop: space.s10 }} />
+        ) : nothingToSell ? (
+          <Text variant="secondary" color={colors.sheet.muted} align="center" style={{ paddingVertical: space.s20 }}>
+            {`No ${symbol} in this wallet, so there is nothing to quote a sale for.`}
+          </Text>
         ) : quote.loading || !quote.data ? (
           <Text variant="secondary" color={colors.sheet.muted} align="center" style={{ paddingVertical: space.s20 }}>
             Asking the venue…
@@ -545,6 +555,19 @@ export default function XStockTicket() {
                 />
               ) : null}
             </View>
+          ) : short ? (
+            /*
+             * More than the wallet holds (2026-10-01). The button stayed live over an empty wallet, and the shortfall
+             * only surfaced as a failed transfer after the person had signed.
+             */
+            <View style={{ alignItems: 'center', gap: space.s8 }}>
+              <Text variant="footnote" color={colors.sheet.muted} align="center">
+                {usdc && usdc > 0
+                  ? `You have ${money(usdc)} USDC, less than this buy. Deposit more or lower the amount.`
+                  : 'Your wallet has no USDC yet. Deposit some to buy.'}
+              </Text>
+              <Pill label="Deposit USDC" light onPress={() => router.push('/deposit')} testID="xstock-deposit-cta" />
+            </View>
           ) : buyError ? (
             <Text variant="footnote" color={colors.down} align="center">
               {buyError}
@@ -560,7 +583,7 @@ export default function XStockTicket() {
             <Button
               label={buying ? 'Buying' : `Buy ${money(amount)} of ${symbol}`}
               loading={buying}
-              disabled={!(amount > 0) || !quote.data || !canSettle || (!!eligibility.data && !mayBuy(eligibility.data))}
+              disabled={!(amount > 0) || short || !quote.data || !canSettle || (!!eligibility.data && !mayBuy(eligibility.data))}
               onPress={buy}
             />
           )}

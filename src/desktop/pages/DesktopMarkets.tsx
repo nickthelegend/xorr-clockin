@@ -8,9 +8,9 @@
  *
  * The search box filters the rows already read. It asks nothing of the server.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Icon } from '@/design/Icon';
 import { assetGradient } from '@/design/gradients';
 import {
@@ -76,6 +76,12 @@ export function DesktopMarkets() {
   const { data, loading, error, reload } = useAsync(() => system.xstocks(), []);
   const [sector, setSector] = useState<string>(ALL_SECTORS);
   const [query, setQuery] = useState('');
+  /** The top bar's search button lands here with `?focus=search` and the box ready to type in (2026-10-01). */
+  const { focus } = useLocalSearchParams<{ focus?: string }>();
+  const searchRef = useRef<TextInput>(null);
+  useEffect(() => {
+    if (focus === 'search') searchRef.current?.focus();
+  }, [focus]);
 
   const rows = useMemo(() => data?.rows ?? [], [data]);
   const sectors = useMemo(() => sectorOptions(data?.sectors ?? []), [data]);
@@ -115,6 +121,7 @@ export function DesktopMarkets() {
         >
           <Icon name="search" size={16} color={colors.ink45} />
           <TextInput
+            ref={searchRef}
             value={query}
             onChangeText={setQuery}
             placeholder="Filter by name, symbol or sector"

@@ -153,16 +153,18 @@ function TopBar({ path }: { path: string }) {
           ))}
         </View>
         <View style={{ flex: 1 }} />
-        <IconOnly icon="search" onPress={() => router.push('/search')} />
+        <IconOnly icon="search" label="Search stocks" onPress={() => router.navigate('/xstocks?focus=search' as never)} />
         {roomy ? (
           <TopButton icon="chat" label="Ask agents" onPress={() => showChat()} />
         ) : (
-          <IconOnly icon="chat" onPress={() => showChat()} />
+          <IconOnly icon="chat" label="Ask agents" onPress={() => showChat()} />
         )}
         <TopButton icon="plus" label="Deposit" onPress={() => router.push('/deposit')} primary />
-        {roomy ? null : <IconOnly icon="shield" onPress={() => router.push('/safety')} />}
-        <IconOnly icon="bell" onPress={() => router.push('/notifications')} />
+        {roomy ? null : <IconOnly icon="shield" label="Safety" onPress={() => router.push('/safety')} />}
+        <IconOnly icon="bell" label="Notifications" onPress={() => router.push('/notifications')} />
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Account"
           onPress={() => router.push('/profile')}
           style={{
             flexDirection: 'row',
@@ -194,6 +196,8 @@ function TopBar({ path }: { path: string }) {
 function TopButton({ icon, label, onPress, primary }: { icon: IconName; label: string; onPress: () => void; primary?: boolean }) {
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
       onPress={onPress}
       style={{
         flexDirection: 'row',
@@ -215,9 +219,11 @@ function TopButton({ icon, label, onPress, primary }: { icon: IconName; label: s
   );
 }
 
-function IconOnly({ icon, onPress }: { icon: IconName; onPress: () => void }) {
+function IconOnly({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
       onPress={onPress}
       style={{
         width: 40,

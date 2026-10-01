@@ -1,5 +1,5 @@
 /**
- * The desktop web app's frame (2026-10-01): a sidebar, a top bar, and a content area.
+ * The desktop web app's frame (2026-10-01): one top bar — the mark, every page, search, account — over the page.
  *
  * Pages that have a desktop layout (`DESKTOP_PAGES`) get the whole content area and draw their own multi-column
  * layout. Every other screen — a phone screen with no desktop version yet, a sheet, a settings page — renders in a
@@ -9,13 +9,13 @@
  * `PhoneFrame` still wraps everything below the desktop width.
  */
 import React from 'react';
-import { Image, Pressable, ScrollView, View } from 'react-native';
+import { Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { Icon, type IconName } from '@/design/Icon';
 import { Text, alpha, colors, radius, space } from '@/ui';
 import { useStore } from '@/state/store';
 import { useChatDrawer } from '@/chat/chatDrawer';
-import { CONTENT_MAX_WIDTH, PANEL_WIDTH, SIDEBAR_WIDTH, TOPBAR_HEIGHT } from './useDesktop';
+import { CONTENT_MAX_WIDTH, PANEL_WIDTH, TOPBAR_HEIGHT } from './useDesktop';
 
 type NavItem = { label: string; href: string; icon: IconName; match: (p: string) => boolean };
 
@@ -58,6 +58,7 @@ function short(address?: string): string {
   return address ? `${address.slice(0, 4)}…${address.slice(-4)}` : '';
 }
 
+/** One link in the top nav: a quiet word, lit as a pill when it is the page you are on. */
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   const router = useRouter();
   return (
@@ -65,140 +66,125 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       accessibilityRole="link"
       onPress={() => router.navigate(item.href as never)}
       style={({ hovered }: { hovered?: boolean }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        height: 42,
+        height: 36,
         paddingHorizontal: 14,
-        borderRadius: 12,
-        backgroundColor: active ? colors.control : hovered ? alpha('#FFFFFF', 0.04) : 'transparent',
+        borderRadius: 18,
+        justifyContent: 'center',
+        backgroundColor: active ? colors.ink : hovered ? alpha('#FFFFFF', 0.07) : 'transparent',
       })}
     >
-      <Icon name={item.icon} size={19} color={active ? colors.ink : colors.ink55} />
-      <Text variant="rowPrimary" color={active ? colors.ink : colors.ink65}>
+      <Text variant="control" color={active ? colors.bg : colors.ink65}>
         {item.label}
       </Text>
     </Pressable>
   );
 }
 
-function Sidebar({ path }: { path: string }) {
-  const router = useRouter();
-  return (
-    <View
-      style={{
-        width: SIDEBAR_WIDTH,
-        borderRightWidth: 1,
-        borderRightColor: colors.hairline,
-        backgroundColor: '#050506',
-        paddingHorizontal: 14,
-        paddingTop: 22,
-        paddingBottom: 18,
-      }}
-    >
-      <Pressable onPress={() => router.navigate('/')} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, marginBottom: 28 }}>
-        <Image source={require('../../assets/icon.png')} style={{ width: 30, height: 30, borderRadius: 8 }} />
-        <Text variant="screenTitle">xorr</Text>
-      </Pressable>
-      <View style={{ gap: 4 }}>
-        {NAV.map((item) => (
-          <NavLink key={item.href} item={item} active={item.match(path)} />
-        ))}
-      </View>
-      <View style={{ flex: 1 }} />
-      <View style={{ gap: 4 }}>
-        {NAV_BOTTOM.map((item) => (
-          <NavLink key={item.href} item={item} active={item.match(path)} />
-        ))}
-      </View>
-      <View
-        style={{
-          marginTop: 16,
-          padding: 14,
-          borderRadius: radius.card,
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.hairline,
-          gap: 4,
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.up }} />
-          <Text variant="secondary" color={colors.ink70}>
-            Live on Solana mainnet
-          </Text>
-        </View>
-        <Text variant="secondarySm" color={colors.ink40}>
-          Tokenized stocks · Jupiter · Pyth
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-function TopBar() {
+/**
+ * The desktop app's one bar (2026-10-01): the mark, every page as a link, then search and the account. It replaced a
+ * sidebar — the owner wanted the page to own the full width, with navigation along the top like a trading site.
+ */
+function TopBar({ path }: { path: string }) {
   const router = useRouter();
   const wallet = useStore((s) => s.wallet);
   const showChat = useChatDrawer((s) => s.show);
+  // The six pages are links; Safety joins them on a wide screen and is an icon (beside the bell) otherwise, and the
+  // buttons drop their words, so the bar fits a 1080px window without wrapping.
+  const { width } = useWindowDimensions();
+  const roomy = width >= 1400;
+  const links = roomy ? [...NAV, NAV_BOTTOM[0]!] : NAV;
   return (
     <View
       style={{
         height: TOPBAR_HEIGHT,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        paddingHorizontal: 28,
         borderBottomWidth: 1,
         borderBottomColor: colors.hairline,
-        backgroundColor: colors.bg,
-      }}
+        backgroundColor: alpha('#000000', 0.82),
+        backdropFilter: 'blur(18px)',
+        zIndex: 10,
+      } as never}
     >
-      <Pressable
-        onPress={() => router.push('/search')}
+      <View
         style={{
+          flex: 1,
+          width: '100%',
+          maxWidth: CONTENT_MAX_WIDTH + 64,
+          alignSelf: 'center',
           flexDirection: 'row',
           alignItems: 'center',
           gap: 10,
-          width: 380,
-          height: 40,
-          paddingHorizontal: 14,
-          borderRadius: 12,
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.hairline,
+          paddingHorizontal: 32,
         }}
       >
-        <Icon name="search" size={17} color={colors.ink45} />
-        <Text variant="body" color={colors.ink45}>
-          Search stocks and pre-IPO companies
-        </Text>
-      </Pressable>
-      <View style={{ flex: 1 }} />
-      <TopButton icon="chat" label="Ask your agents" onPress={() => showChat()} />
-      <TopButton icon="plus" label="Deposit" onPress={() => router.push('/deposit')} primary />
-      <IconOnly icon="bell" onPress={() => router.push('/notifications')} />
-      <Pressable
-        onPress={() => router.push('/profile')}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
-          height: 40,
-          paddingLeft: 6,
-          paddingRight: 14,
-          borderRadius: 20,
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.hairline,
-        }}
-      >
-        <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="assets" size={15} color={colors.bg} />
+        <Pressable onPress={() => router.navigate('/')} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginRight: 18 }}>
+          <Image source={require('../../assets/icon.png')} style={{ width: 30, height: 30, borderRadius: 8 }} />
+          <Text variant="screenTitle">xorr</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              height: 22,
+              paddingHorizontal: 8,
+              borderRadius: 11,
+              backgroundColor: alpha('#2BD87A', 0.12),
+            }}
+          >
+            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.up }} />
+            <Text variant="secondarySm" color={colors.up}>
+              Mainnet
+            </Text>
+          </View>
+        </Pressable>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 2,
+            padding: 4,
+            borderRadius: 22,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.hairline,
+          }}
+        >
+          {links.map((item) => (
+            <NavLink key={item.href} item={item} active={item.match(path)} />
+          ))}
         </View>
-        <Text variant="control" color={colors.ink70}>
-          {wallet ? short(wallet.address) : 'Sign in'}
-        </Text>
-      </Pressable>
+        <View style={{ flex: 1 }} />
+        <IconOnly icon="search" onPress={() => router.push('/search')} />
+        {roomy ? (
+          <TopButton icon="chat" label="Ask agents" onPress={() => showChat()} />
+        ) : (
+          <IconOnly icon="chat" onPress={() => showChat()} />
+        )}
+        <TopButton icon="plus" label="Deposit" onPress={() => router.push('/deposit')} primary />
+        {roomy ? null : <IconOnly icon="shield" onPress={() => router.push('/safety')} />}
+        <IconOnly icon="bell" onPress={() => router.push('/notifications')} />
+        <Pressable
+          onPress={() => router.push('/profile')}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            height: 40,
+            paddingLeft: 6,
+            paddingRight: 14,
+            borderRadius: 20,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.hairline,
+          }}
+        >
+          <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="assets" size={15} color={colors.bg} />
+          </View>
+          <Text variant="control" color={colors.ink70}>
+            {wallet ? short(wallet.address) : 'Sign in'}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -287,17 +273,14 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
 
   const wide = DESKTOP_PAGES.some((m) => m(path));
   return (
-    <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.bg }}>
-      <Sidebar path={path} />
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <TopBar />
-        <View style={{ flex: 1, minHeight: 0 }}>
-          {wide ? (
-            <View style={{ flex: 1, width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}>{children}</View>
-          ) : (
-            <Panel>{children}</Panel>
-          )}
-        </View>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <TopBar path={path} />
+      <View style={{ flex: 1, minHeight: 0 }}>
+        {wide ? (
+          <View style={{ flex: 1, width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}>{children}</View>
+        ) : (
+          <Panel>{children}</Panel>
+        )}
       </View>
     </View>
   );

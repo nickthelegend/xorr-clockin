@@ -10,11 +10,8 @@
  */
 import { Platform, useWindowDimensions } from 'react-native';
 
-/** A laptop's narrowest useful window; below it the sidebar and two columns stop fitting. */
+/** A laptop's narrowest useful window; below it the top nav and two columns stop fitting. */
 export const DESKTOP_MIN_WIDTH = 1080;
-
-/** Width of the sidebar the desktop shell draws on the left. */
-export const SIDEBAR_WIDTH = 248;
 
 /** Height of the top bar. */
 export const TOPBAR_HEIGHT = 68;

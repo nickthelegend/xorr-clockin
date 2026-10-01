@@ -15,7 +15,7 @@ import { Icon, type IconName } from '@/design/Icon';
 import { Text, alpha, colors, radius, space } from '@/ui';
 import { useStore } from '@/state/store';
 import { useChatDrawer } from '@/chat/chatDrawer';
-import { CONTENT_MAX_WIDTH, PANEL_WIDTH, TOPBAR_HEIGHT } from './useDesktop';
+import { CONTENT_MAX_WIDTH, PANEL_WIDTH, PanelScope, TOPBAR_HEIGHT } from './useDesktop';
 
 type NavItem = { label: string; href: string; icon: IconName; match: (p: string) => boolean };
 
@@ -256,7 +256,7 @@ function Panel({ children }: { children: React.ReactNode }) {
           borderColor: colors.hairline,
         }}
       >
-        {children}
+        <PanelScope value>{children}</PanelScope>
       </View>
     </View>
   );

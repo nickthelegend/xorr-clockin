@@ -17,7 +17,7 @@ import React, { useEffect, useMemo } from 'react';
 import { View } from 'react-native';
 import { Tabs, usePathname, useRouter } from 'expo-router';
 import { TabBar, colors } from '@/ui';
-import { useDesktop } from '@/desktop/useDesktop';
+import { useDesktopWindow } from '@/desktop/useDesktop';
 import { useThread } from '@/bot/thread';
 import { useChatAgents } from '@/chat/agents';
 import { useChatDrawer } from '@/chat/chatDrawer';
@@ -36,7 +36,8 @@ export default function TabsLayout() {
   const readVoice = useVoice((s) => s.read);
   const agents = useChatAgents();
   // The desktop web app navigates from its sidebar; the phone's bottom bar is not drawn there (2026-10-01).
-  const desktop = useDesktop();
+  // The window, not the panel: signed in, the top nav replaces this bar on every page, panel pages included.
+  const desktop = useDesktopWindow();
 
   // The count on Messages is the thread's, so the thread is read as the shell mounts rather than when the drawer opens.
   useEffect(() => {

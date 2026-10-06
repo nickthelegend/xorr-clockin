@@ -281,7 +281,7 @@ export default function Desk() {
                     {STRATEGY_INFO[id].line}
                   </Text>
                   <Text variant="footnoteSm" color={on ? colors.up : colors.ink38}>
-                    {included ? `Included in ${st.tier.name}` : passLive ? `Hired until ${new Date(pass!.until).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Off'}
+                    {included ? `Included in ${st.tier.name}` : passLive ? `Hired until ${new Date(pass!.until).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' })}` : 'Off'}
                   </Text>
                 </View>
                 {!included && !passLive ? (

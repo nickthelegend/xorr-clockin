@@ -32,6 +32,7 @@ import { boughtToday, useClockin } from './session';
 import { checkInReward, checkedInToday, currentStreak, dayKey, streakAfterCheckIn, withCheckIn } from './streak';
 import { SHIFT_MS, SHIFT_PRICE, STRATEGY_INFO, activeStrategies, rewardMultiplier, tierFor, tierSource, type StrategyId } from './tiers';
 import { notifyNow, scheduleDailyBrief } from './notify';
+import { createDeviceSet, resolveMints } from './bootstrap';
 import type { Owner } from './useOwner';
 
 type Live = {
@@ -66,6 +67,10 @@ export async function agent(): Promise<Keypair> {
 
 /** Re-read the chain and the market. Mainnet reads (SKR, Seeker token) run once per owner and never block. */
 export async function refresh(owner: PublicKey, opts: { mainnet?: boolean } = {}): Promise<void> {
+  if ((await resolveMints()) === 'missing') {
+    useLive.setState({ error: 'Setting up the devnet stand-in tokens…' });
+    return;
+  }
   useLive.setState({ loading: true, error: null });
   const a = await agent();
   const [view, prices] = await Promise.allSettled([readOwner(owner, a.publicKey), fetchPrices()]);
@@ -214,6 +219,25 @@ async function guarded<T>(label: string, fn: () => Promise<T>): Promise<T> {
 
 const log = (...a: Parameters<ReturnType<typeof useClockin.getState>['log']>) => useClockin.getState().log(...a);
 
+/**
+ * Make sure there are stand-in mints: the shared set if it is on devnet, else this phone's own (created once, paid by
+ * the owner from an airdrop). Then the wallet's starter funds. Safe to call on every launch.
+ */
+export async function ensureDesk(owner: Owner): Promise<void> {
+  if ((await resolveMints()) === 'missing') {
+    await guarded('Creating your devnet stand-in tokens', async () => {
+      const set = await createDeviceSet(owner);
+      log({ kind: 'fund', title: 'Created this phone’s devnet stand-in tokens', detail: `dUSDC ${set.usdc.slice(0, 6)}…, dSKR ${set.skr.slice(0, 6)}… and five xStock stand-ins; this phone is their mint authority.`, ok: true });
+    });
+  }
+  await refresh(owner.pubkey);
+  if (feeMode() === 'self' && (useLive.getState().view?.sol ?? 0) < 0.01) await getDevnetSol(owner).catch(() => undefined);
+  // From the chain, not a flag: a wallet without a dUSDC account on THESE mints has not been set up on them.
+  const v = useLive.getState().view;
+  if (v && !v.usdc.exists) await fundStarter(owner);
+  if (v && !v.skr.exists) await claimStarterSkr(owner);
+}
+
 /** A new wallet's starter money: dUSDC to trade, its token accounts made — the faucet pays, nothing to sign. */
 export async function fundStarter(owner: Owner): Promise<string> {
   return guarded('Funding your devnet wallet', async () => {
@@ -221,7 +245,7 @@ export async function fundStarter(owner: Owner): Promise<string> {
     if (o.payer) needOwnerSol();
     const sig = await send(fundStarterIxs(owner.pubkey, STARTER_USDC, o.rent), o.payer ? { payer: o.payer, owner } : {});
     useClockin.getState().set({ funded: true });
-    log({ kind: 'fund', title: `+${STARTER_USDC} dUSDC from the devnet faucet`, detail: 'Test money for the agent to trade. No signature needed.', sig, ok: true });
+    log({ kind: 'fund', title: `+${STARTER_USDC} dUSDC ${DEVNET.source === 'shared' ? 'from the devnet faucet' : 'minted by this phone'}`, detail: 'Test money for the agent to trade. No signature needed.', sig, ok: true });
     await refresh(owner.pubkey);
     return sig;
   });

@@ -19,7 +19,8 @@ OUT="${OUT:-$CLOCKIN/apks/xorr-clockin.apk}"
 ARCHS="${ARCHS:-arm64-v8a,x86_64}"
 
 cd "$ROOT"
-node -e "const d=require('./src/clockin/devnet.json'); if(!d.usdc||!d.skr||/127\.0\.0\.1|localhost/.test(d.cluster||'')) { console.error('src/clockin/devnet.json has no DEVNET mints (run tools/clockin/setup-devnet.ts against devnet first)'); process.exit(1) }"
+# The shared stand-in set must be devnet's (or empty: then each phone creates its own set on first run).
+node -e "const d=require('./src/clockin/devnet.json'); if(/127\.0\.0\.1|localhost/.test(d.cluster||'')) { console.error('src/clockin/devnet.json holds LOCALNET mints; restore the devnet set (git checkout src/clockin/devnet.json)'); process.exit(1) } console.log(d.usdc ? 'shared devnet set '+d.usdc : 'no shared set: each phone creates its own stand-in mints')"
 
 export NODE_ENV=production
 export EXPO_PUBLIC_CLOCKIN=1

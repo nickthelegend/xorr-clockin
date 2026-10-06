@@ -15,8 +15,7 @@ import { Button, Fill, Screen, Text, colors, radius, space } from '@/ui';
 import { Rise } from '@/ui/Rise';
 import { successTap, warningTap } from '@/ui/haptics';
 import { useAuth, useEmailLogin } from '@/auth/useAuth';
-import { DEVNET_READY } from '@/clockin/config';
-import { claimStarterSkr, feeMode, fundStarter, getDevnetSol, refresh, useLive } from '@/clockin/desk';
+import { ensureDesk } from '@/clockin/desk';
 import { guestKeypair, faucetKeypair } from '@/clockin/chain';
 import { MWA_AVAILABLE, mwaConnect } from '@/clockin/mwa';
 import { PRIVY_IN_CLOCKIN, usePrivySolana } from '@/clockin/privySign';
@@ -44,18 +43,13 @@ export default function Start() {
     settingUp.current = true;
     void (async () => {
       try {
-        const s = useClockin.getState();
-        await refresh(owner.pubkey);
-        // xorr's faucet pays while it has SOL; if it is dry, ask devnet's own faucet for this wallet's fees.
-        if (feeMode() === 'self' && (useLive.getState().view?.sol ?? 0) < 0.01) await getDevnetSol(owner).catch(() => undefined);
-        if (!s.funded) await fundStarter(owner);
-        if (!useClockin.getState().starterSkr) await claimStarterSkr(owner);
+        await ensureDesk(owner);
         successTap();
         router.replace('/today');
       } catch (e) {
         warningTap();
         if (__DEV__) console.log('[clockin] setup failed', e);
-        setError(`Connected, but the devnet faucet could not set you up: ${(e as Error).message}`);
+        setError(`Connected, but setting up your devnet desk failed: ${(e as Error).message}`);
         setBusy(null);
       } finally {
         settingUp.current = false;
@@ -93,7 +87,7 @@ export default function Start() {
       return { kind: 'guest', address: kp.publicKey.toBase58() };
     });
 
-  const missing = !DEVNET_READY ? 'This build has no devnet mints configured.' : !faucetKeypair() ? 'This build has no devnet faucet key.' : null;
+  const missing = !faucetKeypair() ? 'This build has no devnet faucet key.' : null;
 
   return (
     <Screen gutter="none">

@@ -14,7 +14,7 @@ import { scheduleDailyBrief } from '@/clockin/notify';
 import { useClockin } from '@/clockin/session';
 import { currentStreak } from '@/clockin/streak';
 import { useDesk } from '@/clockin/useDesk';
-import { useScrollAutopilot } from '@/clockin/autopilot';
+import { useAutopilot, useScrollAutopilot } from '@/clockin/autopilot';
 import { AddressLink, Banner, Card, DevnetPill, Eyebrow, TxLink } from '@/clockin/ui';
 import { WALLET_LABEL } from '@/clockin/useOwner';
 
@@ -36,6 +36,14 @@ export default function Me() {
   useEffect(() => {
     void getAiKey().then((k) => setHasKey(!!k));
   }, []);
+
+  async function onDisconnect() {
+    if (wallet?.mwa) await mwaDisconnect(wallet.mwa);
+    useLive.setState({ view: null, mainnetSkr: null, sgt: undefined });
+    disconnect();
+    router.replace('/start');
+  }
+  useAutopilot({ disconnect: onDisconnect });
 
   const input = { backgroundColor: colors.inputBg, borderRadius: radius.tile, borderWidth: 1, borderColor: colors.inputBorder, color: colors.ink, padding: 12, fontSize: 15 } as const;
 
@@ -176,9 +184,12 @@ export default function Me() {
           <Eyebrow>About this build</Eyebrow>
           <Text variant="bodySm" color={colors.ink70}>
             xorr · CLOCK IN runs on Solana devnet ({DEVNET_RPC.replace('https://', '')}). dUSDC, dSKR and the five xStock
-            stand-ins are devnet test tokens minted by xorr's devnet faucet; they fill at Jupiter's live prices for the real
-            xStocks. Nothing here is real money. The full xorr — real xStocks on mainnet through Jupiter — is a separate,
-            hosted app.
+            stand-ins are devnet test tokens{' '}
+            {DEVNET.source === 'shared'
+              ? "minted by xorr's devnet faucet"
+              : "this phone created for itself, because xorr's shared devnet set was not available — this phone is their mint authority"}
+            ; they fill at Jupiter's live prices for the real xStocks. Nothing here is real money. The full xorr — real
+            xStocks on mainnet through Jupiter — is a separate, hosted app.
           </Text>
           <View style={{ marginTop: space.s10, gap: 2 }}>
             <AddressLink address={DEVNET.usdcMint} label="dUSDC mint" />
@@ -186,19 +197,14 @@ export default function Me() {
             {STOCKS.map((s) => (
               <AddressLink key={s.symbol} address={s.devnetMint} label={`${s.symbol} stand-in mint`} />
             ))}
-            <AddressLink address={DEVNET.faucet} label="xorr devnet faucet / venue" />
+            <AddressLink address={DEVNET.faucet} label={DEVNET.source === 'shared' ? 'xorr devnet faucet / venue' : 'this phone’s venue key'} />
           </View>
         </Card>
 
         <Button
           label="Disconnect"
           variant="destructive"
-          onPress={async () => {
-            if (wallet?.mwa) await mwaDisconnect(wallet.mwa);
-            useLive.setState({ view: null, mainnetSkr: null, sgt: undefined });
-            disconnect();
-            router.replace('/start');
-          }}
+          onPress={onDisconnect}
           testID="disconnect"
         />
       </ScrollView>

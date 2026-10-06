@@ -31,7 +31,7 @@ import {
   type Account,
 } from '@solana/spl-token';
 import bs58 from 'bs58';
-import { DEVNET, DEVNET_READY, DEVNET_RPC, MAINNET_READ_RPC, SKR_MAINNET_MINT, STOCKS, stockBySymbol } from './config';
+import { DEVNET, devnetReady, DEVNET_RPC, MAINNET_READ_RPC, SKR_MAINNET_MINT, STOCKS, stockBySymbol } from './config';
 import { getSecret, setSecret } from './secret';
 
 export const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
@@ -46,8 +46,16 @@ export function connection(): Connection {
 /* ---------------------------------------------------------------------------------------------------------- keys */
 
 let _faucet: Keypair | null | undefined;
-/** The devnet faucet/venue key, from the build's environment. Null in a build made without one. */
+let _deviceVenue: Keypair | null = null;
+
+/** Use a key this phone holds as the mint authority and venue (the device's own stand-in set). */
+export function setDeviceVenue(kp: Keypair | null): void {
+  _deviceVenue = kp;
+}
+
+/** The devnet faucet/venue key: this phone's own when it runs its own set, else the build's. Null when neither. */
 export function faucetKeypair(): Keypair | null {
+  if (_deviceVenue) return _deviceVenue;
   if (_faucet !== undefined) return _faucet;
   const secret = process.env.EXPO_PUBLIC_CLOCKIN_FAUCET_SECRET;
   try {
@@ -113,7 +121,7 @@ function view(address: PublicKey, info: Account | null, decimals: number): Token
 
 /** Everything the screens show about an owner, in one `getMultipleAccounts`. */
 export async function readOwner(owner: PublicKey, agent?: PublicKey): Promise<ChainView> {
-  if (!DEVNET_READY) throw new Error('this build has no devnet stand-in mints configured (see HANDOFF.md)');
+  if (!devnetReady()) throw new Error('the devnet stand-in mints are not set up yet');
   const conn = connection();
   const usdcAta = ata(owner, DEVNET.usdcMint);
   const skrAta = ata(owner, DEVNET.skrMint);

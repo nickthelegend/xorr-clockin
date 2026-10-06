@@ -52,12 +52,19 @@ type DevnetFile = {
 
 const D = devnet as DevnetFile;
 
+/**
+ * The stand-in mints in use. Mutable on purpose: they are the shared set committed in `devnet.json`, unless that set does
+ * not exist on the cluster (nobody could fund its creation), in which case this phone creates its own set and
+ * `applyMintSet` swaps it in before anything is read (`bootstrap.ts`).
+ */
 export const DEVNET = {
   faucet: D.faucet,
   usdcMint: D.usdc,
   skrMint: D.skr,
   usdcDecimals: 6,
   skrDecimals: 6,
+  /** 'shared': the committed set and xorr's faucet; 'device': a set this phone created and owns the authority of. */
+  source: 'shared' as 'shared' | 'device',
 };
 
 const META: Omit<StockDef, 'devnetMint'>[] = [
@@ -74,8 +81,22 @@ export function stockBySymbol(symbol: string): StockDef | undefined {
   return STOCKS.find((s) => s.symbol === symbol);
 }
 
-/** Whether the devnet mints exist (the setup script has been run and its output committed). */
-export const DEVNET_READY = !!(D.usdc && D.skr && STOCKS.every((s) => s.devnetMint));
+export type MintSet = { faucet: string; usdc: string; skr: string; stocks: Record<string, string> };
+
+export const SHARED_SET: MintSet = { faucet: D.faucet, usdc: D.usdc, skr: D.skr, stocks: { ...D.stocks } };
+
+/** Whether a set of mint addresses is configured (not whether it exists on chain). */
+export function devnetReady(): boolean {
+  return !!(DEVNET.usdcMint && DEVNET.skrMint && STOCKS.every((s) => s.devnetMint));
+}
+
+export function applyMintSet(set: MintSet, source: 'shared' | 'device'): void {
+  DEVNET.faucet = set.faucet;
+  DEVNET.usdcMint = set.usdc;
+  DEVNET.skrMint = set.skr;
+  DEVNET.source = source;
+  for (const s of STOCKS) s.devnetMint = set.stocks[s.symbol] ?? '';
+}
 
 export function explorerTx(sig: string): string {
   return `https://explorer.solana.com/tx/${sig}?cluster=devnet`;

@@ -5,7 +5,7 @@ import { Redirect, Tabs, usePathname, useRouter } from 'expo-router';
 import { colors } from '@/ui';
 import { useClockin, useClockinHydrated } from '@/clockin/session';
 import { ClockinTabBar, type ClockinTab } from '@/clockin/ui';
-import { ensureDesk, useLive } from '@/clockin/desk';
+import { ensureDesk, friendlyError, useLive } from '@/clockin/desk';
 import { useOwner } from '@/clockin/useOwner';
 
 /**
@@ -22,7 +22,7 @@ function EnsureSetup() {
       try {
         await ensureDesk(owner);
       } catch (e) {
-        useLive.setState({ error: `The devnet faucet could not set this wallet up: ${(e as Error).message}` });
+        useLive.setState({ error: friendlyError(e), setupFailed: true });
       }
     })();
   }, [owner]);

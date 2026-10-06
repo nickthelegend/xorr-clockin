@@ -11,7 +11,7 @@ import { useRouter } from 'expo-router';
 import { AgentOrb, Button, Screen, Text, colors, radius, space } from '@/ui';
 import { heavyTap, successTap, warningTap } from '@/ui/haptics';
 import { STOCKS } from '@/clockin/config';
-import { checkIn, feeMode, getDevnetSol, type CheckInResult } from '@/clockin/desk';
+import { checkIn, ensureDesk, feeMode, friendlyError, getDevnetSol, useLive, type CheckInResult } from '@/clockin/desk';
 import { driftPct, nasdaqOpen } from '@/clockin/engine';
 import { askAgent, getAiKey, narrateBrief } from '@/clockin/ai';
 import { useClockin } from '@/clockin/session';
@@ -70,16 +70,16 @@ export default function Today() {
       if (await getAiKey()) narrateBrief(aiModel, { ...aiContext(), brief: r.brief, streak: r.streak }).then(setAiLines).catch(() => undefined);
     } catch (e) {
       warningTap();
-      setError((e as Error).message);
+      setError(friendlyError(e));
     }
   }
 
-  async function onAsk() {
-    if (!question.trim()) return;
+  async function onAsk(asked: string = question) {
+    if (!asked.trim()) return;
     setAsking(true);
     setAnswer(null);
     try {
-      setAnswer(await askAgent(aiModel, question, aiContext()));
+      setAnswer(await askAgent(aiModel, asked, aiContext()));
     } catch (e) {
       setAnswer((e as Error).message);
     } finally {
@@ -87,7 +87,17 @@ export default function Today() {
     }
   }
 
-  useAutopilot({ checkin: onClockIn }, !!owner && !!live.view);
+  useAutopilot(
+    {
+      checkin: onClockIn,
+      ask: () => {
+        const q = 'Why did you buy NVDAx?';
+        setQuestion(q);
+        void onAsk(q);
+      },
+    },
+    !!owner && !!live.view && !!live.prices,
+  );
 
   const shown = result ? result.brief : brief;
   const lines = aiLines ?? shown.lines;
@@ -110,6 +120,17 @@ export default function Today() {
         </View>
 
         {live.error ? <Banner text={live.error} /> : null}
+        {live.setupFailed ? (
+          <Button
+            label={busy ?? 'Try setting up again'}
+            loading={!!busy}
+            variant="secondary"
+            onPress={() => {
+              if (owner) void ensureDesk(owner).catch((e) => useLive.setState({ error: friendlyError(e), setupFailed: true }));
+            }}
+            testID="retry-setup"
+          />
+        ) : null}
         {live.view && feeMode(live.view) === 'self' && live.view.sol < 0.003 ? (
           <Card>
             <Text variant="bodySm" color={colors.ink70}>
@@ -121,7 +142,7 @@ export default function Today() {
               variant="secondary"
               loading={busy === 'Requesting devnet SOL'}
               onPress={() => {
-                if (owner) void getDevnetSol(owner).catch((e) => setError((e as Error).message));
+                if (owner) void getDevnetSol(owner).catch((e) => setError(friendlyError(e)));
               }}
               style={{ marginTop: space.s10 }}
             />
@@ -329,18 +350,18 @@ export default function Today() {
             placeholder="Why did you buy NVDAx?"
             placeholderTextColor={colors.ink38}
             style={{ backgroundColor: colors.inputBg, borderRadius: radius.tile, borderWidth: 1, borderColor: colors.inputBorder, color: colors.ink, padding: 12, fontSize: 15 }}
-            onSubmitEditing={onAsk}
+            onSubmitEditing={() => void onAsk()}
             returnKeyType="send"
           />
-          <Button label="Ask" variant="secondary" loading={asking} onPress={onAsk} style={{ marginTop: space.s10 }} />
+          <Button label="Ask" variant="secondary" loading={asking} onPress={() => onAsk()} style={{ marginTop: space.s10 }} />
           {answer ? (
             <Text variant="bodySm" color={colors.ink70} style={{ marginTop: space.s10 }}>
               {answer}
             </Text>
           ) : null}
           <Text variant="footnoteSm" color={colors.ink32} style={{ marginTop: space.s8 }}>
-            Uses your own OpenRouter key (Me tab), kept in this phone’s keystore. The decisions stay the agent’s rules; a
-            model only explains them.
+            Answers from the agent’s own numbers. Add your OpenRouter key on the Me tab (kept in this phone’s keystore) and a
+            model answers in its own words; the decisions stay the agent’s rules.
           </Text>
         </Card>
       </ScrollView>

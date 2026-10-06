@@ -15,7 +15,7 @@ mounted.
 
 | What | Evidence |
 |---|---|
-| Unit rules: streak, tiers and shifts, the agent engine (exits, guard, pacing, allowance, DST-aware Nasdaq session), brief | `npx vitest run src/clockin/clockin.test.ts`: 16/16 |
+| Unit rules: streak, tiers and shifts, the agent engine (exits, guard, pacing, allowance, DST-aware Nasdaq session), the brief, *Ask your agent* answers without a model, the faucet-busy wording | `npx vitest run src/clockin`: 19 passed (the on-chain suites skip without `CLOCKIN_LIVE`) |
 | The whole permission loop **on chain**: fund with no owner signature → clock-in memo and reward → SKR shift payment → `ApproveChecked` grant → agent buy as delegate (allowance falls by exactly the spend) → over-cap transfer **refused by the token program** → agent sale through its approval → `Revoke` → buy after revoke **refused** | `CLOCKIN_LIVE=1 npx vitest run src/clockin/chain.devnet.test.ts` against a local `solana-test-validator`: 8/8 |
 | The same loop when xorr's faucet has no SOL: owner pays fees and rent, the agent receives 0.03 SOL with the grant and pays for its own trades | same file, `CLOCKIN_SELFPAY=1`: 9/9 |
 | The app on **iPhone 17 Pro Max simulator** (debug build, Metro 8481), against a local validator on :4400: Start → guest wallet → funded (1,000 dUSDC, 250 dSKR) → grant 100 → agent bought NVDAx/TSLAx/MSFTx at live Jupiter prices → *Test the cap* refused on chain → clock-in day 1 (+15 dSKR) → agent bought SPYx → Night Shift paid with 20 dSKR → revoke | Signatures in the JS log; screenshots `clockin/screens/01…12`. Taps were driven by a dev-only remote (`src/clockin/autopilot.ts`, `tools/clockin/remote.mjs`, compiled out of release builds) because nobody was at the simulator |
@@ -51,22 +51,26 @@ mounted.
    on the owner's behalf, and *Get devnet SOL* on Today and Me retries. The agent gets 0.03 SOL with the grant.
 3. If there is no shared set (the **current state** of the committed `devnet.json`), the phone creates its own seven
    mints on first run (about 0.011 SOL of rent, paid from a 1 SOL devnet airdrop to the owner), and then case 2 applies.
-   The only thing that can block a judge is devnet's faucet refusing *their* airdrop too. The app then says so and
-   offers a retry.
+   **The risk:** this path depends on devnet's public faucet granting an airdrop to the judge's phone, and that faucet
+   rate-limits per IP. When it refuses, the app does not dead-end. Start shows "Devnet's free faucet is busy (it
+   rate-limits test SOL). Nothing is wrong with your wallet — try again in a minute or two." with a **Try again** button,
+   and Today shows **Try setting up again** and **Get devnet SOL**. A smaller 0.05 SOL request is tried automatically
+   after a refused 1 SOL one. Funding the shared faucet (step 1 below) removes the risk entirely.
 
 ## What the user must do
 
-1. **Optional but best: fund the shared devnet faucet** so judges never need an airdrop. Send ≥ 1 devnet SOL to
-   `GwayahZaN7rMXK5jkNXKu7ndHRw2mcXbbq1qEPJiEeAe` (for example from https://faucet.solana.com while logged in, or any
+1. **Best first: fund the shared devnet faucet, then run one command.** Send ≥ 0.1 devnet SOL (1 is comfortable) to
+   `GwayahZaN7rMXK5jkNXKu7ndHRw2mcXbbq1qEPJiEeAe` (for example from https://faucet.solana.com while signed in, or any
    devnet wallet). Then:
    ```bash
-   source "/Volumes/Extreme SSD/Projects/clockin/env.sh"; cd "/Volumes/Extreme SSD/Projects/clockin/xorr-clockin"
-   CLOCKIN_FAUCET_KEYPAIR=~/.config/solana/xorr-clockin/faucet.json npx tsx tools/clockin/setup-devnet.ts   # creates the devnet set, writes devnet.json + .env.local
-   set -a; . ./.env.local; set +a; CLOCKIN_LIVE=1 npx vitest run src/clockin/chain.devnet.test.ts             # the loop on devnet; prints every signature
-   git add src/clockin/devnet.json && git commit -m "Devnet stand-in mints" && git push
-   tools/clockin/build-apk.sh                                                                                  # rebuild the APK with the shared set
+   cd "/Volumes/Extreme SSD/Projects/clockin/xorr-clockin" && scripts/devnet-go.sh --push
    ```
-   Then put the printed devnet signatures and mint addresses into `clockin/SUBMISSION.md`.
+   The script (1) checks the faucet's balance, (2) creates the shared devnet stand-in set (`src/clockin/devnet.json`),
+   (3) runs the whole loop on devnet and writes every signature, with explorer links, to `clockin/DEVNET-RUN.md`,
+   (4) rebuilds and copies the release APK (printing its new sha256), and with `--push` commits the mint list and run log
+   and pushes them. Afterwards, copy the mints, the links and the new sha256 into `clockin/SUBMISSION.md`.
+   Without funding, the APK still works: each phone creates its own set (see above), but every judge then needs a
+   devnet airdrop to succeed from their phone.
 2. **Run the APK on a real Android phone (ideally a Seeker)** before submitting, and record the demo there
    (`clockin/DEMO-SCRIPT.md`). Install a wallet if the phone has none. Check: *Connect wallet · Seed Vault* opens the
    wallet, the grant and clock-in sign, and *Test the cap* shows a refused devnet transaction.

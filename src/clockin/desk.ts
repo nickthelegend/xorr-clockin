@@ -45,6 +45,8 @@ type Live = {
   loading: boolean;
   error: string | null;
   busy: string | null;
+  /** The launch-time setup failed (usually devnet's faucet being busy); Today offers a retry. */
+  setupFailed?: boolean;
 };
 
 export const useLive = create<Live>(() => ({
@@ -178,6 +180,23 @@ export function plan(live: Live): { decisions: Decision[]; brief: Brief } {
   };
 }
 
+/**
+ * Devnet's free faucet rate-limits test SOL per IP. When it says no, that is a busy faucet, not a broken wallet — say
+ * so in words and offer a retry.
+ */
+export const FAUCET_BUSY =
+  "Devnet's free faucet is busy (it rate-limits test SOL). Nothing is wrong with your wallet — try again in a minute or two.";
+
+export function isFaucetBusy(e: unknown): boolean {
+  const m = e instanceof Error ? e.message : String(e);
+  return /429|rate.?limit|airdrop|too many requests|faucet has run dry/i.test(m);
+}
+
+export function friendlyError(e: unknown): string {
+  if (isFaucetBusy(e)) return FAUCET_BUSY;
+  return e instanceof Error ? e.message : String(e);
+}
+
 /* ------------------------------------------------------------------------------------------------- who pays */
 
 /** Below this the devnet faucet stops paying fees and rent, and the owner (and the agent) pay their own. */
@@ -200,7 +219,7 @@ function ownerPays(owner: Owner): { payer: FeePayer; rent: PublicKey } | { payer
 function needOwnerSol(min = 0.003) {
   const v = useLive.getState().view;
   if (feeMode(v) === 'self' && (v?.sol ?? 0) < min) {
-    throw new Error("xorr's devnet faucet is out of SOL, so this needs a little devnet SOL of your own. Tap Get devnet SOL on the Me tab, then try again.");
+    throw new Error(`This needs a little devnet SOL of your own (free test SOL), and ${FAUCET_BUSY.charAt(0).toLowerCase()}${FAUCET_BUSY.slice(1)}`);
   }
 }
 
@@ -223,6 +242,7 @@ const log = (...a: Parameters<ReturnType<typeof useClockin.getState>['log']>) =>
  * the owner from an airdrop). Then the wallet's starter funds. Safe to call on every launch.
  */
 export async function ensureDesk(owner: Owner): Promise<void> {
+  useLive.setState({ setupFailed: false });
   if ((await resolveMints()) === 'missing') {
     await guarded('Creating your devnet stand-in tokens', async () => {
       const set = await createDeviceSet(owner);
@@ -230,7 +250,11 @@ export async function ensureDesk(owner: Owner): Promise<void> {
     });
   }
   await refresh(owner.pubkey);
-  if (feeMode() === 'self' && (useLive.getState().view?.sol ?? 0) < 0.01) await getDevnetSol(owner).catch(() => undefined);
+  if (feeMode() === 'self' && (useLive.getState().view?.sol ?? 0) < 0.01) {
+    // Best effort: if devnet's faucet is busy and the wallet has no SOL, the funding below says so in words.
+    await getDevnetSol(owner).catch(() => undefined);
+    await refresh(owner.pubkey);
+  }
   // From the chain, not a flag: a wallet without a dUSDC account on THESE mints has not been set up on them.
   const v = useLive.getState().view;
   if (v && !v.usdc.exists) await fundStarter(owner);
@@ -425,7 +449,9 @@ export async function buyShift(owner: Owner, strategy: StrategyId): Promise<stri
 
 export async function getDevnetSol(owner: Owner): Promise<string> {
   return guarded('Requesting devnet SOL', async () => {
-    const sig = await airdropSol(owner.pubkey, 0.5);
+    const sig = await airdropSol(owner.pubkey, 0.5).catch((e) => {
+      throw new Error(friendlyError(e), { cause: e });
+    });
     log({ kind: 'airdrop', title: '+0.5 devnet SOL', sig, ok: true });
     await refresh(owner.pubkey);
     return sig;

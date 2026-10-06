@@ -92,7 +92,7 @@ export default function Me() {
                 setMsg({ tone: 'up', text: '+0.5 devnet SOL', sig });
               } catch (e) {
                 warningTap();
-                setMsg({ tone: 'down', text: `Devnet's faucet said no: ${(e as Error).message}` });
+                setMsg({ tone: 'warn', text: (e as Error).message });
               }
             }}
             style={{ marginTop: space.s10 }}

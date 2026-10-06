@@ -51,6 +51,34 @@ export async function narrateBrief(model: string, c: AiContext): Promise<string[
   return text.split('\n').map((l) => l.replace(/^[-•*\d.\s]+/, '').trim()).filter(Boolean).slice(0, 5);
 }
 
+/**
+ * The agent answering from its own numbers, with no model: a stock named in the question gets its decision, reason,
+ * price and position; otherwise the plan and the book. Used when the owner has not added a key.
+ */
+export function localAnswer(question: string, c: AiContext): string {
+  const q = question.toLowerCase();
+  const sym = Object.keys(c.quotes).find((s) => q.includes(s.toLowerCase()) || q.includes(s.toLowerCase().replace(/x$/, '')));
+  if (sym) {
+    const d = c.decisions.find((x) => x.symbol === sym);
+    const quote = c.quotes[sym]!;
+    const h = c.holdings[sym];
+    const parts = [
+      `${sym} is $${quote.usd.toFixed(2)}${quote.change24h != null ? ` (${quote.change24h >= 0 ? '+' : ''}${quote.change24h.toFixed(2)}% today)` : ''}.`,
+      h ? `I hold ${h.qty.toFixed(4)} that cost $${h.cost.toFixed(2)}, worth $${(h.qty * quote.usd).toFixed(2)} now.` : 'I hold none.',
+      d ? `Right now I would ${d.action === 'hold' ? 'hold' : d.action === 'buy' ? `buy $${d.usd?.toFixed(0)}` : 'sell'}: ${d.reason}` : '',
+    ];
+    return parts.filter(Boolean).join(' ');
+  }
+  if (/plan|today|what.*(do|doing)|why/.test(q)) {
+    const acts = c.decisions.filter((d) => d.action !== 'hold');
+    return acts.length
+      ? `My plan: ${acts.map((d) => `${d.action} ${d.symbol} — ${d.reason}`).join(' ')}`
+      : `Nothing meets my rules right now, so I hold. ${c.brief.lines[0] ?? ''}`;
+  }
+  return `${c.brief.headline} ${c.brief.lines.slice(0, 2).join(' ')} Ask me about a stock by name — NVDAx, TSLAx, AAPLx, MSFTx or SPYx.`;
+}
+
 export async function askAgent(model: string, question: string, c: AiContext): Promise<string> {
+  if (!(await getAiKey())) return localAnswer(question, c);
   return chat(model, VOICE, `Owner asks: ${question.slice(0, 500)}\nAnswer in at most 5 sentences from this data: ${context(c)}`);
 }

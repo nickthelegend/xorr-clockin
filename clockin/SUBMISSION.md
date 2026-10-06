@@ -42,7 +42,8 @@ pool with the issuer's own mark for the share and holds when they have come apar
   tier; it is read and never moved. On devnet the loop runs on **dSKR, a stand-in mint labelled as such everywhere**.
 - **AI agent:** the agent decides, executes and explains on its own. It runs on the phone, from live Jupiter prices and
   the issuer's mark, through rules you can read. Optionally, your own OpenRouter key lets a model narrate the brief and
-  answer "Ask your agent". It explains decisions; it never makes them.
+  answer "Ask your agent". Without a key, the agent answers from its own numbers (a stock's decision, reason, price
+  and position). Either way, the model explains decisions and never makes them.
 
 ## Devnet addresses and transactions
 
@@ -62,6 +63,10 @@ pool with the issuer's own mark for the share and holds when they have come apar
 - Install: allow installs from your browser or file manager, open the APK, then launch **xorr**. On a Seeker, tap
   *Connect wallet · Seed Vault*. On another phone, install Phantom or Solflare, or use *Try with a devnet guest wallet*.
 - Everything runs on Solana devnet with test tokens. No real money is involved.
+- **If the app says "Devnet's free faucet is busy":** devnet's public faucet rate-limits test SOL per IP. Tap **Try
+  again** after a minute. This only happens while xorr's shared devnet faucet is unfunded, when each phone sets up its
+  own stand-in tokens from a devnet airdrop. Once the shared faucet is funded (see HANDOFF.md), the app pays every fee
+  and no airdrop is needed.
 
 ## Links
 

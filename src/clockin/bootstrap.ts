@@ -58,7 +58,12 @@ export async function resolveMints(): Promise<'shared' | 'device' | 'missing'> {
 /** Create this phone's own stand-in set. The owner signs and pays rent; airdrops devnet SOL first if needed. */
 export async function createDeviceSet(owner: Owner): Promise<MintSet> {
   const conn = connection();
-  if ((await conn.getBalance(owner.pubkey)) < 0.02 * LAMPORTS_PER_SOL) await airdropSol(owner.pubkey, 1);
+  if ((await conn.getBalance(owner.pubkey)) < 0.02 * LAMPORTS_PER_SOL) {
+    await airdropSol(owner.pubkey, 1).catch(async (e) => {
+      // A smaller ask sometimes gets through when the full one is refused.
+      if ((await conn.getBalance(owner.pubkey)) < 0.012 * LAMPORTS_PER_SOL) await airdropSol(owner.pubkey, 0.05).catch(() => Promise.reject(e));
+    });
+  }
 
   const stored = await getSecret(VENUE_KEY);
   const venue = stored ? Keypair.fromSecretKey(bs58.decode(stored)) : Keypair.generate();

@@ -15,7 +15,7 @@ import { Button, Fill, Screen, Text, colors, radius, space } from '@/ui';
 import { Rise } from '@/ui/Rise';
 import { successTap, warningTap } from '@/ui/haptics';
 import { useAuth, useEmailLogin } from '@/auth/useAuth';
-import { ensureDesk } from '@/clockin/desk';
+import { ensureDesk, friendlyError, isFaucetBusy } from '@/clockin/desk';
 import { guestKeypair, faucetKeypair } from '@/clockin/chain';
 import { MWA_AVAILABLE, mwaConnect } from '@/clockin/mwa';
 import { PRIVY_IN_CLOCKIN, usePrivySolana } from '@/clockin/privySign';
@@ -35,6 +35,7 @@ export default function Start() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState(false);
+  const [busyFaucet, setBusyFaucet] = useState(false);
 
   // Once a wallet is connected, set it up (no signature) and go to Today. Once per connection.
   const settingUp = useRef(false);
@@ -49,7 +50,8 @@ export default function Start() {
       } catch (e) {
         warningTap();
         if (__DEV__) console.log('[clockin] setup failed', e);
-        setError(`Connected, but setting up your devnet desk failed: ${(e as Error).message}`);
+        setBusyFaucet(isFaucetBusy(e));
+        setError(isFaucetBusy(e) ? friendlyError(e) : `Connected, but setting up your devnet desk failed: ${(e as Error).message}`);
         setBusy(null);
       } finally {
         settingUp.current = false;
@@ -111,7 +113,18 @@ export default function Start() {
           </Text>
         </Rise>
         <Rise index={2} style={{ marginTop: space.s22, gap: space.s10 }}>
-          {error ? <Banner text={error} tone="down" /> : null}
+          {error ? <Banner text={error} tone={busyFaucet ? 'warn' : 'down'} /> : null}
+          {error && wallet ? (
+            <Button
+              label="Try again"
+              onPress={() => {
+                setError(null);
+                setBusyFaucet(false);
+                setBusy('Setting up your devnet desk…');
+              }}
+              testID="retry-setup"
+            />
+          ) : null}
           {missing ? <Banner text={`${missing} See HANDOFF.md.`} /> : null}
           {email && PRIVY_IN_CLOCKIN ? (
             <PrivyEmail onWallet={(address) => go('Connecting your Privy wallet…', async () => ({ kind: 'privy', address }))} onCancel={() => setEmail(false)} />

@@ -20,7 +20,7 @@ import { AddressLink, Banner, Card, DevnetPill, Eyebrow, SKR_GOLD, whole } from 
 
 export default function Skr() {
   const router = useRouter();
-  const { owner, live, st, reload } = useDesk();
+  const { owner, live, st, pulling, onPull } = useDesk();
   const starter = useClockin((s) => s.starterSkr);
   const [err, setErr] = React.useState<string | null>(null);
   const next = nextTier(st.source.skr);
@@ -32,7 +32,7 @@ export default function Skr() {
     <Screen gutter="none">
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: space.s44, gap: space.s16 }}
-        refreshControl={<RefreshControl refreshing={live.loading && !live.busy} onRefresh={() => void reload()} tintColor={colors.ink55} />}
+        refreshControl={<RefreshControl refreshing={pulling} onRefresh={onPull} tintColor={colors.ink55} />}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: space.s8 }}>
           <Text variant="screenTitle">SKR</Text>

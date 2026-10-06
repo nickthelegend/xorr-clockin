@@ -5,7 +5,7 @@
  * Whichever way in, the new wallet is set up without a single signature: the devnet faucet pays for its token accounts
  * and hands it test dUSDC and a welcome grant of dSKR, so the first thing a person signs is something that matters.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Platform, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Redirect, useRouter } from 'expo-router';
@@ -23,6 +23,7 @@ import { PRIVY_IN_CLOCKIN, usePrivySolana } from '@/clockin/privySign';
 import { useClockin, useClockinHydrated, type ConnectedWallet } from '@/clockin/session';
 import { useOwner } from '@/clockin/useOwner';
 import { Banner, DevnetPill } from '@/clockin/ui';
+import { useAutopilot } from '@/clockin/autopilot';
 
 const WORDMARK = require('../assets/brand/xorr-wordmark.png');
 
@@ -36,9 +37,11 @@ export default function Start() {
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState(false);
 
-  // Once a wallet is connected, set it up (no signature) and go to Today.
+  // Once a wallet is connected, set it up (no signature) and go to Today. Once per connection.
+  const settingUp = useRef(false);
   useEffect(() => {
-    if (!owner || !busy?.startsWith('Setting up')) return;
+    if (!owner || !busy?.startsWith('Setting up') || settingUp.current) return;
+    settingUp.current = true;
     void (async () => {
       try {
         const s = useClockin.getState();
@@ -48,11 +51,16 @@ export default function Start() {
         router.replace('/today');
       } catch (e) {
         warningTap();
+        if (__DEV__) console.log('[clockin] setup failed', e);
         setError(`Connected, but the devnet faucet could not set you up: ${(e as Error).message}`);
         setBusy(null);
+      } finally {
+        settingUp.current = false;
       }
     })();
   }, [owner, busy, router]);
+
+  useAutopilot({ guest: () => guest(), mwa: () => mwa() }, hydrated);
 
   if (hydrated && wallet && !busy && !error) return <Redirect href="/today" />;
 
@@ -65,6 +73,7 @@ export default function Start() {
       setBusy('Setting up your devnet desk…');
     } catch (e) {
       warningTap();
+      if (__DEV__) console.log('[clockin] connect failed', e);
       setError((e as Error).message);
       setBusy(null);
     }

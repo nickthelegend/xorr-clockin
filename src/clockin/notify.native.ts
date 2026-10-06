@@ -10,17 +10,18 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
 });
 
-async function allowed(): Promise<boolean> {
+/** Granted already, or — only when `ask` — granted now. The clock-in never pops a prompt; the Me tab's switch does. */
+async function allowed(ask: boolean): Promise<boolean> {
   const perm = await Notifications.getPermissionsAsync();
   if (perm.status === 'granted') return true;
-  if (!perm.canAskAgain) return false;
+  if (!ask || !perm.canAskAgain) return false;
   return (await Notifications.requestPermissionsAsync()).status === 'granted';
 }
 
 /** (Re)schedule tomorrow-morning's brief, carrying the streak the owner would lose. Returns whether it is scheduled. */
-export async function scheduleDailyBrief(streak: number, hour = 8, minute = 30): Promise<boolean> {
+export async function scheduleDailyBrief(streak: number, ask = false, hour = 8, minute = 30): Promise<boolean> {
   try {
-    if (!(await allowed())) return false;
+    if (!(await allowed(ask))) return false;
     await Notifications.cancelScheduledNotificationAsync(DAILY_ID).catch(() => undefined);
     await Notifications.scheduleNotificationAsync({
       identifier: DAILY_ID,
@@ -40,7 +41,7 @@ export async function scheduleDailyBrief(streak: number, hour = 8, minute = 30):
 
 export async function notifyNow(title: string, body: string): Promise<void> {
   try {
-    if (!(await allowed())) return;
+    if (!(await allowed(false))) return;
     await Notifications.scheduleNotificationAsync({ content: { title, body, data: { route: '/desk' }, sound: 'default' }, trigger: null });
   } catch {
     // A notification is a courtesy; the trade is already on the trail.

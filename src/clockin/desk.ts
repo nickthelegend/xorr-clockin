@@ -79,6 +79,8 @@ export async function refresh(owner: PublicKey, opts: { mainnet?: boolean } = {}
           ? `Prices could not be read: ${String((prices.reason as Error)?.message ?? prices.reason)}`
           : null,
   });
+  // eslint-disable-next-line no-console
+  if (__DEV__ && useLive.getState().error) console.log(`[clockin] refresh: ${useLive.getState().error}`);
   if (opts.mainnet) {
     void readMainnetSkr(owner).then((mainnetSkr) => useLive.setState({ mainnetSkr }));
     void readSeekerGenesis(owner).then((sgt) => useLive.setState({ sgt }));

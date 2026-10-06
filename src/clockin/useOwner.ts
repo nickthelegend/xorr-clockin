@@ -2,7 +2,7 @@
  * The connected owner and a `sign` that works whichever wallet it is: Seed Vault / any MWA wallet (Android), Privy's
  * embedded wallet, or the devnet guest key. Every owner-signed transaction in the CLOCK IN build goes through here.
  */
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { PublicKey, type Transaction } from '@solana/web3.js';
 import { guestKeypair, type OwnerSign } from './chain';
 import { mwaSign } from './mwa';
@@ -27,6 +27,9 @@ export function useOwner(): Owner | null {
   const wallet = useClockin((s) => s.wallet);
   const updateMwa = useClockin((s) => s.updateMwa);
   const privy = usePrivySolana();
+  // Through a ref, so `sign` (and the owner object every screen keys its effects on) stays the same across renders.
+  const privyRef = useRef(privy);
+  privyRef.current = privy;
 
   const sign = useCallback<OwnerSign>(
     async (tx: Transaction) => {
@@ -43,9 +46,9 @@ export function useOwner(): Owner | null {
         updateMwa(auth);
         return signed[0]!;
       }
-      return privy.sign(tx);
+      return privyRef.current.sign(tx);
     },
-    [privy, updateMwa],
+    [updateMwa],
   );
 
   return useMemo(() => {
@@ -57,5 +60,6 @@ export function useOwner(): Owner | null {
       label: wallet.label ?? WALLET_LABEL[wallet.kind],
       sign,
     };
-  }, [wallet, sign]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wallet?.address, wallet?.kind, wallet?.label, sign]);
 }

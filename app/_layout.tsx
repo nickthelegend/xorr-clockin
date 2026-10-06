@@ -3,7 +3,7 @@
  * Don't author custom ones."
  */
 import React, { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { LogBox, Platform } from 'react-native';
 import { Stack, router, usePathname } from 'expo-router';
 import { hiddenOn, solanaRedirect } from '@/nav/solanaRoutes';
 import { useFonts } from 'expo-font';
@@ -24,6 +24,7 @@ import { ReachabilityProvider } from '@/net/Reachability';
 import { ChatSheet } from '@/chat/ChatSheet';
 import { useChatDrawer } from '@/chat/chatDrawer';
 import { CLOCKIN } from '@/clockin/config';
+import { useRemote } from '@/clockin/autopilot';
 
 /*
  * The page under the app is the app's black on the web (2026-10-01). Expo's page leaves html and body unpainted, so an
@@ -41,6 +42,9 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
  * between the imports, which is both a lint error and a real hazard — a bundler is free to
  * hoist imports above it, and then the splash hides before the call lands.
  */
+// The CLOCK IN dev build is driven headless for screenshots; its warnings belong in Metro's log, not over the screen.
+if (CLOCKIN && __DEV__) LogBox.ignoreAllLogs(true);
+
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 /**
@@ -106,6 +110,12 @@ function hiddenScreenLayout({ route, children }: { route: { name: string }; chil
   return hiddenOn(`/${route.name}`) ? <></> : children;
 }
 
+function ClockinRemote() {
+  const navigate = React.useCallback((href: string) => router.navigate(href as never), []);
+  useRemote(navigate);
+  return null;
+}
+
 function NotificationRouting() {
   useNotificationRoute();
   return null;
@@ -143,6 +153,10 @@ function ChatDrawer() {
   return <ChatSheet open={open} onClose={hide} />;
 }
 
+function MaybeReachability({ children }: { children: React.ReactNode }) {
+  return CLOCKIN ? <>{children}</> : <ReachabilityProvider>{children}</ReachabilityProvider>;
+}
+
 export default function RootLayout() {
   /*
    * Hold the splash until the typefaces are in.
@@ -173,7 +187,8 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppPrivyProvider>
       <SafeAreaProvider>
-        <ReachabilityProvider>
+        {/* The executor heartbeat is the hosted build's; the CLOCK IN build has no executor to reach. */}
+        <MaybeReachability>
         {/*
           The CLOCK IN build talks to Solana devnet directly and has no executor: nothing that reads the hosted
           executor is mounted, so the devnet app never touches the live mainnet service.
@@ -197,8 +212,9 @@ export default function RootLayout() {
         {/* After the Stack, so `useRouter` resolves against a mounted navigator. */}
         <NotificationRouting />
         <SolanaRouteGuard />
+        {CLOCKIN && __DEV__ ? <ClockinRemote /> : null}
         </Frame>
-        </ReachabilityProvider>
+        </MaybeReachability>
       </SafeAreaProvider>
       </AppPrivyProvider>
     </GestureHandlerRootView>

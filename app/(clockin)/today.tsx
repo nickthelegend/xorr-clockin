@@ -18,11 +18,12 @@ import { useClockin } from '@/clockin/session';
 import { checkInReward, checkedInToday, currentStreak, streakAfterCheckIn } from '@/clockin/streak';
 import { rewardMultiplier, STRATEGY_INFO } from '@/clockin/tiers';
 import { useDesk } from '@/clockin/useDesk';
+import { useAutopilot } from '@/clockin/autopilot';
 import { Banner, Card, DevnetPill, Eyebrow, SKR_GOLD, StockMark, TxLink, WeekStrip, signedPct, signedUsd, usd } from '@/clockin/ui';
 
 export default function Today() {
   const router = useRouter();
-  const { owner, live, st, plan, reload } = useDesk();
+  const { owner, live, st, plan, pulling, onPull } = useDesk();
   const streakState = useClockin((s) => s.streak);
   const activity = useClockin((s) => s.activity);
   const aiModel = useClockin((s) => s.aiModel);
@@ -42,6 +43,8 @@ export default function Today() {
   const working = st.permission.live;
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  // Whether the latest permission event was a grant: an empty allowance then means "spent", not "never given".
+  const granted = activity.find((a) => a.kind === 'grant' || a.kind === 'revoke')?.kind === 'grant';
   const todaysSig = result?.sig ?? activity.find((a) => a.kind === 'checkin')?.sig;
 
   const aiContext = () => ({
@@ -82,6 +85,8 @@ export default function Today() {
     }
   }
 
+  useAutopilot({ checkin: onClockIn }, !!owner && !!live.view);
+
   const shown = result ? result.brief : brief;
   const lines = aiLines ?? shown.lines;
 
@@ -89,7 +94,7 @@ export default function Today() {
     <Screen gutter="none">
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: space.s44, gap: space.s16 }}
-        refreshControl={<RefreshControl refreshing={live.loading && !busy} onRefresh={() => void reload()} tintColor={colors.ink55} />}
+        refreshControl={<RefreshControl refreshing={pulling} onRefresh={onPull} tintColor={colors.ink55} />}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: space.s8 }}>
           <View style={{ flexShrink: 1 }}>
@@ -109,7 +114,11 @@ export default function Today() {
             <AgentOrb gradient={colors.agent.momentum} size={74} bloom face identity="xorr-clockin" status={working ? 'active' : 'paused'} />
             <View style={{ flex: 1 }}>
               <Text variant="eyebrowSm" color={working ? colors.up : colors.ink45}>
-                {working ? `Working · ${usd(st.permission.leftUsd, 0)} left to spend` : 'Watching · no permission yet'}
+                {working
+                  ? `Working · ${usd(st.permission.leftUsd, 0)} left to spend`
+                  : granted
+                    ? 'Watching · allowance used up or revoked'
+                    : 'Watching · no permission yet'}
               </Text>
               <Text variant="cardTitleLg" style={{ marginTop: space.s6 }}>
                 {shown.headline}

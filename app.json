@@ -31,7 +31,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "versionCode": 1
+      "versionCode": 1,
+      "permissions": []
     },
     "plugins": [
       [
@@ -53,7 +54,8 @@
       "expo-web-browser",
       "expo-image",
       "expo-font",
-      "./plugins/with-spaces-in-project-path"
+      "./plugins/with-spaces-in-project-path",
+      "./plugins/with-release-signing"
     ],
     "experiments": {
       "typedRoutes": true

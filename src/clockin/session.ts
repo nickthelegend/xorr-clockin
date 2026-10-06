@@ -97,10 +97,13 @@ export const useClockin = create<State & Actions>()(
         if (w?.kind === 'mwa') set({ wallet: { ...w, mwa: auth } });
       },
       disconnect: () => set({ ...fresh(), aiModel: get().aiModel }),
-      log: (a) =>
+      log: (a) => {
+        // eslint-disable-next-line no-console
+        if (__DEV__) console.log(`[clockin] ${a.ok ? 'ok' : 'FAIL'} ${a.kind}: ${a.title}${a.sig ? ` sig=${a.sig}` : ''}${a.detail ? ` — ${a.detail}` : ''}`);
         set({
           activity: [{ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, at: a.at ?? Date.now(), ...a }, ...get().activity].slice(0, 200),
-        }),
+        });
+      },
       setStreak: (streak) => set({ streak }),
       recordBuy: (symbol, qtyRaw, cost) => {
         const prev = get().ledger[symbol];
@@ -135,6 +138,11 @@ export function boughtToday(): string[] {
 
 export function useClockinHydrated(): boolean {
   const [h, setH] = useState(useClockin.persist.hasHydrated());
-  useEffect(() => useClockin.persist.onFinishHydration(() => setH(true)), []);
+  useEffect(() => {
+    const off = useClockin.persist.onFinishHydration(() => setH(true));
+    // Hydration can finish between the first render and this effect; the listener would never hear it.
+    if (useClockin.persist.hasHydrated()) setH(true);
+    return off;
+  }, []);
   return h;
 }

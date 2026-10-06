@@ -96,7 +96,7 @@ export default function Me() {
               onChange={async (v: boolean) => {
                 setBrief(v);
                 if (v) {
-                  const ok = await scheduleDailyBrief(currentStreak(streak));
+                  const ok = await scheduleDailyBrief(currentStreak(streak), true);
                   if (!ok) {
                     setBrief(false);
                     setMsg({ tone: 'warn', text: 'Notifications are off for xorr in Settings.' });

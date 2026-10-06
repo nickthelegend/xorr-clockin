@@ -14,13 +14,14 @@ import { agentLook, buyShift, grant, revoke, testCap, type TradeResult } from '@
 import { useClockin } from '@/clockin/session';
 import { SHIFT_PRICE, STRATEGY_INFO, type StrategyId } from '@/clockin/tiers';
 import { useDesk } from '@/clockin/useDesk';
+import { useAutopilot } from '@/clockin/autopilot';
 import { AddressLink, Banner, Card, DevnetPill, Eyebrow, SKR_GOLD, TxLink, usd } from '@/clockin/ui';
 
 const CAPS = [50, 100, 250];
 const SIZES = [10, 25, 50];
 
 export default function Desk() {
-  const { owner, live, st, plan, reload } = useDesk();
+  const { owner, live, st, plan, pulling, onPull } = useDesk();
   const activity = useClockin((s) => s.activity);
   const passes = useClockin((s) => s.passes);
   const perTrade = useClockin((s) => s.perTradeUsd);
@@ -45,13 +46,25 @@ export default function Desk() {
     }
   }
 
+  useAutopilot(
+    {
+      grant: () => owner && run(() => grant(owner, cap), (sig) => ({ text: `Granted. The agent may spend up to ${cap} dUSDC.`, sig })),
+      cap: () => owner && run(() => testCap(owner), (r) => ({ tone: 'up', text: `Devnet refused the agent: ${r.message}`, sig: r.sig })),
+      revoke: () => owner && run(() => revoke(owner), (sig) => ({ tone: 'warn', text: 'Revoked. The agent can move nothing now.', sig })),
+      look: async () => owner && setLook(await agentLook(owner)),
+      'shift-dip': () => owner && run(() => buyShift(owner, 'dip'), (sig) => ({ text: 'Dip Buyer is on for 24 hours, paid in SKR.', sig })),
+      'shift-night': () => owner && run(() => buyShift(owner, 'nightShift'), (sig) => ({ text: 'Night Shift is on for 24 hours, paid in SKR.', sig })),
+    },
+    !!owner && !!live.view,
+  );
+
   const trail = activity.filter((a) => ['grant', 'revoke', 'buy', 'sell', 'refused', 'look', 'shift'].includes(a.kind)).slice(0, 12);
 
   return (
     <Screen gutter="none">
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: space.s44, gap: space.s16 }}
-        refreshControl={<RefreshControl refreshing={live.loading && !busy} onRefresh={() => void reload()} tintColor={colors.ink55} />}
+        refreshControl={<RefreshControl refreshing={pulling} onRefresh={onPull} tintColor={colors.ink55} />}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: space.s8 }}>
           <Text variant="screenTitle">Your agent</Text>
@@ -96,7 +109,7 @@ export default function Desk() {
               </Text>
               <View style={{ flexDirection: 'row', gap: space.s10, marginTop: space.s16 }}>
                 <Button
-                  label="Make it overspend"
+                  label="Test the cap"
                   variant="secondary"
                   loading={busy === 'Testing the cap'}
                   disabled={!!busy}

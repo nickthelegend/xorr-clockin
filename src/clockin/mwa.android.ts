@@ -35,19 +35,38 @@ async function authorize(wallet: Web3MobileWallet, previous?: MwaAuth): Promise<
   };
 }
 
+/** What a person should read when the wallet handshake fails, instead of the protocol's error code. */
+export function mwaErrorText(e: unknown): string {
+  const code = (e as { code?: string })?.code ?? '';
+  const msg = e instanceof Error ? e.message : String(e);
+  if (code === 'ERROR_WALLET_NOT_FOUND' || /wallet.?not.?found|no installed wallet/i.test(msg)) {
+    return 'No Mobile Wallet Adapter wallet on this phone. On a Seeker, Seed Vault answers here; elsewhere install Phantom, Solflare or Backpack — or try xorr with the devnet guest wallet below.';
+  }
+  if (/declin|reject|cancel/i.test(code + msg)) return 'The wallet declined. Nothing was signed.';
+  return msg;
+}
+
+async function friendly<T>(p: Promise<T>): Promise<T> {
+  try {
+    return await p;
+  } catch (e) {
+    throw new Error(mwaErrorText(e), { cause: e });
+  }
+}
+
 export async function mwaConnect(): Promise<MwaAuth> {
-  return transact((wallet) => authorize(wallet));
+  return friendly(transact((wallet) => authorize(wallet)));
 }
 
 export async function mwaSign(auth: MwaAuth, txs: Transaction[]): Promise<{ signed: Transaction[]; auth: MwaAuth }> {
-  return transact(async (wallet) => {
+  return friendly(transact(async (wallet) => {
     const fresh = await authorize(wallet, auth);
     if (fresh.address !== auth.address) {
       throw new Error(`The wallet switched account (${fresh.address.slice(0, 4)}…). Reconnect from the Me tab.`);
     }
     const signed = await wallet.signTransactions({ transactions: txs });
     return { signed, auth: fresh };
-  });
+  }));
 }
 
 export async function mwaDisconnect(auth: MwaAuth): Promise<void> {

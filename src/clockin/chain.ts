@@ -198,12 +198,30 @@ export async function send(
   tx.partialSign(...cosigners);
   const raw = tx.serialize({ requireAllSignatures: true, verifySignatures: true });
   const sig = await conn.sendRawTransaction(raw, { skipPreflight: !!opts.skipPreflight, preflightCommitment: 'confirmed' });
-  const res = await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
-  if (res.value.err) {
+  const err = await confirmByPolling(conn, sig, lastValidBlockHeight);
+  if (err) {
     const t = await conn.getTransaction(sig, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 }).catch(() => null);
-    throw new ChainRefused(`The chain refused it: ${JSON.stringify(res.value.err)}`, sig, t?.meta?.logMessages ?? []);
+    throw new ChainRefused(`The chain refused it: ${JSON.stringify(err)}`, sig, t?.meta?.logMessages ?? []);
   }
   return sig;
+}
+
+/**
+ * Wait for `confirmed` by polling, not over a websocket: a phone on a flaky network, an RPC without a websocket and the
+ * React Native runtime all make the subscription the fragile part. Resolves to the transaction's error, or null.
+ */
+async function confirmByPolling(conn: Connection, sig: string, lastValidBlockHeight: number): Promise<unknown> {
+  for (let i = 0; i < 90; i++) {
+    const { value } = await conn.getSignatureStatuses([sig]);
+    const st = value[0];
+    if (st && (st.confirmationStatus === 'confirmed' || st.confirmationStatus === 'finalized')) return st.err ?? null;
+    if (st?.err) return st.err;
+    if (i % 5 === 4 && (await conn.getBlockHeight('confirmed')) > lastValidBlockHeight) {
+      throw new Error('The transaction expired before it landed. Try again.');
+    }
+    await new Promise((r) => setTimeout(r, 700));
+  }
+  throw new Error('Devnet did not confirm the transaction in time. It may still land — check the trail.');
 }
 
 /* -------------------------------------------------------------------------------------------- the transactions */
@@ -366,6 +384,7 @@ export async function readSeekerGenesis(owner: PublicKey): Promise<string | null
 export async function airdropSol(owner: PublicKey, sol = 0.5): Promise<string> {
   const conn = connection();
   const sig = await conn.requestAirdrop(owner, Math.round(sol * LAMPORTS_PER_SOL));
-  await conn.confirmTransaction(sig, 'confirmed');
+  const { lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+  await confirmByPolling(conn, sig, lastValidBlockHeight);
   return sig;
 }

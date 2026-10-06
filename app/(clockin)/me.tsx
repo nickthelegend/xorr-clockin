@@ -126,7 +126,7 @@ export default function Me() {
           <Eyebrow>AI narration · optional</Eyebrow>
           <Text variant="bodySm" color={colors.ink70}>
             The agent decides on its own rules. Add your own OpenRouter key and a model also writes the morning brief and answers
-            your questions. The key stays in this phone's keystore.
+            your questions. The key stays in this phone’s keystore.
           </Text>
           {hasKey ? (
             <Button
@@ -188,7 +188,7 @@ export default function Me() {
             {DEVNET.source === 'shared'
               ? "minted by xorr's devnet faucet"
               : "this phone created for itself, because xorr's shared devnet set was not available — this phone is their mint authority"}
-            ; they fill at Jupiter's live prices for the real xStocks. Nothing here is real money. The full xorr — real
+            ; they fill at Jupiter’s live prices for the real xStocks. Nothing here is real money. The full xorr — real
             xStocks on mainnet through Jupiter — is a separate, hosted app.
           </Text>
           <View style={{ marginTop: space.s10, gap: 2 }}>

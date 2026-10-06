@@ -127,7 +127,7 @@ export default function Skr() {
             <>
               <Text variant="cardTitle">{live.sgt === undefined ? 'Checking…' : 'No Genesis Token in this wallet'}</Text>
               <Text variant="footnote" color={colors.ink45} style={{ marginTop: space.s4 }}>
-                Connect a Seeker's Seed Vault wallet: its Genesis Token (mainnet, read-only) adds 1.5× to every clock-in.
+                Connect a Seeker’s Seed Vault wallet: its Genesis Token (mainnet, read-only) adds 1.5× to every clock-in.
               </Text>
             </>
           )}
@@ -155,7 +155,7 @@ export default function Skr() {
 
         {/* Spend. */}
         <Card>
-          <Eyebrow color={SKR_GOLD}>Spend · hire your agent's shifts</Eyebrow>
+          <Eyebrow color={SKR_GOLD}>Spend · hire your agent’s shifts</Eyebrow>
           {(Object.keys(SHIFT_PRICE) as StrategyId[])
             .filter((id) => SHIFT_PRICE[id] > 0)
             .map((id) => (

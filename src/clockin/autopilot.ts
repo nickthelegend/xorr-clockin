@@ -15,8 +15,7 @@ export function useAutopilot(actions: Record<string, () => unknown>, ready = tru
   const done = useRef<string | null>(null);
   useEffect(() => {
     if (!__DEV__ || !auto) return;
-    // eslint-disable-next-line no-console
-    console.log(`[clockin] autopilot ${auto} ready=${ready} known=${!!actions[auto]}`);
+      console.log(`[clockin] autopilot ${auto} ready=${ready} known=${!!actions[auto]}`);
     if (!ready) return;
     const key = `${auto}:${n ?? ''}`;
     if (done.current === key) return;
@@ -40,8 +39,7 @@ export function useRemote(navigate: (href: string) => void): void {
         const res = await fetch(`${base}/next`);
         if (res.status === 200) {
           const cmd = (await res.json()) as { id: number; path: string; auto?: string };
-          // eslint-disable-next-line no-console
-          console.log(`[clockin] remote ${cmd.path} ${cmd.auto ?? ''}`);
+                  console.log(`[clockin] remote ${cmd.path} ${cmd.auto ?? ''}`);
           navigate(`${cmd.path}${cmd.auto ? `?auto=${cmd.auto}&n=${cmd.id}` : ''}`);
         }
       } catch {

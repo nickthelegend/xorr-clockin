@@ -7,9 +7,8 @@
  */
 import React, { useState } from 'react';
 import { Alert, RefreshControl, ScrollView, View } from 'react-native';
-import { AgentOrb, Button, Screen, Text, colors, radius, space } from '@/ui';
+import { AgentOrb, Button, Press, Screen, Text, colors, radius, space } from '@/ui';
 import { heavyTap, killTap, successTap, warningTap } from '@/ui/haptics';
-import { Press } from '@/ui';
 import { agentLook, buyShift, grant, revoke, testCap, type TradeResult } from '@/clockin/desk';
 import { useClockin } from '@/clockin/session';
 import { SHIFT_PRICE, STRATEGY_INFO, type StrategyId } from '@/clockin/tiers';
@@ -149,7 +148,7 @@ export default function Desk() {
           ) : (
             <>
               <Text variant="bodySm" color={colors.ink70}>
-                Approve the agent's key to spend up to:
+                Approve the agent’s key to spend up to:
               </Text>
               <View style={{ flexDirection: 'row', gap: space.s8, marginTop: space.s12 }}>
                 {CAPS.map((c) => (
@@ -271,7 +270,7 @@ export default function Desk() {
             const on = st.strategies.includes(id);
             const included = st.tier.strategies.includes(id);
             const pass = passes[id];
-            const passLive = !!pass && pass.until > Date.now();
+            const passLive = !!pass && pass.until > (live.prices?.at ?? 0);
             return (
               <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingVertical: space.s10 }}>
                 <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: on ? colors.up : colors.switchOff }} />
@@ -304,7 +303,7 @@ export default function Desk() {
             );
           })}
           <Text variant="footnoteSm" color={colors.ink32} style={{ marginTop: space.s6 }}>
-            Hire a strategy's shift with SKR (devnet stand-in), or hold enough SKR for a tier that includes it.
+            Hire a strategy’s shift with SKR (devnet stand-in), or hold enough SKR for a tier that includes it.
           </Text>
         </Card>
 

@@ -7,7 +7,7 @@
  * SOL airdropped to them. Every screen then works the same way, on this phone's own mints, and says so on the Me tab.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import { Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram } from '@solana/web3.js';
 import { MINT_SIZE, TOKEN_PROGRAM_ID, createInitializeMint2Instruction } from '@solana/spl-token';
 import bs58 from 'bs58';
 import { DEVNET, SHARED_SET, STOCKS, applyMintSet, type MintSet } from './config';

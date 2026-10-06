@@ -7,7 +7,7 @@
  * Secrets are not here: the guest key and the agent key are in the OS keystore (`secret.native.ts`), the MWA auth
  * token is a session token (not a key) and is kept here so the wallet reauthorizes silently.
  */
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -98,8 +98,7 @@ export const useClockin = create<State & Actions>()(
       },
       disconnect: () => set({ ...fresh(), aiModel: get().aiModel }),
       log: (a) => {
-        // eslint-disable-next-line no-console
-        if (__DEV__) console.log(`[clockin] ${a.ok ? 'ok' : 'FAIL'} ${a.kind}: ${a.title}${a.sig ? ` sig=${a.sig}` : ''}${a.detail ? ` — ${a.detail}` : ''}`);
+              if (__DEV__) console.log(`[clockin] ${a.ok ? 'ok' : 'FAIL'} ${a.kind}: ${a.title}${a.sig ? ` sig=${a.sig}` : ''}${a.detail ? ` — ${a.detail}` : ''}`);
         set({
           activity: [{ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, at: a.at ?? Date.now(), ...a }, ...get().activity].slice(0, 200),
         });
@@ -137,12 +136,10 @@ export function boughtToday(): string[] {
 }
 
 export function useClockinHydrated(): boolean {
-  const [h, setH] = useState(useClockin.persist.hasHydrated());
-  useEffect(() => {
-    const off = useClockin.persist.onFinishHydration(() => setH(true));
-    // Hydration can finish between the first render and this effect; the listener would never hear it.
-    if (useClockin.persist.hasHydrated()) setH(true);
-    return off;
-  }, []);
-  return h;
+  // Subscribed, not polled: hydration can finish between the first render and an effect, and a listener added in the
+  // effect would never hear it.
+  return useSyncExternalStore(
+    (cb) => useClockin.persist.onFinishHydration(cb),
+    () => useClockin.persist.hasHydrated(),
+  );
 }

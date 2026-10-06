@@ -113,7 +113,7 @@ export default function Today() {
         {live.view && feeMode(live.view) === 'self' && live.view.sol < 0.003 ? (
           <Card>
             <Text variant="bodySm" color={colors.ink70}>
-              xorr's devnet faucet is out of SOL right now, so transactions need a little devnet SOL of your own (free, test
+              xorr’s devnet faucet is out of SOL right now, so transactions need a little devnet SOL of your own (free, test
               only).
             </Text>
             <Button
@@ -316,7 +316,7 @@ export default function Today() {
             );
           })}
           <Text variant="footnoteSm" color={colors.ink32} style={{ marginTop: space.s6 }}>
-            Prices are Jupiter's live quotes for the real mainnet xStocks (read-only). What moves here is devnet stand-ins.
+            Prices are Jupiter’s live quotes for the real mainnet xStocks (read-only). What moves here is devnet stand-ins.
           </Text>
         </Card>
 
@@ -339,7 +339,7 @@ export default function Today() {
             </Text>
           ) : null}
           <Text variant="footnoteSm" color={colors.ink32} style={{ marginTop: space.s8 }}>
-            Uses your own OpenRouter key (Me tab), kept in this phone's keystore. The decisions stay the agent's rules; a
+            Uses your own OpenRouter key (Me tab), kept in this phone’s keystore. The decisions stay the agent’s rules; a
             model only explains them.
           </Text>
         </Card>

@@ -134,6 +134,9 @@ since.
 
 ## Cleanup done / left
 
-- Gradle daemons are stopped after each build. `android/` and `ios/` are generated (gitignored). Build outputs:
-  `android/app/build` (about 1–2 GB) and `$CLOCKIN_DERIVED_DATA/xorr` (iOS). Delete them when finished.
-- `test-ledger/` (local validator, gitignored) can be deleted.
+- Stopped: Metro (8481), the dev remote (4405) and the local validator (4400). `test-ledger/` (6.4 GB) was deleted.
+  Gradle daemons are stopped after each build.
+- Kept, gitignored, for `scripts/devnet-go.sh`'s rebuild: `android/` (1.0 GB) and `ios/` (1.2 GB). The iOS build
+  products in `/Volumes/Extreme SSD/Projects/clockin/.cache/derived/xorr` (2.8 GB) can be deleted when you are done.
+- Release APK: `/Volumes/Extreme SSD/Projects/clockin/apks/xorr-clockin.apk` (copy in `clockin/apk/`, gitignored),
+  sha256 `a65b0c1f15a0fc1ae06d851e353bbfa16cdce3ba04bedddbd7ae1af91162fea6`, built from 522b07c.

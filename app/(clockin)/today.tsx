@@ -11,19 +11,21 @@ import { useRouter } from 'expo-router';
 import { AgentOrb, Button, Screen, Text, colors, radius, space } from '@/ui';
 import { heavyTap, successTap, warningTap } from '@/ui/haptics';
 import { STOCKS } from '@/clockin/config';
-import { checkIn, type CheckInResult } from '@/clockin/desk';
+import { checkIn, feeMode, getDevnetSol, type CheckInResult } from '@/clockin/desk';
 import { driftPct, nasdaqOpen } from '@/clockin/engine';
 import { askAgent, getAiKey, narrateBrief } from '@/clockin/ai';
 import { useClockin } from '@/clockin/session';
 import { checkInReward, checkedInToday, currentStreak, streakAfterCheckIn } from '@/clockin/streak';
 import { rewardMultiplier, STRATEGY_INFO } from '@/clockin/tiers';
 import { useDesk } from '@/clockin/useDesk';
-import { useAutopilot } from '@/clockin/autopilot';
+import { useAutopilot, useScrollAutopilot } from '@/clockin/autopilot';
+
 import { Banner, Card, DevnetPill, Eyebrow, SKR_GOLD, StockMark, TxLink, WeekStrip, signedPct, signedUsd, usd } from '@/clockin/ui';
 
 export default function Today() {
   const router = useRouter();
   const { owner, live, st, plan, pulling, onPull } = useDesk();
+  const scroller = useScrollAutopilot();
   const streakState = useClockin((s) => s.streak);
   const activity = useClockin((s) => s.activity);
   const aiModel = useClockin((s) => s.aiModel);
@@ -93,6 +95,7 @@ export default function Today() {
   return (
     <Screen gutter="none">
       <ScrollView
+        ref={scroller}
         contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: space.s44, gap: space.s16 }}
         refreshControl={<RefreshControl refreshing={pulling} onRefresh={onPull} tintColor={colors.ink55} />}
       >
@@ -107,6 +110,23 @@ export default function Today() {
         </View>
 
         {live.error ? <Banner text={live.error} /> : null}
+        {live.view && feeMode(live.view) === 'self' && live.view.sol < 0.003 ? (
+          <Card>
+            <Text variant="bodySm" color={colors.ink70}>
+              xorr's devnet faucet is out of SOL right now, so transactions need a little devnet SOL of your own (free, test
+              only).
+            </Text>
+            <Button
+              label="Get devnet SOL"
+              variant="secondary"
+              loading={busy === 'Requesting devnet SOL'}
+              onPress={() => {
+                if (owner) void getDevnetSol(owner).catch((e) => setError((e as Error).message));
+              }}
+              style={{ marginTop: space.s10 }}
+            />
+          </Card>
+        ) : null}
 
         {/* The agent, front and centre. */}
         <Card testID="agent-brief" style={{ paddingTop: space.s22 }}>
@@ -214,7 +234,7 @@ export default function Today() {
           )}
           <Text variant="footnoteSm" color={colors.ink32} style={{ marginTop: space.s10 }}>
             One signature: a memo from your wallet on Solana devnet, plus the reward in dSKR, the devnet stand-in for SKR.
-            xorr pays the network fee.
+            {feeMode(live.view) === 'faucet' ? ' xorr pays the network fee.' : ' You pay the devnet fee (test SOL).'}
           </Text>
         </Card>
 

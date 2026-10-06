@@ -7,6 +7,7 @@
  * (`__DEV__` is false there), so the APK has no such door.
  */
 import { useEffect, useRef } from 'react';
+import type { ScrollView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
 export function useAutopilot(actions: Record<string, () => unknown>, ready = true): void {
@@ -53,4 +54,20 @@ export function useRemote(navigate: (href: string) => void): void {
       alive = false;
     };
   }, [navigate]);
+}
+
+/** Development-only: `auto=y600` / `auto=bottom` / `auto=top` scrolls the screen, for screenshots. */
+export function useScrollAutopilot() {
+  const ref = useRef<ScrollView>(null);
+  const { auto, n } = useLocalSearchParams<{ auto?: string; n?: string }>();
+  useEffect(() => {
+    if (!__DEV__ || !auto) return;
+    const t = setTimeout(() => {
+      if (auto === 'bottom') ref.current?.scrollToEnd({ animated: false });
+      else if (auto === 'top') ref.current?.scrollTo({ y: 0, animated: false });
+      else if (/^y\d+$/.test(auto)) ref.current?.scrollTo({ y: Number(auto.slice(1)), animated: false });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [auto, n]);
+  return ref;
 }

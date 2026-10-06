@@ -100,3 +100,34 @@ run(`CLOCK IN on ${DEVNET_RPC}`, () => {
     console.log(JSON.stringify({ owner: owner.publicKey.toBase58(), agent: agent.publicKey.toBase58(), sigs }, null, 2));
   }, 120_000);
 });
+
+/*
+ * The same loop when xorr's faucet is out of SOL: the owner pays fees and rent from their own devnet SOL, gives the
+ * agent a little SOL with the permission, and the agent pays for its own trades. The faucet only signs as the stand-in
+ * mints' authority — it needs no SOL. Needs a cluster that airdrops (a local validator): CLOCKIN_SELFPAY=1.
+ */
+const selfPay = process.env.CLOCKIN_LIVE && process.env.CLOCKIN_SELFPAY && process.env.EXPO_PUBLIC_CLOCKIN_FAUCET_SECRET ? describe : describe.skip;
+
+selfPay('when the faucet is dry, owner and agent pay their own way', () => {
+  const owner = Keypair.generate();
+  const agent = Keypair.generate();
+  const sign = { sign: async (tx: Transaction) => (tx.partialSign(owner), tx) };
+  const payer = { kind: 'owner' as const, pubkey: owner.publicKey };
+
+  it('runs fund → grant (with agent gas) → agent buy → revoke with nobody but the owner paying', async () => {
+    const { connection } = await import('./chain');
+    const conn = connection();
+    const air = await conn.requestAirdrop(owner.publicKey, 1e9);
+    for (let i = 0; i < 30 && !(await conn.getSignatureStatuses([air])).value[0]?.confirmationStatus; i++) await new Promise((r) => setTimeout(r, 500));
+    await send(fundStarterIxs(owner.publicKey, 500, owner.publicKey), { owner: sign, payer });
+    await send(grantIxs(owner.publicKey, agent.publicKey, 50, owner.publicKey, 30_000_000), { owner: sign, payer });
+    expect(await conn.getBalance(agent.publicKey)).toBe(30_000_000);
+    const { ixs } = agentBuyIxs(owner.publicKey, agent.publicKey, 'AAPLx', 20, 250, 0, 'self-pay buy', agent.publicKey);
+    await send(ixs, { signers: [agent], payer: { kind: 'signer', signer: agent } });
+    const v = await readOwner(owner.publicKey);
+    expect(v.usdc.ui).toBe(480);
+    expect(permissionOf(v, agent.publicKey).leftUsd).toBe(30);
+    await send(revokeIxs(owner.publicKey, v), { owner: sign, payer });
+    expect(permissionOf(await readOwner(owner.publicKey), agent.publicKey).live).toBe(false);
+  }, 120_000);
+});

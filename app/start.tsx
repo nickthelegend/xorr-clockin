@@ -16,7 +16,7 @@ import { Rise } from '@/ui/Rise';
 import { successTap, warningTap } from '@/ui/haptics';
 import { useAuth, useEmailLogin } from '@/auth/useAuth';
 import { DEVNET_READY } from '@/clockin/config';
-import { claimStarterSkr, fundStarter } from '@/clockin/desk';
+import { claimStarterSkr, feeMode, fundStarter, getDevnetSol, refresh, useLive } from '@/clockin/desk';
 import { guestKeypair, faucetKeypair } from '@/clockin/chain';
 import { MWA_AVAILABLE, mwaConnect } from '@/clockin/mwa';
 import { PRIVY_IN_CLOCKIN, usePrivySolana } from '@/clockin/privySign';
@@ -45,6 +45,9 @@ export default function Start() {
     void (async () => {
       try {
         const s = useClockin.getState();
+        await refresh(owner.pubkey);
+        // xorr's faucet pays while it has SOL; if it is dry, ask devnet's own faucet for this wallet's fees.
+        if (feeMode() === 'self' && (useLive.getState().view?.sol ?? 0) < 0.01) await getDevnetSol(owner).catch(() => undefined);
         if (!s.funded) await fundStarter(owner);
         if (!useClockin.getState().starterSkr) await claimStarterSkr(owner);
         successTap();

@@ -7,19 +7,21 @@ import { useRouter } from 'expo-router';
 import { Button, Screen, Switch, Text, colors, radius, space } from '@/ui';
 import { successTap, warningTap } from '@/ui/haptics';
 import { DEVNET, DEVNET_RPC, STOCKS } from '@/clockin/config';
-import { getDevnetSol, useLive } from '@/clockin/desk';
+import { feeMode, getDevnetSol, useLive } from '@/clockin/desk';
 import { clearAiKey, getAiKey, setAiKey } from '@/clockin/ai';
 import { mwaDisconnect } from '@/clockin/mwa';
 import { scheduleDailyBrief } from '@/clockin/notify';
 import { useClockin } from '@/clockin/session';
 import { currentStreak } from '@/clockin/streak';
 import { useDesk } from '@/clockin/useDesk';
+import { useScrollAutopilot } from '@/clockin/autopilot';
 import { AddressLink, Banner, Card, DevnetPill, Eyebrow, TxLink } from '@/clockin/ui';
 import { WALLET_LABEL } from '@/clockin/useOwner';
 
 export default function Me() {
   const router = useRouter();
   const { owner, live } = useDesk();
+  const scroller = useScrollAutopilot();
   const wallet = useClockin((s) => s.wallet);
   const activity = useClockin((s) => s.activity);
   const streak = useClockin((s) => s.streak);
@@ -39,7 +41,7 @@ export default function Me() {
 
   return (
     <Screen gutter="none">
-      <ScrollView contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: space.s44, gap: space.s16 }}>
+      <ScrollView ref={scroller} contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: space.s44, gap: space.s16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: space.s8 }}>
           <Text variant="screenTitle">Me</Text>
           <DevnetPill />
@@ -64,7 +66,11 @@ export default function Me() {
                 : 'A devnet-only key kept in this phone\'s keystore. Fine for trying xorr; use Seed Vault for anything real.'}
           </Text>
           <Text variant="footnote" color={colors.ink45} style={{ marginTop: space.s6 }}>
-            {live.view ? `${live.view.sol.toFixed(4)} devnet SOL — you need none; xorr pays fees.` : ''}
+            {live.view
+              ? feeMode(live.view) === 'faucet'
+                ? `${live.view.sol.toFixed(4)} devnet SOL — you need none; xorr's faucet pays fees.`
+                : `${live.view.sol.toFixed(4)} devnet SOL — xorr's faucet is dry, so you pay devnet fees for now.`
+              : ''}
           </Text>
           <Button
             label="Get 0.5 devnet SOL (optional)"

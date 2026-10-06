@@ -34,7 +34,9 @@ if [ -f "$SIGNING" ]; then
 else
   echo "WARNING: no signing properties at $SIGNING — the APK will be signed with the debug key." >&2
 fi
-(cd android && ./gradlew assembleRelease -PreactNativeArchitectures="$ARCHS" "${PROPS[@]}" --console=plain)
+# One daemon, 3 GB heap at most (shared machine), stopped when done.
+(cd android && ./gradlew assembleRelease -PreactNativeArchitectures="$ARCHS" "${PROPS[@]}" \
+  -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m" -Dorg.gradle.workers.max=4 --console=plain; ./gradlew --stop >/dev/null)
 mkdir -p "$(dirname "$OUT")"
 cp android/app/build/outputs/apk/release/app-release.apk "$OUT"
 BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"

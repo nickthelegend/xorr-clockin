@@ -14,7 +14,8 @@ import { agentLook, buyShift, grant, revoke, testCap, type TradeResult } from '@
 import { useClockin } from '@/clockin/session';
 import { SHIFT_PRICE, STRATEGY_INFO, type StrategyId } from '@/clockin/tiers';
 import { useDesk } from '@/clockin/useDesk';
-import { useAutopilot } from '@/clockin/autopilot';
+import { useAutopilot, useScrollAutopilot } from '@/clockin/autopilot';
+
 import { AddressLink, Banner, Card, DevnetPill, Eyebrow, SKR_GOLD, TxLink, usd } from '@/clockin/ui';
 
 const CAPS = [50, 100, 250];
@@ -22,6 +23,7 @@ const SIZES = [10, 25, 50];
 
 export default function Desk() {
   const { owner, live, st, plan, pulling, onPull } = useDesk();
+  const scroller = useScrollAutopilot();
   const activity = useClockin((s) => s.activity);
   const passes = useClockin((s) => s.passes);
   const perTrade = useClockin((s) => s.perTradeUsd);
@@ -49,7 +51,7 @@ export default function Desk() {
   useAutopilot(
     {
       grant: () => owner && run(() => grant(owner, cap), (sig) => ({ text: `Granted. The agent may spend up to ${cap} dUSDC.`, sig })),
-      cap: () => owner && run(() => testCap(owner), (r) => ({ tone: 'up', text: `Devnet refused the agent: ${r.message}`, sig: r.sig })),
+      cap: () => owner && run(() => testCap(owner), (r) => ({ tone: 'up', text: `Cap held. The agent tried to move ${r.tried} dUSDC with ${r.left.toFixed(0)} approved, and the token program refused (${r.message.replace('Program log: ', '')}). Nothing moved.`, sig: r.sig })),
       revoke: () => owner && run(() => revoke(owner), (sig) => ({ tone: 'warn', text: 'Revoked. The agent can move nothing now.', sig })),
       look: async () => owner && setLook(await agentLook(owner)),
       'shift-dip': () => owner && run(() => buyShift(owner, 'dip'), (sig) => ({ text: 'Dip Buyer is on for 24 hours, paid in SKR.', sig })),
@@ -63,6 +65,7 @@ export default function Desk() {
   return (
     <Screen gutter="none">
       <ScrollView
+        ref={scroller}
         contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: space.s44, gap: space.s16 }}
         refreshControl={<RefreshControl refreshing={pulling} onRefresh={onPull} tintColor={colors.ink55} />}
       >
@@ -116,7 +119,7 @@ export default function Desk() {
                   onPress={() =>
                     run(
                       () => (owner ? testCap(owner) : Promise.reject(new Error('No wallet'))),
-                      (r) => ({ tone: 'up', text: `Devnet refused the agent: ${r.message}`, sig: r.sig }),
+                      (r) => ({ tone: 'up', text: `Cap held. The agent tried to move ${r.tried} dUSDC with ${r.left.toFixed(0)} approved, and the token program refused (${r.message.replace('Program log: ', '')}). Nothing moved.`, sig: r.sig }),
                     )
                   }
                   style={{ flex: 1 }}

@@ -57,7 +57,9 @@ async function main() {
     bal = await conn.getBalance(faucet.publicKey);
   }
   console.log(`balance  ${bal / LAMPORTS_PER_SOL} SOL`);
-  if (bal < 0.03 * LAMPORTS_PER_SOL) throw new Error('The faucet needs at least 0.03 SOL to create the mints. Fund it first.');
+  // Seven mints cost ~0.0103 SOL of rent. Everything after that (token accounts, fees) can be paid by the faucet while it
+  // has SOL, or by the owner and the agent when it does not (see feeMode in src/clockin/desk.ts).
+  if (bal < 0.012 * LAMPORTS_PER_SOL) throw new Error('The faucet needs at least 0.012 SOL to create the seven mints. Fund it first.');
 
   const usdc = await mint('dUSDC', 6, prev.usdc);
   const skr = await mint('dSKR', 6, prev.skr);
@@ -65,7 +67,10 @@ async function main() {
   for (const s of STOCKS) stocks[s] = await mint(s, 8, prev.stocks?.[s]);
 
   // The venue's own accounts: dUSDC it receives on a buy, and each stock it receives on a sale.
-  for (const m of [usdc, ...Object.values(stocks)]) await getOrCreateAssociatedTokenAccount(conn, faucet, new PublicKey(m), faucet.publicKey);
+  // Optional: pre-create them while SOL is plentiful; every buy and sale also creates them idempotently.
+  if ((await conn.getBalance(faucet.publicKey)) > 0.1 * LAMPORTS_PER_SOL) {
+    for (const m of [usdc, ...Object.values(stocks)]) await getOrCreateAssociatedTokenAccount(conn, faucet, new PublicKey(m), faucet.publicKey);
+  }
 
   const file: Out = { faucet: faucet.publicKey.toBase58(), usdc, skr, stocks, createdAt: new Date().toISOString(), cluster: rpc };
   fs.writeFileSync(out, JSON.stringify(file, null, 2) + '\n');

@@ -16,11 +16,13 @@ import { useClockin } from '@/clockin/session';
 import { checkInReward } from '@/clockin/streak';
 import { SHIFT_PRICE, STRATEGY_INFO, TIERS, nextTier, rewardMultiplier, type StrategyId } from '@/clockin/tiers';
 import { useDesk } from '@/clockin/useDesk';
+import { useScrollAutopilot } from '@/clockin/autopilot';
 import { AddressLink, Banner, Card, DevnetPill, Eyebrow, SKR_GOLD, whole } from '@/clockin/ui';
 
 export default function Skr() {
   const router = useRouter();
   const { owner, live, st, pulling, onPull } = useDesk();
+  const scroller = useScrollAutopilot();
   const starter = useClockin((s) => s.starterSkr);
   const [err, setErr] = React.useState<string | null>(null);
   const next = nextTier(st.source.skr);
@@ -31,6 +33,7 @@ export default function Skr() {
   return (
     <Screen gutter="none">
       <ScrollView
+        ref={scroller}
         contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: space.s44, gap: space.s16 }}
         refreshControl={<RefreshControl refreshing={pulling} onRefresh={onPull} tintColor={colors.ink55} />}
       >

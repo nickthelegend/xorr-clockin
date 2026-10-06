@@ -13,6 +13,7 @@ import {
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
+  SystemProgram,
   PublicKey,
   Transaction,
   TransactionInstruction,
@@ -30,7 +31,7 @@ import {
   type Account,
 } from '@solana/spl-token';
 import bs58 from 'bs58';
-import { DEVNET, DEVNET_RPC, MAINNET_READ_RPC, SKR_MAINNET_MINT, STOCKS, stockBySymbol } from './config';
+import { DEVNET, DEVNET_READY, DEVNET_RPC, MAINNET_READ_RPC, SKR_MAINNET_MINT, STOCKS, stockBySymbol } from './config';
 import { getSecret, setSecret } from './secret';
 
 export const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
@@ -93,6 +94,8 @@ export type ChainView = {
   skr: TokenView;
   stocks: Record<string, TokenView>;
   faucetSol: number | null;
+  /** The agent key's own SOL — only used when the owner, not the faucet, pays devnet fees. */
+  agentSol: number | null;
   at: number;
 };
 
@@ -109,13 +112,16 @@ function view(address: PublicKey, info: Account | null, decimals: number): Token
 }
 
 /** Everything the screens show about an owner, in one `getMultipleAccounts`. */
-export async function readOwner(owner: PublicKey): Promise<ChainView> {
+export async function readOwner(owner: PublicKey, agent?: PublicKey): Promise<ChainView> {
+  if (!DEVNET_READY) throw new Error('this build has no devnet stand-in mints configured (see HANDOFF.md)');
   const conn = connection();
   const usdcAta = ata(owner, DEVNET.usdcMint);
   const skrAta = ata(owner, DEVNET.skrMint);
   const stockAtas = STOCKS.map((s) => ata(owner, s.devnetMint));
   const faucet = faucetKeypair()?.publicKey;
-  const keys = [owner, usdcAta, skrAta, ...stockAtas, ...(faucet ? [faucet] : [])];
+  const keys = [owner, usdcAta, skrAta, ...stockAtas, ...(faucet ? [faucet] : []), ...(agent ? [agent] : [])];
+  const faucetAt = faucet ? 3 + STOCKS.length : -1;
+  const agentAt = agent ? 3 + STOCKS.length + (faucet ? 1 : 0) : -1;
   const infos = await conn.getMultipleAccountsInfo(keys, 'confirmed');
   const unpack = (i: number) => {
     const info = infos[i];
@@ -135,7 +141,8 @@ export async function readOwner(owner: PublicKey): Promise<ChainView> {
     usdc: view(usdcAta, unpack(1), DEVNET.usdcDecimals),
     skr: view(skrAta, unpack(2), DEVNET.skrDecimals),
     stocks,
-    faucetSol: faucet ? (infos[keys.length - 1]?.lamports ?? 0) / LAMPORTS_PER_SOL : null,
+    faucetSol: faucet ? (infos[faucetAt]?.lamports ?? 0) / LAMPORTS_PER_SOL : null,
+    agentSol: agent ? (infos[agentAt]?.lamports ?? 0) / LAMPORTS_PER_SOL : null,
     at: Date.now(),
   };
 }
@@ -185,17 +192,31 @@ export class ChainRefused extends Error {
  * device-held signer. Resolves to the confirmed signature, or throws `ChainRefused` with the landed signature when
  * `expectFailure`-style sends are made with `skipPreflight`.
  */
+export type FeePayer = { kind: 'faucet' } | { kind: 'owner'; pubkey: PublicKey } | { kind: 'signer'; signer: Signer };
+
 export async function send(
   ixs: TransactionInstruction[],
-  opts: { owner?: { sign: OwnerSign }; signers?: Signer[]; skipPreflight?: boolean } = {},
+  opts: { owner?: { sign: OwnerSign }; signers?: Signer[]; skipPreflight?: boolean; payer?: FeePayer } = {},
 ): Promise<string> {
   const conn = connection();
   const faucet = requireFaucet();
+  const payer = opts.payer ?? { kind: 'faucet' };
+  const feePayer = payer.kind === 'faucet' ? faucet.publicKey : payer.kind === 'owner' ? payer.pubkey : payer.signer.publicKey;
   const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
-  let tx = new Transaction({ feePayer: faucet.publicKey, blockhash, lastValidBlockHeight }).add(...ixs);
+  let tx = new Transaction({ feePayer, blockhash, lastValidBlockHeight }).add(...ixs);
   if (opts.owner) tx = await opts.owner.sign(tx);
-  const cosigners = [faucet, ...(opts.signers ?? [])];
-  tx.partialSign(...cosigners);
+  // Co-sign with every device-held key this transaction actually names as a signer (the faucet only as mint authority
+  // when it is not paying).
+  const needed = new Set(
+    tx
+      .compileMessage()
+      .accountKeys.slice(0, tx.compileMessage().header.numRequiredSignatures)
+      .map((k) => k.toBase58()),
+  );
+  const cosigners = [faucet, ...(opts.signers ?? []), ...(payer.kind === 'signer' ? [payer.signer] : [])].filter(
+    (k, i, all) => needed.has(k.publicKey.toBase58()) && all.findIndex((x) => x.publicKey.equals(k.publicKey)) === i,
+  );
+  if (cosigners.length) tx.partialSign(...cosigners);
   const raw = tx.serialize({ requireAllSignatures: true, verifySignatures: true });
   const sig = await conn.sendRawTransaction(raw, { skipPreflight: !!opts.skipPreflight, preflightCommitment: 'confirmed' });
   const err = await confirmByPolling(conn, sig, lastValidBlockHeight);
@@ -230,30 +251,32 @@ const usdcRaw = (usd: number) => BigInt(Math.round(usd * 10 ** DEVNET.usdcDecima
 const skrRaw = (skr: number) => BigInt(Math.round(skr * 10 ** DEVNET.skrDecimals));
 
 /** Starter dUSDC and the owner's token accounts, paid and minted by the faucet. No owner signature. */
-export function fundStarterIxs(owner: PublicKey, usd: number): TransactionInstruction[] {
+export function fundStarterIxs(owner: PublicKey, usd: number, payer?: PublicKey): TransactionInstruction[] {
   const f = requireFaucet().publicKey;
+  const p = payer ?? f;
   return [
-    createAssociatedTokenAccountIdempotentInstruction(f, ata(owner, DEVNET.usdcMint), owner, new PublicKey(DEVNET.usdcMint)),
-    createAssociatedTokenAccountIdempotentInstruction(f, ata(owner, DEVNET.skrMint), owner, new PublicKey(DEVNET.skrMint)),
+    createAssociatedTokenAccountIdempotentInstruction(p, ata(owner, DEVNET.usdcMint), owner, new PublicKey(DEVNET.usdcMint)),
+    createAssociatedTokenAccountIdempotentInstruction(p, ata(owner, DEVNET.skrMint), owner, new PublicKey(DEVNET.skrMint)),
     createMintToCheckedInstruction(new PublicKey(DEVNET.usdcMint), ata(owner, DEVNET.usdcMint), f, usdcRaw(usd), DEVNET.usdcDecimals),
     memo(`xorr clockin: starter ${usd} dUSDC (devnet test money)`),
   ];
 }
 
-export function mintSkrIxs(owner: PublicKey, skr: number, note: string): TransactionInstruction[] {
+export function mintSkrIxs(owner: PublicKey, skr: number, note: string, payer?: PublicKey): TransactionInstruction[] {
   const f = requireFaucet().publicKey;
+  const p = payer ?? f;
   return [
-    createAssociatedTokenAccountIdempotentInstruction(f, ata(owner, DEVNET.skrMint), owner, new PublicKey(DEVNET.skrMint)),
+    createAssociatedTokenAccountIdempotentInstruction(p, ata(owner, DEVNET.skrMint), owner, new PublicKey(DEVNET.skrMint)),
     createMintToCheckedInstruction(new PublicKey(DEVNET.skrMint), ata(owner, DEVNET.skrMint), f, skrRaw(skr), DEVNET.skrDecimals),
     memo(note),
   ];
 }
 
 /** The daily clock-in: a memo the OWNER signs (the proof they showed up) plus the dSKR reward. */
-export function checkInIxs(owner: PublicKey, day: string, streak: number, reward: number): TransactionInstruction[] {
+export function checkInIxs(owner: PublicKey, day: string, streak: number, reward: number, payer?: PublicKey): TransactionInstruction[] {
   return [
     memo(`xorr clock-in ${day} · streak ${streak} · +${reward} dSKR`, [owner]),
-    ...mintSkrIxs(owner, reward, `xorr clockin reward ${reward} dSKR (devnet stand-in for SKR)`).slice(0, 2),
+    ...mintSkrIxs(owner, reward, `xorr clockin reward ${reward} dSKR (devnet stand-in for SKR)`, payer).slice(0, 2),
   ];
 }
 
@@ -261,16 +284,18 @@ export function checkInIxs(owner: PublicKey, day: string, streak: number, reward
  * The permission: `ApproveChecked` of `capUsd` dUSDC to the agent, and of every stock account so the agent's exits can
  * sell unattended. One transaction, one owner signature.
  */
-export function grantIxs(owner: PublicKey, agent: PublicKey, capUsd: number): TransactionInstruction[] {
-  const f = requireFaucet().publicKey;
+export function grantIxs(owner: PublicKey, agent: PublicKey, capUsd: number, payer?: PublicKey, agentGasLamports = 0): TransactionInstruction[] {
+  const p = payer ?? requireFaucet().publicKey;
   const ixs: TransactionInstruction[] = [];
   for (const s of STOCKS) {
-    ixs.push(createAssociatedTokenAccountIdempotentInstruction(f, ata(owner, s.devnetMint), owner, new PublicKey(s.devnetMint)));
+    ixs.push(createAssociatedTokenAccountIdempotentInstruction(p, ata(owner, s.devnetMint), owner, new PublicKey(s.devnetMint)));
   }
   ixs.push(createApproveCheckedInstruction(ata(owner, DEVNET.usdcMint), new PublicKey(DEVNET.usdcMint), agent, owner, usdcRaw(capUsd), DEVNET.usdcDecimals));
   for (const s of STOCKS) {
     ixs.push(createApproveCheckedInstruction(ata(owner, s.devnetMint), new PublicKey(s.devnetMint), agent, owner, U64_MAX, s.decimals));
   }
+  // When the owner pays devnet fees (the faucet is empty), the agent gets a little SOL of its own to pay for its trades.
+  if (agentGasLamports > 0) ixs.push(SystemProgram.transfer({ fromPubkey: owner, toPubkey: agent, lamports: agentGasLamports }));
   ixs.push(memo(`xorr grant: agent ${agent.toBase58()} may spend ${capUsd} dUSDC and sell stand-in xStocks; revoke any time`));
   return ixs;
 }
@@ -296,14 +321,16 @@ function feeAdjusted(raw: bigint, feeBps: number): bigint {
  * the stand-in xStock at the live price, less the tier's fee. If the permission does not cover it the token program
  * refuses the whole transaction — nothing is delivered.
  */
-export function agentBuyIxs(owner: PublicKey, agent: PublicKey, symbol: string, usd: number, price: number, feeBps: number, note: string) {
+export function agentBuyIxs(owner: PublicKey, agent: PublicKey, symbol: string, usd: number, price: number, feeBps: number, note: string, payer?: PublicKey) {
   const s = stockBySymbol(symbol)!;
   const f = requireFaucet().publicKey;
+  const p = payer ?? f;
   const qtyRaw = feeAdjusted(BigInt(Math.floor((usd / price) * 10 ** s.decimals)), feeBps);
   return {
     qtyRaw,
     ixs: [
-      createAssociatedTokenAccountIdempotentInstruction(f, ata(owner, s.devnetMint), owner, new PublicKey(s.devnetMint)),
+      createAssociatedTokenAccountIdempotentInstruction(p, ata(owner, s.devnetMint), owner, new PublicKey(s.devnetMint)),
+      createAssociatedTokenAccountIdempotentInstruction(p, ata(f, DEVNET.usdcMint), f, new PublicKey(DEVNET.usdcMint)),
       createTransferCheckedInstruction(ata(owner, DEVNET.usdcMint), new PublicKey(DEVNET.usdcMint), ata(f, DEVNET.usdcMint), agent, usdcRaw(usd), DEVNET.usdcDecimals),
       createMintToCheckedInstruction(new PublicKey(s.devnetMint), ata(owner, s.devnetMint), f, qtyRaw, s.decimals),
       memo(note),
@@ -312,15 +339,16 @@ export function agentBuyIxs(owner: PublicKey, agent: PublicKey, symbol: string, 
 }
 
 /** An agent exit: the agent, as delegate on the stock account, sells to the venue; dUSDC comes back to the owner. */
-export function agentSellIxs(owner: PublicKey, agent: PublicKey, symbol: string, qtyRaw: bigint, price: number, feeBps: number, note: string) {
+export function agentSellIxs(owner: PublicKey, agent: PublicKey, symbol: string, qtyRaw: bigint, price: number, feeBps: number, note: string, payer?: PublicKey) {
   const s = stockBySymbol(symbol)!;
   const f = requireFaucet().publicKey;
+  const p = payer ?? f;
   const usd = (Number(qtyRaw) / 10 ** s.decimals) * price;
   const outRaw = feeAdjusted(usdcRaw(usd), feeBps);
   return {
     outRaw,
     ixs: [
-      createAssociatedTokenAccountIdempotentInstruction(f, ata(f, s.devnetMint), f, new PublicKey(s.devnetMint)),
+      createAssociatedTokenAccountIdempotentInstruction(p, ata(f, s.devnetMint), f, new PublicKey(s.devnetMint)),
       createTransferCheckedInstruction(ata(owner, s.devnetMint), new PublicKey(s.devnetMint), ata(f, s.devnetMint), agent, qtyRaw, s.decimals),
       createMintToCheckedInstruction(new PublicKey(DEVNET.usdcMint), ata(owner, DEVNET.usdcMint), f, outRaw, DEVNET.usdcDecimals),
       memo(note),
@@ -338,11 +366,12 @@ export function overCapIxs(owner: PublicKey, agent: PublicKey, usd: number): Tra
 }
 
 /** Pay a strategy's 24-hour shift in SKR: the OWNER signs a `TransferChecked` of dSKR to the xorr treasury. */
-export function payShiftIxs(owner: PublicKey, skr: number, strategy: string): TransactionInstruction[] {
+export function payShiftIxs(owner: PublicKey, skr: number, strategy: string, payer?: PublicKey): TransactionInstruction[] {
   const f = requireFaucet().publicKey;
+  const p = payer ?? f;
   const treasury = ata(f, DEVNET.skrMint);
   return [
-    createAssociatedTokenAccountIdempotentInstruction(f, treasury, f, new PublicKey(DEVNET.skrMint)),
+    createAssociatedTokenAccountIdempotentInstruction(p, treasury, f, new PublicKey(DEVNET.skrMint)),
     createTransferCheckedInstruction(ata(owner, DEVNET.skrMint), new PublicKey(DEVNET.skrMint), treasury, owner, skrRaw(skr), DEVNET.skrDecimals),
     memo(`xorr shift: ${strategy} for 24h, paid ${skr} dSKR (devnet stand-in for SKR)`, [owner]),
   ];

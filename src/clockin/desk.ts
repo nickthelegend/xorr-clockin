@@ -24,6 +24,7 @@ import {
   revokeIxs,
   send,
   type ChainView,
+  type FeePayer,
 } from './chain';
 import { brief as writeBrief, decide, type Brief, type Decision, type Holding } from './engine';
 import { fetchPrices, type Prices } from './prices';
@@ -66,8 +67,8 @@ export async function agent(): Promise<Keypair> {
 /** Re-read the chain and the market. Mainnet reads (SKR, Seeker token) run once per owner and never block. */
 export async function refresh(owner: PublicKey, opts: { mainnet?: boolean } = {}): Promise<void> {
   useLive.setState({ loading: true, error: null });
-  await agent();
-  const [view, prices] = await Promise.allSettled([readOwner(owner), fetchPrices()]);
+  const a = await agent();
+  const [view, prices] = await Promise.allSettled([readOwner(owner, a.publicKey), fetchPrices()]);
   useLive.setState({
     view: view.status === 'fulfilled' ? view.value : useLive.getState().view,
     prices: prices.status === 'fulfilled' ? prices.value : useLive.getState().prices,
@@ -173,6 +174,32 @@ export function plan(live: Live): { decisions: Decision[]; brief: Brief } {
   };
 }
 
+/* ------------------------------------------------------------------------------------------------- who pays */
+
+/** Below this the devnet faucet stops paying fees and rent, and the owner (and the agent) pay their own. */
+export const FAUCET_MIN_SOL = 0.02;
+const AGENT_GAS_SOL = 0.03;
+
+/**
+ * Who pays devnet fees and rent right now. The faucet, while it has SOL — a judge needs nothing. If it runs dry (devnet
+ * faucets are rate-limited, and the faucet key ships in the APK), the owner pays from devnet SOL they airdrop to
+ * themselves, and the agent pays for its own trades from SOL the owner gives it with the permission.
+ */
+export function feeMode(view: ChainView | null = useLive.getState().view): 'faucet' | 'self' {
+  return (view?.faucetSol ?? 0) >= FAUCET_MIN_SOL ? 'faucet' : 'self';
+}
+
+function ownerPays(owner: Owner): { payer: FeePayer; rent: PublicKey } | { payer?: undefined; rent?: undefined } {
+  return feeMode() === 'faucet' ? {} : { payer: { kind: 'owner', pubkey: owner.pubkey }, rent: owner.pubkey };
+}
+
+function needOwnerSol(min = 0.003) {
+  const v = useLive.getState().view;
+  if (feeMode(v) === 'self' && (v?.sol ?? 0) < min) {
+    throw new Error("xorr's devnet faucet is out of SOL, so this needs a little devnet SOL of your own. Tap Get devnet SOL on the Me tab, then try again.");
+  }
+}
+
 /* ---------------------------------------------------------------------------------------------------- actions */
 
 async function guarded<T>(label: string, fn: () => Promise<T>): Promise<T> {
@@ -190,7 +217,9 @@ const log = (...a: Parameters<ReturnType<typeof useClockin.getState>['log']>) =>
 /** A new wallet's starter money: dUSDC to trade, its token accounts made — the faucet pays, nothing to sign. */
 export async function fundStarter(owner: Owner): Promise<string> {
   return guarded('Funding your devnet wallet', async () => {
-    const sig = await send(fundStarterIxs(owner.pubkey, STARTER_USDC));
+    const o = ownerPays(owner);
+    if (o.payer) needOwnerSol();
+    const sig = await send(fundStarterIxs(owner.pubkey, STARTER_USDC, o.rent), o.payer ? { payer: o.payer, owner } : {});
     useClockin.getState().set({ funded: true });
     log({ kind: 'fund', title: `+${STARTER_USDC} dUSDC from the devnet faucet`, detail: 'Test money for the agent to trade. No signature needed.', sig, ok: true });
     await refresh(owner.pubkey);
@@ -200,7 +229,9 @@ export async function fundStarter(owner: Owner): Promise<string> {
 
 export async function claimStarterSkr(owner: Owner): Promise<string> {
   return guarded('Claiming starter SKR', async () => {
-    const sig = await send(mintSkrIxs(owner.pubkey, STARTER_SKR, `xorr clockin: starter ${STARTER_SKR} dSKR (devnet stand-in for SKR)`));
+    const o = ownerPays(owner);
+    if (o.payer) needOwnerSol();
+    const sig = await send(mintSkrIxs(owner.pubkey, STARTER_SKR, `xorr clockin: starter ${STARTER_SKR} dSKR (devnet stand-in for SKR)`, o.rent), o.payer ? { payer: o.payer, owner } : {});
     useClockin.getState().set({ starterSkr: true });
     log({ kind: 'skr', title: `+${STARTER_SKR} dSKR welcome grant`, detail: 'Devnet stand-in for SKR.', sig, ok: true });
     await refresh(owner.pubkey);
@@ -221,7 +252,9 @@ export async function checkIn(owner: Owner): Promise<CheckInResult> {
     const streak = streakAfterCheckIn(s.streak);
     const reward = checkInReward(streak, rewardMultiplier(st.tier, st.seeker));
     const { brief } = plan(live); // written against the LAST clock-in's prices, before they are replaced
-    const sig = await send(checkInIxs(owner.pubkey, dayKey(), streak, reward), { owner });
+    const o = ownerPays(owner);
+    if (o.payer) needOwnerSol();
+    const sig = await send(checkInIxs(owner.pubkey, dayKey(), streak, reward, o.rent), { owner, payer: o.payer });
     useClockin.getState().setStreak(withCheckIn(useClockin.getState().streak));
     if (live.prices) useClockin.getState().setSnapshot(Object.fromEntries(Object.values(live.prices.quotes).map((q) => [q.symbol, q.usd])));
     useClockin.getState().set({ lastBrief: { ...brief, at: Date.now(), by: 'engine' } });
@@ -238,7 +271,11 @@ export async function checkIn(owner: Owner): Promise<CheckInResult> {
 export async function grant(owner: Owner, capUsd: number): Promise<string> {
   return guarded('Granting the permission', async () => {
     const a = await agent();
-    const sig = await send(grantIxs(owner.pubkey, a.publicKey, capUsd), { owner });
+    const o = ownerPays(owner);
+    const agentSol = useLive.getState().view?.agentSol ?? 0;
+    const gas = o.payer && agentSol < AGENT_GAS_SOL / 2 ? Math.round(AGENT_GAS_SOL * 1e9) : 0;
+    if (o.payer) needOwnerSol(0.003 + gas / 1e9);
+    const sig = await send(grantIxs(owner.pubkey, a.publicKey, capUsd, o.rent, gas), { owner, payer: o.payer });
     log({ kind: 'grant', title: `Permission granted: ${capUsd} dUSDC`, detail: `SPL ApproveChecked to the agent ${a.publicKey.toBase58().slice(0, 6)}…, plus sell approvals so exits can fire.`, sig, ok: true });
     await refresh(owner.pubkey);
     return sig;
@@ -251,7 +288,8 @@ export async function revoke(owner: Owner): Promise<string> {
     await refresh(owner.pubkey);
     const view = useLive.getState().view;
     if (!view) throw new Error('Devnet could not be read.');
-    const sig = await send(revokeIxs(owner.pubkey, view), { owner });
+    const o = ownerPays(owner);
+    const sig = await send(revokeIxs(owner.pubkey, view), { owner, payer: o.payer });
     log({ kind: 'revoke', title: 'Permission revoked', detail: 'SPL Revoke on every account. The agent can move nothing now.', sig, ok: true });
     await refresh(owner.pubkey);
     return sig;
@@ -267,6 +305,10 @@ export async function agentLook(owner: Owner, only?: { symbol: string; usd: numb
     const live = useLive.getState();
     const st = standing(live);
     const a = await agent();
+    // When the faucet is dry the agent pays for its own trades from the SOL it was given with the permission.
+    const agentPays = feeMode(live.view) === 'self';
+    const tradeOpts = agentPays ? { payer: { kind: 'signer', signer: a } as FeePayer, signers: [a] } : { signers: [a] };
+    const rent = agentPays ? a.publicKey : undefined;
     let decisions: Decision[];
     if (only) {
       const q = live.prices?.quotes[only.symbol];
@@ -286,16 +328,16 @@ export async function agentLook(owner: Owner, only?: { symbol: string; usd: numb
         if (d.action === 'buy') {
           if (!st.permission.live) throw new Error('No permission: grant one first.');
           if (!d.usd || d.usd < 1) throw new Error('Nothing left to spend.');
-          const { ixs, qtyRaw } = agentBuyIxs(owner.pubkey, a.publicKey, d.symbol, d.usd, q.usd, st.tier.feeBps, `xorr agent buy ${d.symbol} $${d.usd.toFixed(2)} @ ${q.usd.toFixed(2)}: ${d.reason}`);
-          const sig = await send(ixs, { signers: [a] });
+          const { ixs, qtyRaw } = agentBuyIxs(owner.pubkey, a.publicKey, d.symbol, d.usd, q.usd, st.tier.feeBps, `xorr agent buy ${d.symbol} $${d.usd.toFixed(2)} @ ${q.usd.toFixed(2)}: ${d.reason}`, rent);
+          const sig = await send(ixs, tradeOpts);
           useClockin.getState().recordBuy(d.symbol, qtyRaw, d.usd);
           log({ kind: 'buy', title: `Agent bought $${d.usd.toFixed(2)} ${d.symbol}`, detail: d.reason, sig, ok: true });
           out.push({ decision: d, sig });
         } else {
           const t = live.view?.stocks[d.symbol];
           if (!t || t.raw <= 0n) continue;
-          const { ixs, outRaw } = agentSellIxs(owner.pubkey, a.publicKey, d.symbol, t.raw, q.usd, st.tier.feeBps, `xorr agent sell ${d.symbol} @ ${q.usd.toFixed(2)}: ${d.reason}`);
-          const sig = await send(ixs, { signers: [a] });
+          const { ixs, outRaw } = agentSellIxs(owner.pubkey, a.publicKey, d.symbol, t.raw, q.usd, st.tier.feeBps, `xorr agent sell ${d.symbol} @ ${q.usd.toFixed(2)}: ${d.reason}`, rent);
+          const sig = await send(ixs, tradeOpts);
           useClockin.getState().recordSell(d.symbol);
           log({ kind: 'sell', title: `Agent sold ${d.symbol} for $${(Number(outRaw) / 10 ** DEVNET.usdcDecimals).toFixed(2)}`, detail: d.reason, sig, ok: true });
           out.push({ decision: d, sig });
@@ -316,22 +358,27 @@ export async function agentLook(owner: Owner, only?: { symbol: string; usd: numb
 }
 
 /** Ask the agent to move more than it was allowed. The token program refuses — and the refusal lands on devnet. */
-export async function testCap(owner: Owner): Promise<{ sig: string; message: string }> {
+export async function testCap(owner: Owner): Promise<{ sig: string; message: string; tried: number; left: number }> {
   return guarded('Testing the cap', async () => {
     await refresh(owner.pubkey);
     const st = standing(useLive.getState());
     const a = await agent();
     const over = Math.floor(st.permission.leftUsd) + 50;
     try {
-      const sig = await send(overCapIxs(owner.pubkey, a.publicKey, over), { signers: [a], skipPreflight: true });
+      const self = feeMode() === 'self';
+      const sig = await send(overCapIxs(owner.pubkey, a.publicKey, over), {
+        signers: [a],
+        skipPreflight: true,
+        ...(self ? { payer: { kind: 'signer', signer: a } as FeePayer } : {}),
+      });
       // It should never get here.
       log({ kind: 'refused', title: 'Cap test: the chain ACCEPTED an over-cap move', detail: `${over} dUSDC`, sig, ok: false });
-      return { sig, message: 'Unexpected: the transfer went through.' };
+      return { sig, message: 'Unexpected: the transfer went through.', tried: over, left: st.permission.leftUsd };
     } catch (e) {
       if (!(e instanceof ChainRefused)) throw e;
       const why = e.logs.find((l) => /insufficient|owner does not match|Error/i.test(l)) ?? e.message;
       log({ kind: 'refused', title: `Cap held: agent tried ${over} dUSDC, chain refused`, detail: why, sig: e.signature, ok: true });
-      return { sig: e.signature, message: why };
+      return { sig: e.signature, message: why, tried: over, left: st.permission.leftUsd };
     }
   });
 }
@@ -342,7 +389,9 @@ export async function buyShift(owner: Owner, strategy: StrategyId): Promise<stri
     const price = SHIFT_PRICE[strategy];
     const live = useLive.getState();
     if ((live.view?.skr.ui ?? 0) < price) throw new Error(`The ${STRATEGY_INFO[strategy].name} shift costs ${price} dSKR. Clock in to earn more.`);
-    const sig = await send(payShiftIxs(owner.pubkey, price, STRATEGY_INFO[strategy].name), { owner });
+    const o = ownerPays(owner);
+    if (o.payer) needOwnerSol();
+    const sig = await send(payShiftIxs(owner.pubkey, price, STRATEGY_INFO[strategy].name, o.rent), { owner, payer: o.payer });
     const passes = { ...useClockin.getState().passes, [strategy]: { until: Date.now() + SHIFT_MS, sig } };
     useClockin.getState().set({ passes });
     log({ kind: 'shift', title: `${STRATEGY_INFO[strategy].name} hired for 24h · −${price} dSKR`, detail: 'Paid to the xorr treasury in the devnet SKR stand-in.', sig, ok: true });

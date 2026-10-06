@@ -31,7 +31,7 @@ The bot's own accounts — each is public, and each can be checked on Solscan:
 | Payer | [`6usPSsycKfrcmEc8zxmRmjVvUCGu2Ygf89RHk7peauhc`](https://solscan.io/account/6usPSsycKfrcmEc8zxmRmjVvUCGu2Ygf89RHk7peauhc) | pays network fees and the rent of a user's new token accounts |
 | Venue vault | [`CZ1JQUm7CbTrvUimxzpZZAPRbe65d5SV2R91yjAa82i9`](https://solscan.io/account/CZ1JQUm7CbTrvUimxzpZZAPRbe65d5SV2R91yjAa82i9) | holds USDC only for the instant of a routed buy; pays its own swap fees |
 
-Mainnet transactions from the demo are listed in [docs/MAINNET-LOG.md](docs/MAINNET-LOG.md), each with its Solscan link.
+Mainnet transactions from the demo are listed in [docs/MAINNET-LOG.md](../MAINNET-LOG.md), each with its Solscan link.
 
 ## What it does
 
@@ -359,10 +359,10 @@ above, not the executor's. That is the non-custodial property, read straight off
 - Server: `cd server && npm test` (1,350+ tests), `npm run typecheck`.
 - On-chain proofs against a fresh fork: `npx vitest run server/src/solana/fork.chain.test.ts` — capped delegation,
   over-cap refusal, kill switch, and a Jupiter-routed buy and a sell of the owner's own shares.
-- End-to-end run of every flow in the app, with signatures: [`docs/TESTPLAN-SOLANA.md`](docs/TESTPLAN-SOLANA.md).
-- What is left and why: [`PLAN.md`](PLAN.md).
+- End-to-end run of every flow in the app, with signatures: [`docs/TESTPLAN-SOLANA.md`](../TESTPLAN-SOLANA.md).
+- What is left and why: [`PLAN.md`](../../PLAN.md).
 
 ## History
 
 xorr started on Base (ETHOnline 2026, Base Build Camp). That build's README — its contracts, sponsors and screens — is
-in [`docs/base/README-base.md`](docs/base/README-base.md). The Solana build hides every Base-only screen.
+in [`docs/base/README-base.md`](../base/README-base.md). The Solana build hides every Base-only screen.

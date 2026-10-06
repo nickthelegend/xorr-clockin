@@ -69,3 +69,7 @@ dist-base/
 dist/
 dist-web/
 /dist-mobile
+
+# CLOCK IN: the release APK is hosted, not committed
+/clockin/apk/
+*.apk

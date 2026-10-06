@@ -15,7 +15,8 @@
 import { isSolana } from '@/chain';
 import React, { useEffect, useMemo } from 'react';
 import { View } from 'react-native';
-import { Tabs, usePathname, useRouter } from 'expo-router';
+import { Redirect, Tabs, usePathname, useRouter } from 'expo-router';
+import { CLOCKIN } from '@/clockin/config';
 import { TabBar, colors } from '@/ui';
 import { useDesktopWindow } from '@/desktop/useDesktop';
 import { useThread } from '@/bot/thread';
@@ -25,7 +26,14 @@ import { summaries, unreadTotal } from '@/chat/conversations';
 import { useVoice } from '@/chat/voice';
 
 
-export default function TabsLayout() {
+/** The CLOCK IN build never mounts this shell: its effects read the hosted executor. See app/(tabs)/index.tsx. */
+function ClockinTabs() {
+  return <Redirect href="/today" />;
+}
+
+export default CLOCKIN ? ClockinTabs : TabsLayout;
+
+function TabsLayout() {
   const router = useRouter();
   const pathname = usePathname();
   const show = useChatDrawer((s) => s.show);

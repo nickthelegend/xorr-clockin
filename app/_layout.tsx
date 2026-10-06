@@ -23,6 +23,7 @@ import { useHydrateDelegation } from '@/wallet/useHydrateDelegation';
 import { ReachabilityProvider } from '@/net/Reachability';
 import { ChatSheet } from '@/chat/ChatSheet';
 import { useChatDrawer } from '@/chat/chatDrawer';
+import { CLOCKIN } from '@/clockin/config';
 
 /*
  * The page under the app is the app's black on the web (2026-10-01). Expo's page leaves html and body unpainted, so an
@@ -173,9 +174,17 @@ export default function RootLayout() {
       <AppPrivyProvider>
       <SafeAreaProvider>
         <ReachabilityProvider>
-        <WalletHydration />
-        <DeviceRegistration />
-        <AgentTradeAlerts />
+        {/*
+          The CLOCK IN build talks to Solana devnet directly and has no executor: nothing that reads the hosted
+          executor is mounted, so the devnet app never touches the live mainnet service.
+        */}
+        {CLOCKIN ? null : (
+          <>
+            <WalletHydration />
+            <DeviceRegistration />
+            <AgentTradeAlerts />
+          </>
+        )}
         {/* The app is true-black by design; the OS theme never gets to change it. */}
         <StatusBar style="light" />
         {/*
@@ -183,7 +192,7 @@ export default function RootLayout() {
           both position themselves against their parent, and a per-screen fix would have left them
           spanning the whole window.
         */}
-        <Frame overlay={<ChatDrawer />}>
+        <Frame overlay={CLOCKIN ? null : <ChatDrawer />}>
         <AppRoutes />
         {/* After the Stack, so `useRouter` resolves against a mounted navigator. */}
         <NotificationRouting />

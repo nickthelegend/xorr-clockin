@@ -14,6 +14,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { AccessibilityInfo, Pressable, ScrollView, View } from 'react-native';
+import { CLOCKIN } from '@/clockin/config';
 import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { agentGradient, assetGradient } from '@/design/gradients';
 import { Icon } from '@/design/Icon';
@@ -464,7 +465,17 @@ function AgentsAtWork({ roster, onOpen }: { roster: Agent[]; onOpen: (id: string
  * Chosen in a component of its own, so neither layout's hooks sit behind the other's early return, and a browser
  * resized across the desktop width swaps one for the other cleanly rather than calling a different set of hooks.
  */
-export default function Home() {
+/**
+ * The CLOCK IN build (devnet, Seeker-first) has its own shell — Today, Agent, SKR, Me — and never reaches the hosted
+ * mainnet home below, which reads the executor. `CLOCKIN` is a build constant, so this choice never changes at runtime.
+ */
+function ClockinRoot() {
+  return <Redirect href="/today" />;
+}
+
+export default CLOCKIN ? ClockinRoot : Home;
+
+function Home() {
   const desktop = useDesktop();
   return desktop ? <DesktopHome /> : <MobileHome />;
 }

@@ -97,6 +97,8 @@ The Publisher Policy prohibits "Content that infringes on intellectual property 
 
 **Recommendation:** in the store build, replace the issuer and USDC logos on stand-in tokens with neutral ticker badges, or label them clearly as stand-ins. Keep real logos for a future build that holds real xStocks, under Backed's brand terms.
 
+**Done in 1.2.1:** the stand-in stocks and dUSDC now show neutral ticker marks (their colours and first letter), not the companies' or Circle's logos. Only the SKR logo is still loaded.
+
 ### 3. Other review risks
 
 - **A private key ships in the APK.** The devnet faucet key (`EXPO_PUBLIC_CLOCKIN_FAUCET_SECRET`) is devnet only and documented in HANDOFF.md, but a reviewer who unpacks the APK will find a private key. Consider leaving it out of the store build.

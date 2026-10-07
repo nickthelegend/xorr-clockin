@@ -49,7 +49,7 @@ Android backup is turned off for this app (`allowBackup: false`), so this data i
    - your recent trades
 
    It is sent to OpenRouter and the model provider you selected (the default is `anthropic/claude-haiku-4.5`), under their policies. Your wallet address is not included. The key is used only for this. "Remove" deletes it from the phone.
-6. **Image hosts** (`xstocks-metadata.backed.fi`, `r2.solanamobiledappstore.com`, `raw.githubusercontent.com`) serve token logos. Like any web request, they see your IP address and user agent.
+6. **Solana Mobile's image host** (`r2.solanamobiledappstore.com`) serves the SKR logo. Like any web request, it sees your IP address and user agent. Since 1.2.1 the stand-in tokens use neutral ticker marks drawn on the phone, so no stock or USDC logo is fetched.
 7. **Your wallet app** (Seed Vault, Phantom, Solflare and others), through Mobile Wallet Adapter. It sees xorr's name, website and icon, and the transactions you approve. Its own policy applies.
 8. **Solana Explorer** opens in your browser only when you tap "View transaction".
 

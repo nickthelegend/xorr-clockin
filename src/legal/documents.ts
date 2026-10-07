@@ -80,7 +80,7 @@ const CLOCKIN_PRIVACY: LegalDoc = {
         'Jupiter’s price API: a fixed list of token addresses. Nothing about you.',
         'Privy, only if you sign in with email: your email, the one-time code, your IP address and device details. Privy creates and secures your embedded wallet under its own policy; xorr keeps only the wallet’s public address.',
         'OpenRouter, only if you add your own key and use Ask your agent: your question, your agent’s brief and decisions, prices, your holdings and cost, your dUSDC cash, tier, streak and recent trades. They go to OpenRouter and the model provider you chose, under their policies. Your wallet address is not sent. Without a key, Ask answers on this phone and sends nothing.',
-        'Image hosts (xstocks-metadata.backed.fi, r2.solanamobiledappstore.com, raw.githubusercontent.com) serve token logos, and see your IP address like any web request.',
+        'Solana Mobile’s image host (r2.solanamobiledappstore.com) serves the SKR logo, and sees your IP address like any web request. The stand-in tokens use marks drawn on the phone.',
         'Your wallet app, through Mobile Wallet Adapter: xorr’s name and icon, and the transactions you approve.',
       ],
     },

@@ -116,14 +116,12 @@ export const APP_IDENTITY = {
 /** Starter balances the devnet faucet hands a new wallet — no signature needed, test money only. */
 export const STARTER_USDC = 1_000;
 
-/** Logos, from the issuers' own public metadata (Backed for xStocks, Solana Mobile for SKR). Images only, no API. */
+/**
+ * Logos. Only SKR's, from Solana Mobile's own store CDN: it is drawn on real SKR (read from mainnet) and on dSKR, which
+ * is labelled "Devnet stand-in for SKR" wherever it appears. The stock stand-ins and dUSDC get neutral ticker marks
+ * (`TokenMark`), not NVIDIA's, Tesla's or Circle's logos: neither the companies nor Backed nor Circle issued them.
+ */
 export const LOGOS: Record<string, string> = {
-  NVDAx: 'https://xstocks-metadata.backed.fi/logos/tokens/NVDAx.png',
-  TSLAx: 'https://xstocks-metadata.backed.fi/logos/tokens/TSLAx.png',
-  AAPLx: 'https://xstocks-metadata.backed.fi/logos/tokens/AAPLx.png',
-  MSFTx: 'https://xstocks-metadata.backed.fi/logos/tokens/MSFTx.png',
-  SPYx: 'https://xstocks-metadata.backed.fi/logos/tokens/SPYx.png',
   SKR: 'https://r2.solanamobiledappstore.com/skr/seeker.png',
-  USDC: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
 };
 export const STARTER_SKR = 250;

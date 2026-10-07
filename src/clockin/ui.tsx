@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { Linking } from 'react-native';
-import { AssetMark, size } from '@/ui';
+import { AssetMark, colors, size } from '@/ui';
 import { selectionTick } from '@/ui/haptics';
 import { LOGOS } from './config';
 
@@ -14,8 +14,15 @@ export function openUrl(url: string) {
 }
 
 /** A token's mark: its logo where the issuer publishes one, over its gradient (the app's AssetMark). */
+/**
+ * A token's mark. SKR draws its logo; every devnet stand-in (the xStock stand-ins, dUSDC) draws a neutral ticker mark —
+ * its colours and its ticker's first letter, the same monogram xorr gives instruments with no logo — so nothing on screen
+ * suggests the company or the stablecoin's issuer made the token.
+ */
 export function TokenMark({ symbol, c1, c2, size: px = size.mark }: { symbol: string; c1: string; c2: string; size?: number }) {
-  return <AssetMark gradient={{ c1, c2 }} uri={LOGOS[symbol] ?? null} size={px} />;
+  const uri = LOGOS[symbol] ?? null;
+  const letter = symbol.replace(/^d(?=[A-Z])/, '').charAt(0);
+  return <AssetMark gradient={uri ? { c1, c2 } : { c1, c2, monogram: { letters: letter, ink: colors.ink } }} uri={uri} size={px} />;
 }
 
 export const usd = (n: number, digits = 2) =>

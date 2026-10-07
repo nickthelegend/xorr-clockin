@@ -15,7 +15,7 @@ These touch app code, which belongs to the app's builder:
 - [ ] **Make the in-app Privacy page match `PRIVACY.md`.** See the last section of that file. Developer Agreement §2.1 requires the privacy policy and EULA to be linked in the app.
 - [ ] **Disconnect should wipe keys** (guest, agent and venue keys, the OpenRouter key, the Privy session), or the privacy text must keep saying it doesn't.
 - [ ] **The devnet faucet secret is inside the APK** (`EXPO_PUBLIC_CLOCKIN_FAUCET_SECRET`). It holds devnet funds only, and HANDOFF.md says so. Anyone can still extract it, and a reviewer who unpacks the APK will find a private key. Consider leaving it out of the store build and relying on the per-phone fallback.
-- [ ] **Bump the version.** Judges installed **1.2.0 / versionCode 3**. The store build needs **versionCode 4 or higher** and a higher `version` (for example 1.2.1), set in `app.json` (`expo.version`, `expo.android.versionCode`, and `ios.buildNumber` for parity).
+- [ ] **Bump the version.** The hackathon APK is **1.2.1 / versionCode 4**. The store build needs **versionCode 5 or higher** and a higher `version` (for example 1.2.2), set in `app.json` (`expo.version`, `expo.android.versionCode`, and `ios.buildNumber` for parity).
 - [ ] Icon recommendations for the builder are in `README.md` (monochrome icon, notification icon).
 
 ## 1. Build and sign
@@ -43,7 +43,7 @@ Check the result before uploading:
 BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
 A="/Volumes/Extreme SSD/Projects/clockin/apks/xorr-clockin.apk"
 "$BT/apksigner" verify --print-certs "$A" | head -2   # CN=xorr CLOCK IN and the SHA-256 above
-"$BT/aapt2" dump badging "$A" | head -1                # finance.xorr.app, versionCode >= 4
+"$BT/aapt2" dump badging "$A" | head -1                # finance.xorr.app, versionCode >= 5
 shasum -a 256 "$A"
 ```
 If the build prints "no signing properties … debug key", **do not upload** that APK.

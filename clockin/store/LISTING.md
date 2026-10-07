@@ -43,7 +43,25 @@ What this build is: a Solana devnet build with test tokens only. No real money m
 
 ## Release notes ("What's new")
 
-### 1.2.0 (versionCode 3, current `main`)
+### 1.2.1 (versionCode 4, current `main`)
+
+APK sha256: `d3d953cf2b29a93c1c9231966ba3d25384c2cbf5820e93281893728ffef0203c`
+
+```
+• Privacy page rewritten for this build: what stays on your phone, and exactly what each service sees.
+• Disconnect now deletes this phone's keys and signs your wallet out, after a confirmation.
+• Stand-in tokens use neutral ticker marks instead of company logos.
+• The streak reminder has its own switch. Offline states show a clear note with a retry.
+• Android: a proper notification icon and a themed (monochrome) app icon.
+Devnet build with test tokens; stand-ins fill at live prices.
+```
+
+Short form for `dapp-store --whats-new`:
+```
+Accurate privacy page, Disconnect deletes keys, neutral token marks, streak reminder switch, Android icons.
+```
+
+### 1.2.0 (versionCode 3)
 
 ```
 • First run: a three-screen intro and a guided setup. Sign a cap, watch the agent's first $10 buy, then watch the chain refuse an over-cap transfer.
@@ -59,7 +77,7 @@ Short form for `dapp-store --whats-new`:
 ```
 Guided setup, morning brief at your time, streak reminders, offline states and accessibility. Devnet build, test tokens.
 ```
-**The first store release must carry versionCode 4 or higher**, because judges installed versionCode 3 (see `PUBLISH.md`).
+**The first store release must carry versionCode 5 or higher**, because the hackathon APK judges install is versionCode 4 (1.2.1; see `PUBLISH.md`).
 
 ## Category
 

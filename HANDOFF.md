@@ -163,10 +163,24 @@ sends to Home. The census turned up these issues, all fixed and recaptured:
 Not captured: the Android-only MWA states (iOS has no MWA, and the emulator is off-limits), the faucet-dry state, the
 notification prompt and delivery, and the sub-second first-load skeleton.
 
+## 1.2.1: truth and hygiene (Oct 7, versionCode 4)
+
+From the store-kit audit (`clockin/store/README.md`) and the coordinator's review of the census:
+
+| # | What | Done |
+|---|---|---|
+| 1 | In-app Privacy page | Rewritten for this build, in line with `clockin/store/PRIVACY.md`: keystore and app storage, devnet RPC, the read-only mainnet SKR and Seeker Genesis Token lookups, Jupiter, Privy, OpenRouter (only with your own key, and what Ask sends), the SKR image host, the wallet app, local notifications. The risk disclosure is linked from Profile → Legal and from setup before the first grant |
+| 2 | Model claims | The model only answers *Ask your agent*. README, Profile, PITCH, SUBMISSION and this file now say so. The unused `narrateBrief` is removed |
+| 3 | Disconnect | A confirm panel says exactly what happens. Then `forgetDevice` deletes the guest, agent, venue and OpenRouter keys from SecureStore, forgets this phone's stand-in set, deauthorizes MWA and signs out of Privy. Tested in `src/clockin/forget.test.ts` |
+| 4 | Android icons | Notification small icon (white XORR mark on transparent, #12D77D accent), monochrome themed icon, and a transparent adaptive foreground. `aapt2` shows `drawable/notification_icon`, `mipmap/ic_launcher_monochrome`, an `<adaptive-icon>` with a `<monochrome>` layer, and the `default_notification_icon` metadata |
+| 5 | Stand-in logos | The stock stand-ins and dUSDC show neutral ticker marks (xorr's monogram mark). Only SKR keeps its logo. Backed's and GitHub's image hosts are no longer contacted |
+| 6 | Faucet key | Left in for the hackathon build. The note under "Decisions" says the store build must remove it and pay rewards server-side |
+| — | Census leftovers | Profile: a streak-reminder switch, a Network row and folded test tokens in place of the RPC paragraph. Agent pages: "No permission yet", linking to Safety, instead of "—". Offline: a result card with Try again inside it, on Home and Safety. Legal: a one-line summary and more space between sections |
+
 ## Android audit (Oct 7, static: no device or emulator was used)
 
-Checked first against 1.1.0 (versionCode 2, sha256 `5396e26a…7d57`, built from `dcbe14a`); re-checked on 1.2.0 (versionCode 3, sha256
-`c81028b9a3412e248bd879ceea4d597dcc020ee8431b00b6707c4d39b4a58f28`, rebuilt from `e8a552c` after the census fixes): no RECORD_AUDIO, FOREGROUND_SERVICE, SYSTEM_ALERT_WINDOW or storage permission. The same file is the `clockin-v1` release asset (download
+Checked first against 1.1.0 (versionCode 2, sha256 `5396e26a…7d57`, built from `dcbe14a`); re-checked on 1.2.0 (versionCode 3) and on 1.2.1 (versionCode 4, sha256
+`d3d953cf2b29a93c1c9231966ba3d25384c2cbf5820e93281893728ffef0203c`, built from `b993576`): no RECORD_AUDIO, FOREGROUND_SERVICE, SYSTEM_ALERT_WINDOW or storage permission. The same file is the `clockin-v1` release asset (download
 hash checked). Tools used: `aapt2 dump badging/xmltree`, `apksigner`, `unzip`, a string scan of the Hermes bundle, and
 reading the source.
 
@@ -209,7 +223,7 @@ since.
 - Kept, gitignored, for `scripts/devnet-go.sh`'s rebuild: `android/` (1.0 GB) and `ios/` (1.2 GB). The iOS build
   products in `/Volumes/Extreme SSD/Projects/clockin/.cache/derived/xorr` (2.8 GB) can be deleted when you are done.
 - Release APK: `/Volumes/Extreme SSD/Projects/clockin/apks/xorr-clockin.apk` (copy in `clockin/apk/`, gitignored, and the
-  `clockin-v1` release asset), sha256 `c81028b9a3412e248bd879ceea4d597dcc020ee8431b00b6707c4d39b4a58f28`, version 1.2.0
-  (versionCode 3), built from e8a552c (the census fixes).
+  `clockin-v1` release asset), sha256 `d3d953cf2b29a93c1c9231966ba3d25384c2cbf5820e93281893728ffef0203c`, version 1.2.1
+  (versionCode 4), built from b993576.
 - Native builds take the shared `.gradle.lock` (it covers Gradle and Xcode). `tools/clockin/build-apk.sh` takes it with a
   trap.

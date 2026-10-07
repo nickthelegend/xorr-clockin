@@ -1,10 +1,12 @@
 /**
- * Me — the wallet, the agent's key, the morning brief, the optional AI key, the whole trail, and what this build is.
+ * Profile (CLOCK IN build) — the wallet, the morning brief, the optional AI key, the whole trail, and what this build
+ * is. Opened from Home's avatar and bell, in xorr's profile layout.
  */
 import React, { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button, Screen, Switch, Text, colors, radius, space } from '@/ui';
+import { BackButton, Button, Screen, Switch, Text, colors, radius, space } from '@/ui';
+import { useGoBack } from '@/nav/useGoBack';
 import { successTap, warningTap } from '@/ui/haptics';
 import { DEVNET, DEVNET_RPC, STOCKS } from '@/clockin/config';
 import { feeMode, getDevnetSol, useLive } from '@/clockin/desk';
@@ -20,6 +22,7 @@ import { WALLET_LABEL } from '@/clockin/useOwner';
 
 export default function Me() {
   const router = useRouter();
+  const goBack = useGoBack('/');
   const { owner, live } = useDesk();
   const scroller = useScrollAutopilot();
   const wallet = useClockin((s) => s.wallet);
@@ -53,8 +56,11 @@ export default function Me() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView
         keyboardShouldPersistTaps="handled" ref={scroller} contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: space.s44, gap: space.s16 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: space.s8 }}>
-          <Text variant="screenTitle">Me</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s8, paddingTop: space.s4 }}>
+          <BackButton onPress={() => goBack()} />
+          <Text variant="screenTitle" style={{ flex: 1 }}>
+            Profile
+          </Text>
           <DevnetPill />
         </View>
 

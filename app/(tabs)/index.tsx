@@ -15,6 +15,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { AccessibilityInfo, Pressable, ScrollView, View } from 'react-native';
 import { CLOCKIN } from '@/clockin/config';
+import ClockinHome from '@/clockin/screens/ClockinHome';
 import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { agentGradient, assetGradient } from '@/design/gradients';
 import { Icon } from '@/design/Icon';
@@ -466,14 +467,10 @@ function AgentsAtWork({ roster, onOpen }: { roster: Agent[]; onOpen: (id: string
  * resized across the desktop width swaps one for the other cleanly rather than calling a different set of hooks.
  */
 /**
- * The CLOCK IN build (devnet, Seeker-first) has its own shell — Today, Agent, SKR, Me — and never reaches the hosted
- * mainnet home below, which reads the executor. `CLOCKIN` is a build constant, so this choice never changes at runtime.
+ * The CLOCK IN build (devnet, Seeker-first) draws this same Home over Solana devnet — `ClockinHome`, in this screen's
+ * design — and never runs the hosted Home below, which reads the executor. `CLOCKIN` is a build constant.
  */
-function ClockinRoot() {
-  return <Redirect href="/today" />;
-}
-
-export default CLOCKIN ? ClockinRoot : Home;
+export default CLOCKIN ? ClockinHome : Home;
 
 function Home() {
   const desktop = useDesktop();

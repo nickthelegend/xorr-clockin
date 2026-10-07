@@ -52,7 +52,7 @@ export async function scheduleDailyBrief(streak: number, ask = false, hour = 8, 
       content: {
         title: "Your agent's morning brief is ready",
         body: streak > 0 ? `Clock in to keep your ${streak}-day streak and collect today's SKR.` : "See what your agent did overnight and collect today's SKR.",
-        data: { route: '/today' },
+        data: { route: '/' },
         sound: 'default',
       },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: CHANNEL_BRIEF },

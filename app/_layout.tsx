@@ -117,15 +117,15 @@ function ClockinRemote() {
 }
 
 /**
- * The CLOCK IN build's screens are Start, the four tabs and the legal pages. Any other route — an old deep link, a
+ * The CLOCK IN build's screens are Start, Home, Your agent (/desk), SKR, Profile (/me), Ask and the legal pages. Any other route — an old deep link, a
  * notification from the hosted app, a typo — would open a hosted-app screen that reads the mainnet executor, so it is
  * sent to Today instead (or Start, which the tabs do on their own when no wallet is connected).
  */
-const CLOCKIN_ROUTES = /^\/($|start$|today$|desk$|skr$|me$|legal\/)/;
+const CLOCKIN_ROUTES = /^\/($|start$|desk$|skr$|me$|ask$|legal\/)/;
 function ClockinRouteGuard() {
   const path = usePathname();
   useEffect(() => {
-    if (!CLOCKIN_ROUTES.test(path)) router.replace('/today');
+    if (!CLOCKIN_ROUTES.test(path)) router.replace('/');
   }, [path]);
   return null;
 }

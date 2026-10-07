@@ -15,7 +15,8 @@
 import { isSolana } from '@/chain';
 import React, { useEffect, useMemo } from 'react';
 import { View } from 'react-native';
-import { Redirect, Tabs, usePathname, useRouter } from 'expo-router';
+import { Tabs, usePathname, useRouter } from 'expo-router';
+import ClockinTabs from '@/clockin/screens/ClockinTabs';
 import { CLOCKIN } from '@/clockin/config';
 import { TabBar, colors } from '@/ui';
 import { useDesktopWindow } from '@/desktop/useDesktop';
@@ -26,11 +27,7 @@ import { summaries, unreadTotal } from '@/chat/conversations';
 import { useVoice } from '@/chat/voice';
 
 
-/** The CLOCK IN build never mounts this shell: its effects read the hosted executor. See app/(tabs)/index.tsx. */
-function ClockinTabs() {
-  return <Redirect href="/today" />;
-}
-
+/** The CLOCK IN build draws the same bar over Solana devnet data, without the hosted executor's reads. */
 export default CLOCKIN ? ClockinTabs : TabsLayout;
 
 function TabsLayout() {

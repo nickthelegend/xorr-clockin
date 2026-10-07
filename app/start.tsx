@@ -11,7 +11,7 @@ import { Image } from 'expo-image';
 import { Redirect, useRouter } from 'expo-router';
 import { brand } from '@/design/brand';
 import { CoinHero } from '@/design/CoinHero';
-import { Button, Fill, Screen, Text, colors, radius, space } from '@/ui';
+import { Button, Fill, Press, Screen, Text, colors, radius, size, space } from '@/ui';
 import { Rise } from '@/ui/Rise';
 import { successTap, warningTap } from '@/ui/haptics';
 import { useAuth, useEmailLogin } from '@/auth/useAuth';
@@ -25,6 +25,9 @@ import { Banner, DevnetPill } from '@/clockin/ui';
 import { useAutopilot } from '@/clockin/autopilot';
 
 const WORDMARK = require('../assets/brand/xorr-wordmark.png');
+/** The wordmark art is 833×166; drawn at the landing header's height, as xorr's welcome draws it. */
+const WORDMARK_H = 18;
+const WORDMARK_W = Math.round((WORDMARK_H * 833) / 166);
 
 export default function Start() {
   const router = useRouter();
@@ -46,7 +49,7 @@ export default function Start() {
       try {
         await ensureDesk(owner);
         successTap();
-        router.replace('/today');
+        router.replace('/');
       } catch (e) {
         warningTap();
         if (__DEV__) console.log('[clockin] setup failed', e);
@@ -61,7 +64,7 @@ export default function Start() {
 
   useAutopilot({ guest: () => guest(), mwa: () => mwa() }, hydrated);
 
-  if (hydrated && wallet && !busy && !error) return <Redirect href="/today" />;
+  if (hydrated && wallet && !busy && !error) return <Redirect href="/" />;
 
   async function go(label: string, get: () => Promise<ConnectedWallet>) {
     setError(null);
@@ -96,8 +99,8 @@ export default function Start() {
       <Fill>
         <Rise index={0} style={{ flex: 1 }}>
           <CoinHero style={{ flex: 1 }} />
-          <View style={{ position: 'absolute', top: space.s8, left: 0, right: 0, alignItems: 'center', gap: space.s10 }}>
-            <Image source={WORDMARK} accessibilityLabel={brand.WORDMARK} style={{ width: 90, height: 18 }} contentFit="contain" />
+          <View style={{ position: 'absolute', top: space.s8, left: 0, right: 0, alignItems: 'center', gap: space.s8 }}>
+            <Image source={WORDMARK} accessibilityLabel={brand.WORDMARK} style={{ width: WORDMARK_W, height: WORDMARK_H }} contentFit="contain" />
             <DevnetPill />
           </View>
         </Rise>
@@ -105,14 +108,10 @@ export default function Start() {
       <View style={{ paddingHorizontal: space.gutter }}>
         <Rise index={1}>
           <Text variant="onboardingTitle" align="center">
-            Your AI stock agent.{'\n'}Clock in every morning.
-          </Text>
-          <Text variant="secondary" color={colors.ink55} align="center" style={{ marginTop: space.s10 }}>
-            It trades tokenized US stocks inside an on-chain permission you can revoke in one tap, writes you a brief each
-            day, and pays you SKR for showing up. This build runs on Solana devnet with test tokens.
+            {brand.TAGLINE}
           </Text>
         </Rise>
-        <Rise index={2} style={{ marginTop: space.s22, gap: space.s10 }}>
+        <Rise index={2} style={{ marginTop: space.s26 }}>
           {error ? <Banner text={error} tone={busyFaucet ? 'warn' : 'down'} /> : null}
           {error && wallet ? (
             <Button
@@ -122,33 +121,55 @@ export default function Start() {
                 setBusyFaucet(false);
                 setBusy('Setting up your devnet desk…');
               }}
+              style={{ marginTop: space.s10 }}
               testID="retry-setup"
             />
           ) : null}
           {missing ? <Banner text={`${missing} See HANDOFF.md.`} /> : null}
           {email && PRIVY_IN_CLOCKIN ? (
             <PrivyEmail onWallet={(address) => go('Connecting your Privy wallet…', async () => ({ kind: 'privy', address }))} onCancel={() => setEmail(false)} />
+          ) : Platform.OS === 'android' && MWA_AVAILABLE ? (
+            <>
+              {/* Seeker-first: Mobile Wallet Adapter, which on a Seeker is Seed Vault. */}
+              <Button label={busy ?? 'Connect wallet'} loading={!!busy} onPress={mwa} testID="connect-mwa" />
+              {PRIVY_IN_CLOCKIN ? (
+                <Button label="Sign in" variant="ghost" disabled={!!busy} onPress={() => setEmail(true)} style={{ marginTop: space.s10 }} testID="connect-privy" />
+              ) : null}
+              <Press onPress={guest} disabled={!!busy} accessibilityRole="button" hitHeight={size.hit} style={{ alignSelf: 'center', marginTop: space.s6 }} testID="connect-guest">
+                <Text variant="footnote" color={colors.ink65}>
+                  No wallet? Try it with a devnet guest wallet
+                </Text>
+              </Press>
+            </>
           ) : (
             <>
-              {Platform.OS === 'android' && MWA_AVAILABLE ? (
-                <Button label={busy ?? 'Connect wallet · Seed Vault'} loading={!!busy} onPress={mwa} testID="connect-mwa" />
-              ) : null}
-              <Button
-                label={Platform.OS === 'android' ? 'Try with a devnet guest wallet' : busy ?? 'Start with a devnet guest wallet'}
-                variant={Platform.OS === 'android' ? 'secondary' : 'primary'}
-                loading={Platform.OS !== 'android' && !!busy}
-                disabled={!!busy}
-                onPress={guest}
-                testID="connect-guest"
-              />
-              {PRIVY_IN_CLOCKIN ? <Button label="Sign in with email (Privy)" variant="ghost" disabled={!!busy} onPress={() => setEmail(true)} testID="connect-privy" /> : null}
-              {Platform.OS !== 'android' ? (
-                <Text variant="footnote" color={colors.ink45} align="center">
-                  Mobile Wallet Adapter (Seed Vault) is Android-only — on a Seeker the first button is your wallet.
-                </Text>
+              <Button label={busy ?? 'Get started'} loading={!!busy} onPress={guest} testID="connect-guest" />
+              {PRIVY_IN_CLOCKIN ? (
+                <Button label="Sign in" variant="ghost" disabled={!!busy} onPress={() => setEmail(true)} style={{ marginTop: space.s10 }} testID="connect-privy" />
               ) : null}
             </>
           )}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: space.s12 }}>
+            <Text variant="footnote" color={colors.ink55}>
+              {'By continuing you agree to the '}
+            </Text>
+            <Press onPress={() => router.push('/legal/terms')} accessibilityRole="link" accessibilityLabel="Read the Terms" hitHeight={size.hit}>
+              <Text variant="footnote" color={colors.ink}>
+                Terms
+              </Text>
+            </Press>
+            <Text variant="footnote" color={colors.ink55}>
+              {' and '}
+            </Text>
+            <Press onPress={() => router.push('/legal/privacy')} accessibilityRole="link" accessibilityLabel="Read the Privacy Policy" hitHeight={size.hit}>
+              <Text variant="footnote" color={colors.ink}>
+                Privacy Policy
+              </Text>
+            </Press>
+            <Text variant="footnote" color={colors.ink55}>
+              .
+            </Text>
+          </View>
         </Rise>
       </View>
     </Screen>

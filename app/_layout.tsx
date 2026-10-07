@@ -111,7 +111,11 @@ function hiddenScreenLayout({ route, children }: { route: { name: string }; chil
 }
 
 function ClockinRemote() {
-  const navigate = React.useCallback((href: string) => router.navigate(href as never), []);
+  const navigate = React.useCallback((href: string) => {
+    // A remote step to another screen closes the Messages drawer first, as a person would.
+    if (!href.startsWith('/ask')) useChatDrawer.getState().hide();
+    router.navigate(href as never);
+  }, []);
   useRemote(navigate);
   return null;
 }
@@ -121,7 +125,7 @@ function ClockinRemote() {
  * notification from the hosted app, a typo — would open a hosted-app screen that reads the mainnet executor, so it is
  * sent to Today instead (or Start, which the tabs do on their own when no wallet is connected).
  */
-const CLOCKIN_ROUTES = /^\/($|start$|desk$|skr$|me$|ask$|legal\/)/;
+const CLOCKIN_ROUTES = /^\/($|start$|intro$|setup$|desk$|skr$|me$|ask$|activity$|agent\/(momentum|dip|nightShift|indexKeeper)$|legal\/)/;
 function ClockinRouteGuard() {
   const path = usePathname();
   useEffect(() => {
@@ -221,7 +225,7 @@ export default function RootLayout() {
           both position themselves against their parent, and a per-screen fix would have left them
           spanning the whole window.
         */}
-        <Frame overlay={CLOCKIN ? null : <ChatDrawer />}>
+        <Frame overlay={<ChatDrawer />}>
         <AppRoutes />
         {/* After the Stack, so `useRouter` resolves against a mounted navigator. */}
         <NotificationRouting />

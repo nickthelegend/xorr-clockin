@@ -4,8 +4,8 @@
  * The devnet stand-ins have no market of their own; they fill at these prices. `stockData.price` is the issuer's mark
  * for the share, which the agent's guard measures the pool against.
  */
-import { SKR_MAINNET_MINT, STOCKS } from './config';
-import type { Quote } from './engine';
+import { SKR_MAINNET_MINT, STOCKS } from '@/clockin/config';
+import type { Quote } from '@/clockin/engine';
 
 /** Jupiter's keyless hosts, in order: the second answers when the first is rate-limiting. */
 const HOSTS = ['https://lite-api.jup.ag/price/v3', 'https://api.jup.ag/price/v3'];

@@ -21,6 +21,8 @@ import type { Href } from 'expo-router';
 import { create } from 'zustand';
 import { isSolana } from '@/chain';
 import type { Agent } from '@/data/types';
+import { CLOCKIN } from '@/clockin/config';
+import { CLOCKIN_AGENTS } from '@/clockin/agents';
 
 /** A screen that already shows part of an agent's work from real records. */
 export type Shortcut = {
@@ -51,7 +53,7 @@ export type ChatAgent = {
   shortcuts: readonly Shortcut[];
 };
 
-export const CHAT_AGENTS: readonly ChatAgent[] = [
+const HOSTED_AGENTS: readonly ChatAgent[] = [
   {
     id: 'momentum-scout',
     name: 'Momentum Scout',
@@ -114,6 +116,24 @@ export const CHAT_AGENTS: readonly ChatAgent[] = [
     ],
   },
 ] as const;
+
+/**
+ * The CLOCK IN build talks to its own agents — the strategies on Home — and they answer from the on-device agent's
+ * numbers (`askNow`), so every opener is a question that has an answer.
+ */
+const CLOCKIN_CHAT: readonly ChatAgent[] = CLOCKIN_AGENTS.map((a) => ({
+  id: a.id,
+  name: a.name,
+  role: a.role,
+  openers: ['What’s the plan today?', 'How is NVDAx doing?', 'What did you buy?'],
+  shortcuts: [
+    { label: 'How it trades', href: `/agent/${a.id}` as Href },
+    { label: 'Your agent’s permission', href: '/desk' as Href },
+    { label: 'SKR', href: '/skr' as Href },
+  ],
+}));
+
+export const CHAT_AGENTS: readonly ChatAgent[] = CLOCKIN ? CLOCKIN_CHAT : HOSTED_AGENTS;
 
 export const DEFAULT_AGENT: ChatAgent = CHAT_AGENTS[0]!;
 

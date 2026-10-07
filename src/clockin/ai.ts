@@ -5,6 +5,7 @@
  * engine's, so it narrates decisions — it never makes them.
  */
 import { deleteSecret, getSecret, setSecret } from './secret';
+import { openRouterChat } from '@/data/openrouter';
 import type { Brief, Decision, Quote, Holding } from './engine';
 
 const KEY = 'xorr.clockin.openrouter';
@@ -13,7 +14,7 @@ export const getAiKey = () => getSecret(KEY);
 export const setAiKey = (k: string) => setSecret(KEY, k.trim());
 export const clearAiKey = () => deleteSecret(KEY);
 
-export type AiContext = { brief: Brief; decisions: Decision[]; quotes: Record<string, Quote>; holdings: Record<string, Holding>; cashUsd: number; tier: string; streak: number };
+export type AiContext = { brief: Brief; decisions: Decision[]; quotes: Record<string, Quote>; holdings: Record<string, Holding>; cashUsd: number; tier: string; streak: number; recent?: string[] };
 
 function context(c: AiContext): string {
   return JSON.stringify({
@@ -30,17 +31,8 @@ function context(c: AiContext): string {
 
 async function chat(model: string, system: string, user: string): Promise<string> {
   const key = await getAiKey();
-  if (!key) throw new Error('Add your OpenRouter key on the Me tab to talk to the agent in words.');
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'X-Title': 'xorr CLOCK IN' },
-    body: JSON.stringify({ model, max_tokens: 400, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] }),
-  });
-  if (!res.ok) throw new Error(`The model answered ${res.status}.`);
-  const body = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-  const text = body.choices?.[0]?.message?.content?.trim();
-  if (!text) throw new Error('The model returned nothing.');
-  return text;
+  if (!key) throw new Error('Add your OpenRouter key in Profile → Advanced to talk to the agent in words.');
+  return openRouterChat(key, model, system, user);
 }
 
 const VOICE =
@@ -68,6 +60,12 @@ export function localAnswer(question: string, c: AiContext): string {
       d ? `Right now I would ${d.action === 'hold' ? 'hold' : d.action === 'buy' ? `buy $${d.usd?.toFixed(0)}` : 'sell'}: ${d.reason}` : '',
     ];
     return parts.filter(Boolean).join(' ');
+  }
+  if (/\b(buy|bought|trade|trades|traded|sell|sold)\b/.test(q) && !sym) {
+    const recent = c.recent ?? [];
+    return recent.length
+      ? `Lately: ${recent.slice(0, 3).join('; ')}. Ask me about any of them by name for the reason.`
+      : 'I have not traded yet. Give me a permission and clock in — I take my first look right after.';
   }
   if (/plan|today|what.*(do|doing)|why/.test(q)) {
     const acts = c.decisions.filter((d) => d.action !== 'hold');

@@ -25,6 +25,10 @@ describe('Ask your agent, without a model', () => {
     expect(a).toMatch(/buy \$25: Up \+1\.90%/);
     expect(localAnswer('what about tslax', ctx)).toMatch(/hold: Guard/);
   });
+  it('says what it bought, or that it has not traded yet', () => {
+    expect(localAnswer('What did you buy?', { ...ctx, recent: ['bought $25.00 TSLAx'] })).toMatch(/Lately: bought \$25\.00 TSLAx/);
+    expect(localAnswer('What did you buy?', ctx)).toMatch(/not traded yet/);
+  });
   it('answers the plan, and falls back to the brief', () => {
     expect(localAnswer("what's the plan today?", ctx)).toMatch(/My plan: buy NVDAx/);
     expect(localAnswer('hello', ctx)).toMatch(/^Book is up \$1\.00\./);

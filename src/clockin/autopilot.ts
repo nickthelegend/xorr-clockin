@@ -8,6 +8,7 @@
  */
 import { useEffect, useRef } from 'react';
 import type { ScrollView } from 'react-native';
+import { nextRemoteCommand } from '@/data/devRemote';
 import { useLocalSearchParams } from 'expo-router';
 
 export function useAutopilot(actions: Record<string, () => unknown>, ready = true): void {
@@ -38,9 +39,8 @@ export function useRemote(navigate: (href: string) => void): void {
     let alive = true;
     const tick = async () => {
       try {
-        const res = await fetch(`${base}/next`);
-        if (res.status === 200) {
-          const cmd = (await res.json()) as { id: number; path: string; auto?: string };
+        const cmd = await nextRemoteCommand(base);
+        if (cmd) {
                   console.log(`[clockin] remote ${cmd.path} ${cmd.auto ?? ''}`);
           navigate(`${cmd.path}${cmd.auto ? `?auto=${cmd.auto}&n=${cmd.id}` : ''}`);
         }

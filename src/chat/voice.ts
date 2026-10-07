@@ -9,6 +9,7 @@
  * `undefined` is not known: not read yet, or not published. A conversation then offers its questions, as it always did.
  */
 import { create } from 'zustand';
+import { CLOCKIN } from '@/clockin/config';
 import { system } from '@/data/system';
 
 type VoiceState = {
@@ -25,6 +26,11 @@ export const useVoice = create<VoiceState>((set, get) => ({
   configured: undefined,
   read: () => {
     if (get().configured !== undefined) return Promise.resolve();
+    // The CLOCK IN agent always answers: from its own numbers, or through the owner's own model key.
+    if (CLOCKIN) {
+      set({ configured: true });
+      return Promise.resolve();
+    }
     reading ??= system
       .health()
       .then((health) => {

@@ -36,6 +36,8 @@ import { agentGradient } from '@/design/gradients';
 import { Press, Text, duration, space, timing, useReducedMotion } from '@/ui';
 import { mmss } from '@/format';
 import { repos } from '@/data';
+import { CLOCKIN } from '@/clockin/config';
+import { askNow } from '@/clockin/desk';
 import { executorSentence, renderSegments, voice, type ThreadMessage } from '@/bot/message';
 import { ApiError, apiReason } from '@/data/apiError';
 import {
@@ -208,6 +210,14 @@ export function Chat({
       setThinking(true);
       // PLAN.md 11.7: a real question to the real agent. The reply is PROSE ONLY — anything
       // numeric is rejected server-side before it can reach this thread.
+      // The CLOCK IN agent answers on the phone, from its own numbers (or the owner's own model key).
+      if (CLOCKIN) {
+        void askNow(text)
+          .then((answer) => append(botProse(agentName, executorSentence(answer, 'xorr agent on this phone'))))
+          .catch(() => append(botProse(agentName, [voice('I could not answer that just now, so I will not guess.')])))
+          .finally(() => setThinking(false));
+        return;
+      }
       void repos.bot
         .ask({
           agentId: agent.persona ?? agent.id,

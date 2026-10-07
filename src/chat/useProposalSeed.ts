@@ -7,6 +7,7 @@
  */
 import { useEffect, useRef } from 'react';
 import { repos } from '@/data';
+import { CLOCKIN } from '@/clockin/config';
 import { useAsync } from '@/data/useAsync';
 import { voice } from '@/bot/message';
 import { botProse, proposalMessage, useThread } from '@/bot/thread';
@@ -24,6 +25,8 @@ export function useProposalSeed(): void {
   // Ask for an open proposal; if there is none, ask the agent to CONSIDER one. Without this
   // the approve-before-execute pipeline had no producer and the thread was permanently empty.
   const { data } = useAsync(async () => {
+    // The CLOCK IN build has no executor to propose: its agent acts at the clock-in, inside the permission.
+    if (CLOCKIN) return null;
     const open = await repos.bot.currentProposal();
     if (open) return { proposal: open, declined: undefined as string | undefined };
     return repos.bot.generateProposal();

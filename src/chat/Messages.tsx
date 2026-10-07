@@ -25,6 +25,9 @@ import { Icon } from '@/design/Icon';
 import { agentGradient } from '@/design/gradients';
 import { AgentOrb, Press, Tag, Text, alpha, radius, signIn, space } from '@/ui';
 import { repos } from '@/data';
+import { CLOCKIN } from '@/clockin/config';
+import { clockinRoster } from '@/clockin/desk';
+import { useClockin } from '@/clockin/session';
 import { useAsync } from '@/data/useAsync';
 import { usePrivyIdentity } from '@/auth/usePrivyIdentity';
 import { useSignedOut } from '@/auth/useSignedOut';
@@ -81,11 +84,13 @@ export interface MessagesProps {
 export function Messages({ onClose, onOpen, onOpenScreen, footerInset }: MessagesProps) {
   const signedOut = useSignedOut();
   const { name } = usePrivyIdentity();
-  const address = useStore((s) => s.wallet?.address);
+  const hostedAddress = useStore((s) => s.wallet?.address);
+  const clockinAddress = useClockin((s) => s.wallet?.address);
+  const address = CLOCKIN ? clockinAddress : hostedAddress;
   const messages = useThread((s) => s.messages);
   const read = useThread((s) => s.read);
   const now = useNow();
-  const roster = useAsync(() => repos.bot.listAgents(), []);
+  const roster = useAsync(() => (CLOCKIN ? Promise.resolve(clockinRoster()) : repos.bot.listAgents()), []);
   const agents = useChatAgents();
   const remember = useMadeAgents((s) => s.remember);
   const [mode, setMode] = useState<Mode>('list');
@@ -126,9 +131,10 @@ export function Messages({ onClose, onOpen, onOpenScreen, footerInset }: Message
     signIn();
   };
   // And for your profile it comes back up on this list when you return (`useChatDrawer.leave`).
-  const openProfile = () => onOpenScreen('/profile');
+  const openProfile = () => onOpenScreen(CLOCKIN ? '/me' : '/profile');
   // Making one opens as its own screen too, and lands on the new agent's page.
-  const makeAgent = () => onOpenScreen('/agent/new');
+  // In the CLOCK IN build the plus hires a shift: Night Shift's page, where SKR pays for a day of it.
+  const makeAgent = () => onOpenScreen(CLOCKIN ? '/agent/nightShift' : '/agent/new');
 
   return (
     <View style={{ flex: 1 }}>
@@ -180,7 +186,7 @@ export function Messages({ onClose, onOpen, onOpenScreen, footerInset }: Message
             onPress={() => pickRoom(room)}
           />
           <GlassButton icon="search" label="Search agents and messages" onPress={() => setMode('search')} />
-          <GlassButton icon="plus" label="Make an agent" onPress={signedOut ? goSignIn : makeAgent} />
+          <GlassButton icon="plus" label={CLOCKIN ? 'Hire a shift' : 'Make an agent'} onPress={signedOut ? goSignIn : makeAgent} />
         </View>
       )}
 
@@ -236,7 +242,7 @@ export function Messages({ onClose, onOpen, onOpenScreen, footerInset }: Message
               <Press
                 onPress={signedOut ? goSignIn : makeAgent}
                 accessibilityRole="button"
-                accessibilityLabel="New agent. Make one of your own"
+                accessibilityLabel={CLOCKIN ? "Hire a shift with SKR" : "New agent. Make one of your own"}
                 style={{ width: tile, alignItems: 'center', gap: space.s6 }}
               >
                 <View style={[RING_BOX, { borderColor: 'transparent' }]}>
@@ -256,7 +262,7 @@ export function Messages({ onClose, onOpen, onOpenScreen, footerInset }: Message
                   </View>
                 </View>
                 <Text color={chat.inkSoft} style={chatType.small} align="center" numberOfLines={2}>
-                  New agent
+                  {CLOCKIN ? 'Hire a shift' : 'New agent'}
                 </Text>
               </Press>
             </ScrollView>

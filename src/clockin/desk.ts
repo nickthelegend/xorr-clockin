@@ -31,7 +31,10 @@ import { fetchPrices, type Prices } from './prices';
 import { boughtToday, useClockin } from './session';
 import { checkInReward, checkedInToday, currentStreak, dayKey, streakAfterCheckIn, withCheckIn } from './streak';
 import { SHIFT_MS, SHIFT_PRICE, STRATEGY_INFO, activeStrategies, rewardMultiplier, tierFor, tierSource, type StrategyId } from './tiers';
-import { notifyNow, scheduleDailyBrief } from './notify';
+import { notifyNow, syncReminders } from './notify';
+import { askAgent } from './ai';
+import { CLOCKIN_AGENTS } from './agents';
+import type { Agent } from '@/data/types';
 import { createDeviceSet, resolveMints } from './bootstrap';
 import type { Owner } from './useOwner';
 
@@ -82,9 +85,9 @@ export async function refresh(owner: PublicKey, opts: { mainnet?: boolean } = {}
     loading: false,
     error:
       view.status === 'rejected'
-        ? `Devnet could not be read: ${String((view.reason as Error)?.message ?? view.reason)}`
+        ? 'Can’t reach Solana devnet right now. Your tokens are safe on chain — pull down or try again.'
         : prices.status === 'rejected'
-          ? `Prices could not be read: ${String((prices.reason as Error)?.message ?? prices.reason)}`
+          ? 'Live prices are unavailable right now, so your agent is holding. Showing the last prices it had.'
           : null,
   });
   if (__DEV__ && useLive.getState().error) console.log(`[clockin] refresh: ${useLive.getState().error}`);
@@ -92,6 +95,12 @@ export async function refresh(owner: PublicKey, opts: { mainnet?: boolean } = {}
     void readMainnetSkr(owner).then((mainnetSkr) => useLive.setState({ mainnetSkr }));
     void readSeekerGenesis(owner).then((sgt) => useLive.setState({ sgt }));
   }
+}
+
+/** Re-align the morning brief and the evening streak reminder with the session (no permission prompt). */
+export function syncRemindersNow(ask = false, devForce = false): Promise<boolean> {
+  const s = useClockin.getState();
+  return syncReminders({ on: s.remindersOn, briefAt: s.briefAt, streak: currentStreak(s.streak), checkedInToday: checkedInToday(s.streak) }, ask, devForce);
 }
 
 /* ---------------------------------------------------------------------------------------------------- derived */
@@ -306,7 +315,7 @@ export async function checkIn(owner: Owner): Promise<CheckInResult> {
     if (live.prices) useClockin.getState().setSnapshot(Object.fromEntries(Object.values(live.prices.quotes).map((q) => [q.symbol, q.usd])));
     useClockin.getState().set({ lastBrief: { ...brief, at: Date.now(), by: 'engine' } });
     log({ kind: 'checkin', title: `Clocked in · day ${streak} · +${reward} dSKR`, detail: brief.headline, sig, ok: true });
-    void scheduleDailyBrief(streak);
+    void syncRemindersNow();
     return { sig, reward, streak, brief };
   });
   // The agent's look is its own step, so a refusal there never undoes the clock-in.
@@ -456,4 +465,42 @@ export async function getDevnetSol(owner: Owner): Promise<string> {
     await refresh(owner.pubkey);
     return sig;
   });
+}
+
+/* -------------------------------------------------------------------------------------------- the conversation */
+
+/** Ask the agent, from what the desk knows right now (the Messages drawer's voice in the CLOCK IN build). */
+export async function askNow(question: string): Promise<string> {
+  const live = useLive.getState();
+  const s = useClockin.getState();
+  const st = standing(live);
+  const { decisions, brief } = plan(live);
+  return askAgent(s.aiModel, question, {
+    brief,
+    decisions,
+    quotes: live.prices?.quotes ?? {},
+    holdings: st.holdings,
+    cashUsd: st.cashUsd,
+    tier: st.tier.name,
+    streak: currentStreak(s.streak),
+    recent: s.activity.filter((a) => (a.kind === 'buy' || a.kind === 'sell') && a.ok).map((a) => a.title.replace(/^Agent /, '')),
+  });
+}
+
+/** The CLOCK IN agents as the roster the Messages drawer lists: hired while the tier or a paid shift runs them. */
+export function clockinRoster(): Agent[] {
+  const st = standing(useLive.getState());
+  return CLOCKIN_AGENTS.map((a) => ({
+    id: a.id,
+    personaId: a.id,
+    name: a.name,
+    role: a.role,
+    metric: '',
+    pnl30d: 0,
+    win: 0,
+    trades: 0,
+    hired: st.strategies.includes(a.id),
+    c1: a.gradient.c1,
+    c2: a.gradient.c2,
+  }));
 }

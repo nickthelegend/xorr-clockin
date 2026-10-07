@@ -2,7 +2,7 @@
  * Me — the wallet, the agent's key, the morning brief, the optional AI key, the whole trail, and what this build is.
  */
 import React, { useEffect, useState } from 'react';
-import { ScrollView, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, Screen, Switch, Text, colors, radius, space } from '@/ui';
 import { successTap, warningTap } from '@/ui/haptics';
@@ -49,7 +49,10 @@ export default function Me() {
 
   return (
     <Screen gutter="none">
-      <ScrollView ref={scroller} contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: space.s44, gap: space.s16 }}>
+      {/* Android 15 draws edge to edge and no longer resizes the window for the keyboard; the inputs are lifted here. */}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled" ref={scroller} contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: space.s44, gap: space.s16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: space.s8 }}>
           <Text variant="screenTitle">Me</Text>
           <DevnetPill />
@@ -208,6 +211,7 @@ export default function Me() {
           testID="disconnect"
         />
       </ScrollView>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }

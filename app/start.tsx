@@ -6,7 +6,7 @@
  * and hands it test dUSDC and a welcome grant of dSKR, so the first thing a person signs is something that matters.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Platform, TextInput, View } from 'react-native';
+import { BackHandler, Platform, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Redirect, useRouter } from 'expo-router';
 import { brand } from '@/design/brand';
@@ -165,10 +165,24 @@ function PrivyEmail({ onWallet, onCancel }: { onWallet: (address: string) => voi
   const [sent, setSent] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const reported = useRef(false);
+
+  // Android's back button closes the email step rather than leaving the app.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onCancel();
+      return true;
+    });
+    return () => sub.remove();
+  }, [onCancel]);
 
   useEffect(() => {
     if (auth.authenticated && !privy.address) void auth.createWallet().catch(() => undefined);
-    if (auth.authenticated && privy.address) onWallet(privy.address);
+    // Once: the parent re-renders while it connects, and hands down a new callback each time.
+    if (auth.authenticated && privy.address && !reported.current) {
+      reported.current = true;
+      onWallet(privy.address);
+    }
   }, [auth, privy.address, onWallet]);
 
   const input = { backgroundColor: colors.inputBg, borderRadius: radius.tile, borderWidth: 1, borderColor: colors.inputBorder, color: colors.ink, paddingHorizontal: 14, height: 50, fontSize: 16 } as const;

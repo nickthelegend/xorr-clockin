@@ -19,6 +19,11 @@ OUT="${OUT:-$CLOCKIN/apks/xorr-clockin.apk}"
 ARCHS="${ARCHS:-arm64-v8a,x86_64}"
 
 cd "$ROOT"
+# One Gradle build at a time across all CLOCK IN agents (shared machine memory): take the lock, always release it.
+LOCK="$CLOCKIN/.gradle.lock"
+until mkdir "$LOCK" 2>/dev/null; do echo "gradle lock held by $(cat "$LOCK/owner" 2>/dev/null); waiting"; sleep 30; done
+echo xorr > "$LOCK/owner"
+trap '(cd "$ROOT/android" 2>/dev/null && ./gradlew --stop >/dev/null 2>&1); rm -rf "$LOCK"' EXIT
 # The shared stand-in set must be devnet's (or empty: then each phone creates its own set on first run).
 node -e "const d=require('./src/clockin/devnet.json'); if(/127\.0\.0\.1|localhost/.test(d.cluster||'')) { console.error('src/clockin/devnet.json holds LOCALNET mints; restore the devnet set (git checkout src/clockin/devnet.json)'); process.exit(1) } console.log(d.usdc ? 'shared devnet set '+d.usdc : 'no shared set: each phone creates its own stand-in mints')"
 
@@ -27,6 +32,11 @@ export EXPO_PUBLIC_CLOCKIN=1
 export EXPO_PUBLIC_XORR_CHAIN=solana-devnet
 export EXPO_PUBLIC_CLOCKIN_RPC="${EXPO_PUBLIC_CLOCKIN_RPC_RELEASE:-https://api.devnet.solana.com}"
 export EXPO_PUBLIC_CHAIN_RPC="$EXPO_PUBLIC_CLOCKIN_RPC"
+# The CLOCK IN build has no executor. Naming an address that can never resolve (RFC 2606 .invalid) keeps the hosted
+# app's local-development default (localhost:8788) out of the bundle and guarantees no hosted service is ever called.
+export EXPO_PUBLIC_API_URL="https://executor.clockin.invalid"
+# Development-only remote control stays off in release builds.
+unset EXPO_PUBLIC_CLOCKIN_REMOTE
 
 npx expo prebuild -p android --no-install >/dev/null
 PROPS=()
@@ -37,7 +47,7 @@ else
 fi
 # One daemon, 3 GB heap at most (shared machine), stopped when done.
 (cd android && ./gradlew assembleRelease -PreactNativeArchitectures="$ARCHS" "${PROPS[@]}" \
-  -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m" -Dorg.gradle.workers.max=4 --console=plain; ./gradlew --stop >/dev/null)
+  -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m" -Dorg.gradle.workers.max=4 --console=plain)
 mkdir -p "$(dirname "$OUT")"
 cp android/app/build/outputs/apk/release/app-release.apk "$OUT"
 BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"

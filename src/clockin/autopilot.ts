@@ -26,14 +26,16 @@ export function useAutopilot(actions: Record<string, () => unknown>, ready = tru
 
 /**
  * Development-only: poll a local command queue (`tools/clockin/remote.mjs`, port 4405) and open what it says, e.g.
- * `{"path":"/today","auto":"checkin"}`. `simctl openurl` stops on iOS's "Open in xorr?" prompt, which nobody is there
+ * `{"path":"/today","auto":"checkin"}`, when `EXPO_PUBLIC_CLOCKIN_REMOTE` names it. `simctl openurl` stops on iOS's "Open in xorr?" prompt, which nobody is there
  * to tap; this does not. Mounted only when `__DEV__`.
  */
 export function useRemote(navigate: (href: string) => void): void {
   useEffect(() => {
-    if (!__DEV__) return;
+    // Off unless a developer points it somewhere (EXPO_PUBLIC_CLOCKIN_REMOTE=http://127.0.0.1:4405 npx expo start …),
+    // so no local address is baked into any build.
+    const base = process.env.EXPO_PUBLIC_CLOCKIN_REMOTE;
+    if (!__DEV__ || !base) return;
     let alive = true;
-    const base = process.env.EXPO_PUBLIC_CLOCKIN_REMOTE || 'http://127.0.0.1:4405';
     const tick = async () => {
       try {
         const res = await fetch(`${base}/next`);

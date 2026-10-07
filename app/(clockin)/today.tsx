@@ -6,7 +6,7 @@
  * book it keeps, priced live, and the market it watches.
  */
 import React, { useState } from 'react';
-import { RefreshControl, ScrollView, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AgentOrb, Button, Screen, Text, colors, radius, space } from '@/ui';
 import { heavyTap, successTap, warningTap } from '@/ui/haptics';
@@ -46,7 +46,8 @@ export default function Today() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   // Whether the latest permission event was a grant: an empty allowance then means "spent", not "never given".
-  const granted = activity.find((a) => a.kind === 'grant' || a.kind === 'revoke')?.kind === 'grant';
+  const lastPermissionEvent = activity.find((a) => a.kind === 'grant' || a.kind === 'revoke')?.kind;
+  const granted = lastPermissionEvent === 'grant';
   const todaysSig = result?.sig ?? activity.find((a) => a.kind === 'checkin')?.sig;
 
   const aiContext = () => ({
@@ -104,7 +105,10 @@ export default function Today() {
 
   return (
     <Screen gutter="none">
+      {/* Android 15 draws edge to edge and no longer resizes the window for the keyboard; the inputs are lifted here. */}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         ref={scroller}
         contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: space.s44, gap: space.s16 }}
         refreshControl={<RefreshControl refreshing={pulling} onRefresh={onPull} tintColor={colors.ink55} />}
@@ -158,8 +162,10 @@ export default function Today() {
                 {working
                   ? `Working · ${usd(st.permission.leftUsd, 0)} left to spend`
                   : granted
-                    ? 'Watching · allowance used up or revoked'
-                    : 'Watching · no permission yet'}
+                    ? 'Watching · allowance used up'
+                    : lastPermissionEvent === 'revoke'
+                      ? 'Watching · permission revoked'
+                      : 'Watching · no permission yet'}
               </Text>
               <Text variant="cardTitleLg" style={{ marginTop: space.s6 }}>
                 {shown.headline}
@@ -351,6 +357,7 @@ export default function Today() {
             placeholderTextColor={colors.ink38}
             style={{ backgroundColor: colors.inputBg, borderRadius: radius.tile, borderWidth: 1, borderColor: colors.inputBorder, color: colors.ink, padding: 12, fontSize: 15 }}
             onSubmitEditing={() => void onAsk()}
+            onFocus={() => setTimeout(() => scroller.current?.scrollToEnd({ animated: true }), 250)}
             returnKeyType="send"
           />
           <Button label="Ask" variant="secondary" loading={asking} onPress={() => onAsk()} style={{ marginTop: space.s10 }} />
@@ -365,6 +372,7 @@ export default function Today() {
           </Text>
         </Card>
       </ScrollView>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }

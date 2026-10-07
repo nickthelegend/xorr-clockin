@@ -116,6 +116,20 @@ function ClockinRemote() {
   return null;
 }
 
+/**
+ * The CLOCK IN build's screens are Start, the four tabs and the legal pages. Any other route — an old deep link, a
+ * notification from the hosted app, a typo — would open a hosted-app screen that reads the mainnet executor, so it is
+ * sent to Today instead (or Start, which the tabs do on their own when no wallet is connected).
+ */
+const CLOCKIN_ROUTES = /^\/($|start$|today$|desk$|skr$|me$|legal\/)/;
+function ClockinRouteGuard() {
+  const path = usePathname();
+  useEffect(() => {
+    if (!CLOCKIN_ROUTES.test(path)) router.replace('/today');
+  }, [path]);
+  return null;
+}
+
 function NotificationRouting() {
   useNotificationRoute();
   return null;
@@ -211,7 +225,7 @@ export default function RootLayout() {
         <AppRoutes />
         {/* After the Stack, so `useRouter` resolves against a mounted navigator. */}
         <NotificationRouting />
-        <SolanaRouteGuard />
+        {CLOCKIN ? <ClockinRouteGuard /> : <SolanaRouteGuard />}
         {CLOCKIN && __DEV__ ? <ClockinRemote /> : null}
         </Frame>
         </MaybeReachability>

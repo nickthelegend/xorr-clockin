@@ -21,11 +21,18 @@ function toBase58(b64: string): string {
 }
 
 async function authorize(wallet: Web3MobileWallet, previous?: MwaAuth): Promise<MwaAuth> {
-  const res = await wallet.authorize({
-    chain: 'solana:devnet',
-    identity: APP_IDENTITY,
-    ...(previous?.authToken ? { auth_token: previous.authToken } : {}),
-  });
+  const ask = (authToken?: string) =>
+    wallet.authorize({ chain: 'solana:devnet', identity: APP_IDENTITY, ...(authToken ? { auth_token: authToken } : {}) });
+  let res: Awaited<ReturnType<typeof ask>>;
+  try {
+    // Reauthorize silently with the cached token…
+    res = await ask(previous?.authToken);
+  } catch (e) {
+    // …and if the wallet no longer honours it (revoked, expired, wallet reinstalled), ask afresh — unless the person
+    // declined, which is an answer, not a stale token.
+    if (!previous?.authToken || /declin|reject|cancel/i.test(String((e as { code?: string })?.code ?? '') + String(e))) throw e;
+    res = await ask();
+  }
   const account = res.accounts[0];
   if (!account) throw new Error('The wallet authorized no account.');
   return {

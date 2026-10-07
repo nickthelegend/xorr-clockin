@@ -226,7 +226,7 @@ export function brief(input: BriefInput): Brief {
   const buys = input.decisions.filter((d) => d.action === 'buy');
   const sells = input.decisions.filter((d) => d.action === 'sell');
   const guarded = input.decisions.filter((d) => d.reason.startsWith('Guard'));
-  if (!input.permissionLive) lines.push('I have no permission right now, so I am only watching. Grant one on the Agent tab and I start working.');
+  if (!input.permissionLive) lines.push('I have no permission right now, so I am only watching. Give me one from Safety and I start working.');
   else if (buys.length || sells.length)
     lines.push(
       `Plan: ${[...buys.map((b) => `buy $${b.usd!.toFixed(0)} ${b.symbol}`), ...sells.map((s) => `close ${s.symbol}`)].join(', ')}.`,

@@ -69,7 +69,7 @@ export async function mwaSign(auth: MwaAuth, txs: Transaction[]): Promise<{ sign
   return friendly(transact(async (wallet) => {
     const fresh = await authorize(wallet, auth);
     if (fresh.address !== auth.address) {
-      throw new Error(`The wallet switched account (${fresh.address.slice(0, 4)}…). Reconnect from the Me tab.`);
+      throw new Error(`The wallet switched account (${fresh.address.slice(0, 4)}…). Disconnect it in Profile and connect again.`);
     }
     const signed = await wallet.signTransactions({ transactions: txs });
     return { signed, auth: fresh };

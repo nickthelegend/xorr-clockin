@@ -11,4 +11,9 @@ describe('a busy devnet faucet reads as busy, not broken', () => {
     expect(friendlyError(new Error('airdrop request failed. This can happen when the rate limit is reached.'))).toBe(FAUCET_BUSY);
     expect(friendlyError(new Error('The wallet declined. Nothing was signed.'))).toBe('The wallet declined. Nothing was signed.');
   });
+  it('says devnet is unreachable instead of printing a stack', async () => {
+    const { friendlyError, DEVNET_UNREACHABLE } = await import('./desk');
+    expect(friendlyError(new Error('failed to get balance of account 7sz7: Error: fetch failed'))).toBe(DEVNET_UNREACHABLE);
+    expect(friendlyError(new Error('UnexpectedException: Could not connect to the server.'))).toBe(DEVNET_UNREACHABLE);
+  });
 });

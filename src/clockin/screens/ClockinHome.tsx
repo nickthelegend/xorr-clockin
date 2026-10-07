@@ -221,7 +221,7 @@ export default function ClockinHome() {
           {total !== null ? (
             <RollingNumber value={money(total)} variant="heroBalance" delay={STAGGER} roll containerStyle={{ marginTop: space.s6 }} />
           ) : live.error ? (
-            <Text variant="heroBalance" style={{ marginTop: space.s6 }}>
+            <Text variant="heroBalance" color={colors.ink30} style={{ marginTop: space.s6 }} accessibilityLabel="Balance unavailable">
               —
             </Text>
           ) : (
@@ -237,7 +237,7 @@ export default function ClockinHome() {
         {live.error || live.setupFailed || faucetDry ? (
           <View style={{ marginTop: space.s12, paddingHorizontal: space.gutter }}>
             <Button
-              label={busy ?? (live.setupFailed ? 'Try setting up again' : faucetDry ? 'Get devnet SOL' : 'Try again')}
+              label={busy ?? (faucetDry && !live.setupFailed ? 'Get devnet SOL' : 'Try again')}
               variant="secondary"
               loading={!!busy}
               onPress={() => {

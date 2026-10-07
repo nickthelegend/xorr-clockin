@@ -61,7 +61,7 @@ export default function Start() {
     })();
   }, [owner, busy, router]);
 
-  useAutopilot({ guest: () => guest(), mwa: () => mwa() }, hydrated);
+  useAutopilot({ guest: () => guest(), mwa: () => mwa(), email: () => setEmail(true) }, hydrated);
 
   if (hydrated && wallet && !busy && !error) return <Redirect href="/" />;
 

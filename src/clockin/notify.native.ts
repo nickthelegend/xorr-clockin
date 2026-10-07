@@ -33,7 +33,7 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
 });
 
-/** Granted already, or — only when `ask` — granted now. The clock-in never pops a prompt; the Me tab's switch does. */
+/** Granted already, or — only when `ask` — granted now. The clock-in never pops a prompt; Profile's switch does. */
 async function allowed(ask: boolean): Promise<boolean> {
   await ensureChannels().catch(() => undefined);
   const perm = await Notifications.getPermissionsAsync();

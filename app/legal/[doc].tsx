@@ -6,6 +6,7 @@
  * explicitly NOT legal advice: task 14.2 still requires counsel on the non-custodial
  * posture before launch.
  */
+import { CLOCKIN } from '@/clockin/config';
 import React from 'react';
 import { ScrollView, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -70,6 +71,13 @@ export default function LegalDoc() {
           <Text variant="footnote" color={colors.ink55}>
             {entry.updated}
           </Text>
+          {CLOCKIN ? (
+            <NoteStrip kind="acted" style={{ marginTop: space.s16 }}>
+              {
+                'This devnet build runs no xorr server. Your session, streak and agent key stay on this phone; prices come from Jupiter; every transaction goes to Solana devnet with test tokens. Where the text below describes the hosted xorr — its server, deposits, or routing through other venues — it does not apply here.'
+              }
+            </NoteStrip>
+          ) : null}
           {entry.sections.map((s) => (
             <View key={s.heading} style={{ marginTop: space.s22, gap: space.s8 }}>
               <Text variant="cardTitle">{s.heading}</Text>

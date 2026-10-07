@@ -201,8 +201,16 @@ export function isFaucetBusy(e: unknown): boolean {
   return /429|rate.?limit|airdrop|too many requests|faucet has run dry/i.test(m);
 }
 
+export const DEVNET_UNREACHABLE = 'Can’t reach Solana devnet right now. Your tokens are safe on chain — try again in a moment.';
+
+export function isUnreachable(e: unknown): boolean {
+  const m = e instanceof Error ? e.message : String(e);
+  return /fetch failed|network request failed|could not connect|failed to get|ECONNREFUSED|timed? ?out|socket|getaddrinfo/i.test(m);
+}
+
 export function friendlyError(e: unknown): string {
   if (isFaucetBusy(e)) return FAUCET_BUSY;
+  if (isUnreachable(e)) return DEVNET_UNREACHABLE;
   return e instanceof Error ? e.message : String(e);
 }
 

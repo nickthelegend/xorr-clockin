@@ -4,7 +4,7 @@
  * Normally the shared set in `devnet.json` exists on devnet and xorr's faucet is its mint authority. If that set is not
  * on the cluster (it was never created — devnet SOL is rate-limited — or devnet was reset), this phone creates its own
  * set: a venue key kept in the keystore becomes the mint authority, and the owner pays the ~0.011 SOL of rent from devnet
- * SOL airdropped to them. Every screen then works the same way, on this phone's own mints, and says so on the Me tab.
+ * SOL airdropped to them. Every screen then works the same way, on this phone's own mints, and says so in Profile.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram } from '@solana/web3.js';

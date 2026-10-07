@@ -35,7 +35,10 @@ real xStocks**. No real money moves, and the CLOCK IN app never talks to xorr's 
 
 ## What a day looks like
 
-1. **Open** — Home, in xorr's design: the total balance, the live line, the daily clock-in card, and the sheet of Agents, the morning Brief, Stocks and SKR.
+0. **First run** — three intro screens, then a guided first grant: set a cap and sign, watch the agent's first $10 buy,
+   and Test the cap to see devnet refuse it. Skippable, and remembered.
+1. **Open** — Home, in xorr's own design (the xorr-xlayer UI): the total balance, the clock-in row (seven days, one
+   button), the ticker line, and the sheet of Agents, the morning Brief, Stocks and SKR.
 2. **Clock in** — one signature (Seed Vault sheet on a Seeker). The streak goes up and dSKR lands. The agent looks right
    after: exits first, then the guard, then each strategy. It buys inside your permission and tells you why.
 3. **Check the book** — positions at live prices, P&L against cost, and every action on the trail with an explorer link.
@@ -44,7 +47,11 @@ real xStocks**. No real money moves, and the CLOCK IN app never talks to xorr's 
 
 ## How it is built (the CLOCK IN parts)
 
-Everything new is in [`src/clockin/`](src/clockin) (logic and `screens/ClockinHome.tsx`) and the screens `app/start.tsx`, `app/desk.tsx`, `app/skr.tsx`, `app/me.tsx`, `app/ask.tsx` — all drawn in xorr's own design system (the xorr-xlayer UI: same tab bar, Home sheet, Safety layout, type and colour).
+Everything new is in [`src/clockin/`](src/clockin) (logic, plus `screens/` for Home, the agent pages and Activity)
+and the screens `app/start.tsx`, `app/intro.tsx`, `app/setup.tsx`, `app/desk.tsx` (Safety), `app/skr.tsx` and
+`app/me.tsx` (Profile). They are drawn only with xorr's own design system (the xorr-xlayer UI): the same tab bar, Home
+sheet, SetupCard, TradingTicker, KillSwitchChip, Safety layout with its stop curtain, agent pages, and the Messages
+drawer, which is where you talk to your agents. Before-and-after screens are in `clockin/screens/polish/`.
 
 | Piece | What it does |
 |---|---|

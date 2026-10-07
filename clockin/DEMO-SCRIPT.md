@@ -6,23 +6,25 @@ Seed Vault sheet) or an emulator with an MWA wallet. The iOS simulator shows the
 
 | # | Time | Screen | Action | Narration |
 |---|---|---|---|---|
-| 1 | 0:00–0:08 | Start | App opens on the coin art, with the **DEVNET · TEST TOKENS** pill visible | "xorr is an AI agent that trades tokenized US stocks for you, without ever holding your money. This is the Seeker build, on Solana devnet." |
-| 2 | 0:08–0:18 | Start → Seed Vault sheet | Tap **Connect wallet**, then approve in the wallet | "On a Seeker the first button is Seed Vault, over Mobile Wallet Adapter. xorr's devnet faucet sets the wallet up with test dollars and SKR. No signature needed." |
-| 3 | 0:18–0:30 | Home | Show the balance, the clock-in card, then the sheet's Agents and Brief tabs | "Every morning the agent has a brief waiting: what the book did, what moved since I last clocked in, and what it plans to do, written from live Jupiter prices." |
-| 4 | 0:30–0:42 | Trade → Your agent | Choose 100 dUSDC, tap **Sign permission**, approve in the wallet | "I give it a permission: one ApproveChecked on my dUSDC. The token program enforces the cap, not xorr." |
-| 5 | 0:42–0:55 | Home | Tap **Clock in · +15 dSKR**, sign, and watch the week strip light up and the Brief tab's "What it did just now" appear | "I clock in with one signature. My streak goes up, I earn SKR, and the agent takes its look and buys, telling me why." |
-| 6 | 0:55–1:05 | Your agent | Tap **Test the cap**, then open the explorer link | "Can it overspend? It tries 150 dUSDC against my 100. The token program refuses on devnet, and here's the failed transaction." |
-| 7 | 1:05–1:15 | SKR | Show the tier, the earn table, then hire **Night Shift · 20 SKR** on Your agent | "SKR is what I pay my agent with. Clocking in earns it, a strategy shift spends it, and holding it sets my tier. If I already hold real SKR, my tier starts there." |
-| 8 | 1:15–1:25 | Your agent | Hold **Stop all trading** | "And one tap stops everything: an SPL Revoke on every account. The agent can move nothing." |
-| 9 | 1:25–1:30 | Home | Hold on the streak strip | "Thirty seconds a day. Clock in tomorrow." |
+| 1 | 0:00–0:08 | Welcome | The app opens on xorr's coin hero: "A bot that trades while you get on with your life", with the **Devnet · test tokens** tag under the legal line | "xorr is an AI agent that trades tokenized US stocks for you, without ever holding your money. This is the Seeker build, on Solana devnet." |
+| 2 | 0:08–0:16 | Welcome → Seed Vault sheet | Tap **Connect wallet**, then approve in the wallet | "On a Seeker, Connect wallet is Seed Vault, over Mobile Wallet Adapter. xorr sets the wallet up with test dollars and SKR, and I don't sign anything for that." |
+| 3 | 0:16–0:26 | Intro (3 screens) | Swipe through: Meet your agent → A permission you can take back → Clock in every morning | "Three screens: what the agent does, the permission I can take back, and the daily clock-in that pays SKR." |
+| 4 | 0:26–0:44 | First grant | Set the cap with the stepper, tap **Sign permission**, then **Buy $10 of …** and **Test the cap** | "One signature gives it a cap. It makes its first real buy, then I ask it to overspend, and the token program refuses on chain. Every step has its transaction." |
+| 5 | 0:44–0:58 | Home | Show the balance, the clock-in row and the agents. Tap **Clock in · +15 dSKR** and sign | "Every morning: one signature keeps my streak and pays SKR. The agent takes its look right after." |
+| 6 | 0:58–1:08 | Home → Brief tab | The headline, the agent's notes and "What it did just now" with the fill receipt | "The brief is written from live Jupiter prices and what changed since my last visit. Here's what it bought, and why." |
+| 7 | 1:08–1:16 | Messages drawer | Tap the chat button, open Momentum Scout, tap "What did you buy?" | "I can ask any of my agents. They answer from their own numbers." |
+| 8 | 1:16–1:24 | Agent page (Night Shift) | Tap Night Shift on Home, then **Hire for 24h · 20 SKR** | "SKR is how I pay my agent for extra work. Night Shift buys the off-hours discount for a day." |
+| 9 | 1:24–1:30 | Safety | Hold **Stop all trading**; the stop curtain confirms on chain | "And one hold stops everything: an SPL revoke. Thirty seconds a day — clock in tomorrow." |
 
 **Extended (portal cut, to about 3:00):**
-- *Look now* on Your agent: walk through the BUY and HOLD rows and their reasons, including a guard hold if one shows.
-- The trail on Your agent: tap one explorer link per action type.
-- Profile (avatar or bell on Home): wallet type and the morning-brief switch, which triggers the notification prompt.
+- An agent page: **Look now**, then walk through the BUY and HOLD rows and their reasons, including a guard hold if one
+  shows.
+- Safety → Activity: tap one transaction per action type.
+- Profile (avatar or bell on Home): the morning-brief switch with its time (7:00 / 8:30 / 10:00) and the streak
+  reminder, then Advanced.
 - Home's Stocks tab: holdings at live prices with P&L, and the watchlist showing pool versus issuer, with issuer logos.
-- Ask (tab bar): "Why NVDAx?" — the agent answers from its own numbers.
-- On a Seeker: the SKR screen's **Seeker verified · 1.5×** card.
+- The SKR screen: tier meter, earn, spend and hold. On a Seeker, the **Seeker 1.5×** tag.
+- Share on the Brief tab: the streak and P&L card goes to the share sheet.
 
-Everything above was performed in the app on the iOS simulator against a local Solana validator (Oct 6). Only the MWA
+Everything above was performed in the app on the iOS simulator against a local Solana validator (Oct 7, polish build). Only the MWA
 and Seed Vault shots need an Android device; see HANDOFF.md.

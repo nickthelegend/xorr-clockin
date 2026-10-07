@@ -126,10 +126,26 @@ tools/clockin/build-apk.sh
 - **Ports used:** 4400–4403 and 4410–4499 (local validator), 4405 (dev remote), 8481 (Metro). Simulator:
   B60FAA19-1F14-4F56-BCA9-263D22A2046F.
 
+## Polish round (Oct 7, version 1.2.0 / versionCode 3)
+
+The UI stays xorr-xlayer's: everything below is built only from xorr's own components. Before/after captures are in
+`clockin/screens/polish/` (iPhone 17 Pro Max simulator, local validator, guest wallet, per-phone mints).
+
+| # | Item | What shipped | Verified |
+|---|---|---|---|
+| P0 | xlayer fidelity (design review) | Messages is xorr's drawer again (the agents answer from their own numbers); Home is balance → one SetupCard-shaped clock-in row → TradingTicker → sheet with KillSwitchChip; no gold except one Seeker Tag; the hand-built kit (Card, Banner, pill, underlined links) replaced by ConsequenceCard, FailureNote, TransactionRef (ported), Field; /desk split into Safety + agent pages + Activity; header no longer clipped (`overflow: hidden`, subtitle "Devnet · addr") | Simulator captures `polish/02–10`; a second design review of the branch confirmed the P0s and the listed P1s |
+| 1 | First run | `/intro` (3 screens: the agent, the permission you can take back, clock-in + SKR) and `/setup` (Stepper cap → sign → the agent's first $10 buy → Test the cap refused on chain, each with its transaction). Skippable; `introSeen` per device, `firstRunDone` per wallet | Fresh install on the simulator: grant, AAPLx buy, and over-cap refusal all landed on the local validator (`polish/11–13`) |
+| 2 | Feel | xorr's Rise stagger on every sheet tile and row (ROWS_FROM), the balance and the streak count up (RollingNumber), the ticker breathes while the agent looks, the stop curtain on revoke, skeletons (Placeholder/LoadingRows) for the first read, xorr's useRefreshControl. Haptics follow xorr's rules: selection on press, success/warning on the result, heavy only on the hold, kill only in the curtain. Reduced motion comes from Rise/motion.ts | Simulator |
+| 3 | Stickiness | The morning brief at a chosen time (7:00 / 8:30 / 10:00) plus a 20:00 "streak at risk" reminder (tonight while today is open, else tomorrow), re-aligned on every Home focus and clock-in, with the next time read back from the OS on Profile. "Since your last visit" note in Brief. Share (streak, P&L, tier) through the share sheet, text only | The time logic is unit-tested. On the simulator the schedule calls ran, but **iOS keeps no pending notification until permission is granted, and nobody could tap the iOS prompt**, so delivery and the read-back are unverified |
+| 4 | States | Loading (skeletons), empty (EmptyState on Stocks/Activity, "it held" notes), errors (offline: "Can't reach Solana devnet… Try again"; prices down: holding on last prices; faucet busy: retry / Get devnet SOL; setup failed: Try setting up again; no MWA wallet: install one or use the guest wallet). No dead ends | Offline and faucet copy reviewed; the paths are the same code that ran on Oct 6 |
+| 5 | Accessibility | Font scaling capped per variant by xorr's Text; ≥44pt targets (TransactionRef, chips, links); labels with state on tabs, switches, the streak days ("Today, not yet"), the clock-in confirmation (live region); Safety/agent titles are headers | Code review; not run with VoiceOver |
+| 6 | Permissions hygiene | The APK has no RECORD_AUDIO or FOREGROUND_SERVICE. Dictation in the drawer is web-only, so no mic is shown on a phone. SYSTEM_ALERT_WINDOW and storage are blocked (round 2) | `aapt2 dump badging` on the 1.2.0 APK |
+| — | Tests | 1,343 app unit tests pass (`npx vitest run --exclude "server/**"`), including the repository-boundary and design-audit suites, which caught three issues fixed here (network calls moved into `src/data`, no `toFixed` on money, `/ask` renders a Screen). `src/audit/anchorCheck.test.ts` cannot load without the server's `pg` (pre-existing; server deps are not installed) | `tsc` clean; eslint has no errors |
+
 ## Android audit (Oct 7, static: no device or emulator was used)
 
-Checked against the release APK `xorr-clockin.apk`. Its sha256 is `5396e26ab9eab02143ab6fc3f74e9e0557b01518faa78b31456668f0c6a87d57`.
-It is version 1.1.0, versionCode 2, built from `dcbe14a`, and the same file is the `clockin-v1` release asset (download
+Checked first against 1.1.0 (versionCode 2, sha256 `5396e26a…7d57`, built from `dcbe14a`); re-checked on 1.2.0 (versionCode 3, sha256
+`b2908d4a1f0b47bdc877549a7d38c348c8f7d134731fb01373c2fcb7fe712b0c`, built from `802920c`): no RECORD_AUDIO, FOREGROUND_SERVICE, SYSTEM_ALERT_WINDOW or storage permission. It is and the same file is the `clockin-v1` release asset (download
 hash checked). Tools used: `aapt2 dump badging/xmltree`, `apksigner`, `unzip`, a string scan of the Hermes bundle, and
 reading the source.
 
@@ -172,7 +188,7 @@ since.
 - Kept, gitignored, for `scripts/devnet-go.sh`'s rebuild: `android/` (1.0 GB) and `ios/` (1.2 GB). The iOS build
   products in `/Volumes/Extreme SSD/Projects/clockin/.cache/derived/xorr` (2.8 GB) can be deleted when you are done.
 - Release APK: `/Volumes/Extreme SSD/Projects/clockin/apks/xorr-clockin.apk` (copy in `clockin/apk/`, gitignored, and the
-  `clockin-v1` release asset), sha256 `5396e26ab9eab02143ab6fc3f74e9e0557b01518faa78b31456668f0c6a87d57`, version 1.1.0
-  (versionCode 2), built from dcbe14a.
+  `clockin-v1` release asset), sha256 `b2908d4a1f0b47bdc877549a7d38c348c8f7d134731fb01373c2fcb7fe712b0c`, version 1.2.0
+  (versionCode 3), built from 802920c.
 - Native builds take the shared `.gradle.lock` (it covers Gradle and Xcode). `tools/clockin/build-apk.sh` takes it with a
   trap.

@@ -58,7 +58,7 @@ pool with the issuer's own mark for the share and holds when they have come apar
 ## Install the APK
 
 - File: `xorr-clockin.apk`, a release build signed with xorr's own key (`CN=xorr CLOCK IN`), for arm64-v8a and x86_64, Android 7.0+ (minSdk 24).
-- sha256: `5396e26ab9eab02143ab6fc3f74e9e0557b01518faa78b31456668f0c6a87d57` (77 MB, version 1.1.0 / versionCode 2, built 2026-10-07 from commit dcbe14a)
+- sha256: `b2908d4a1f0b47bdc877549a7d38c348c8f7d134731fb01373c2fcb7fe712b0c` (77 MB, version 1.2.0 / versionCode 3, built 2026-10-07 from commit 802920c)
 - Download: https://github.com/nickthelegend/xorr-clockin/releases/download/clockin-v1/xorr-clockin.apk
 - Install: allow installs from your browser or file manager, open the APK, then launch **xorr**. On a Seeker, tap
   *Connect wallet* (Seed Vault). On another phone, install Phantom or Solflare, or tap *No wallet? Try it with a devnet guest wallet*.
@@ -67,6 +67,11 @@ pool with the issuer's own mark for the share and holds when they have come apar
   again** after a minute. This only happens while xorr's shared devnet faucet is unfunded, when each phone sets up its
   own stand-in tokens from a devnet airdrop. Once the shared faucet is funded (see HANDOFF.md), the app pays every fee
   and no airdrop is needed.
+
+## Screens
+
+`clockin/screens/` (the app as it ships) and `clockin/screens/polish/` (before and after the polish round), all from
+the iPhone 17 Pro Max simulator. The full census of every reachable screen is in `clockin/screens/all/`.
 
 ## Links
 

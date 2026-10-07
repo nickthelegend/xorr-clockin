@@ -20,13 +20,18 @@ export const VENUE_KEY = 'xorr.clockin.venue';
 
 let checked: 'shared' | 'device' | null = null;
 
+/**
+ * Whether a mint account is on the cluster. A network failure is not "absent": it throws, so an offline phone says it
+ * can't reach devnet instead of "setting up the stand-in tokens" (and never builds a second set over a good one).
+ */
 async function exists(addr: string): Promise<boolean> {
-  if (!addr) return false;
+  let key: PublicKey;
   try {
-    return !!(await connection().getAccountInfo(new PublicKey(addr), 'confirmed'));
+    key = new PublicKey(addr);
   } catch {
     return false;
   }
+  return !!(await connection().getAccountInfo(key, 'confirmed'));
 }
 
 /** Use the stored device set, if there is one and it is on chain. */

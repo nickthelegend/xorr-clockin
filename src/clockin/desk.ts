@@ -64,6 +64,11 @@ export const useLive = create<Live>(() => ({
 }));
 
 let agentCache: Keypair | null = null;
+/** Drop the in-memory agent key (Disconnect deletes it from the keystore; the next session makes a new one). */
+export function forgetAgent(): void {
+  agentCache = null;
+  useLive.setState({ agent: null });
+}
 export async function agent(): Promise<Keypair> {
   if (!agentCache) agentCache = await agentKeypair();
   useLive.setState({ agent: agentCache.publicKey.toBase58() });
@@ -72,7 +77,14 @@ export async function agent(): Promise<Keypair> {
 
 /** Re-read the chain and the market. Mainnet reads (SKR, Seeker token) run once per owner and never block. */
 export async function refresh(owner: PublicKey, opts: { mainnet?: boolean } = {}): Promise<void> {
-  if ((await resolveMints()) === 'missing') {
+  let mints: Awaited<ReturnType<typeof resolveMints>>;
+  try {
+    mints = await resolveMints();
+  } catch {
+    useLive.setState({ loading: false, error: 'Can’t reach Solana devnet right now. Your tokens are safe on chain — pull down or try again.' });
+    return;
+  }
+  if (mints === 'missing') {
     useLive.setState({ error: 'Setting up the devnet stand-in tokens…' });
     return;
   }
@@ -258,7 +270,25 @@ const log = (...a: Parameters<ReturnType<typeof useClockin.getState>['log']>) =>
  * Make sure there are stand-in mints: the shared set if it is on devnet, else this phone's own (created once, paid by
  * the owner from an airdrop). Then the wallet's starter funds. Safe to call on every launch.
  */
-export async function ensureDesk(owner: Owner): Promise<void> {
+export function ensureDesk(owner: Owner): Promise<void> {
+  // Single flight per wallet: the start screen and the tab shell both ask as a new wallet lands, and the second ask
+  // must join the first rather than fail on "Still working on: Creating your devnet stand-in tokens".
+  if (ensuring?.address === owner.address) return ensuring.p;
+  const p: Promise<void> = ensureDeskOnce(owner).finally(() => {
+    if (ensuring?.p === p) ensuring = null;
+  });
+  ensuring = { address: owner.address, p };
+  return p;
+}
+let ensuring: { address: string; p: Promise<void> } | null = null;
+
+/** Wait for any setup in flight to finish (Disconnect waits, so nothing re-creates a key it is about to delete). */
+export async function settleDesk(): Promise<void> {
+  await ensuring?.p.catch(() => undefined);
+  for (let i = 0; i < 60 && useLive.getState().busy; i++) await new Promise((r) => setTimeout(r, 250));
+}
+
+async function ensureDeskOnce(owner: Owner): Promise<void> {
   useLive.setState({ setupFailed: false });
   if ((await resolveMints()) === 'missing') {
     await guarded('Creating your devnet stand-in tokens', async () => {

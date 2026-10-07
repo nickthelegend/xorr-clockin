@@ -15,7 +15,7 @@ import { Rise } from '@/ui/Rise';
 import { selectionTick, successTap, warningTap } from '@/ui/haptics';
 import { useGoBack } from '@/nav/useGoBack';
 import { DEVNET, STOCKS, explorerAddress, explorerTx } from '@/clockin/config';
-import { feeMode, friendlyError, getDevnetSol, syncRemindersNow, useLive } from '@/clockin/desk';
+import { feeMode, forgetAgent, friendlyError, getDevnetSol, settleDesk, syncRemindersNow, useLive } from '@/clockin/desk';
 import { clearAiKey, getAiKey, setAiKey } from '@/clockin/ai';
 import { useAutopilot, useScrollAutopilot } from '@/clockin/autopilot';
 import { forgetDevice } from '@/clockin/forget';
@@ -102,12 +102,15 @@ export default function Me() {
     setDisconnectError(null);
     try {
       const mwa = wallet?.mwa;
+      // Let any setup in flight finish, end the session so nothing new starts for this wallet, then delete the keys.
+      await settleDesk();
+      disconnect();
+      useLive.setState({ view: null, mainnetSkr: null, sgt: undefined, error: null, setupFailed: false });
+      forgetAgent();
       await forgetDevice({
         deauthorizeWallet: mwa ? () => mwaDisconnect(mwa) : undefined,
         privyLogout: privy.signedIn ? privy.logout : undefined,
       });
-      useLive.setState({ view: null, mainnetSkr: null, sgt: undefined });
-      disconnect();
       router.replace('/start');
     } catch (e) {
       warningTap();

@@ -75,8 +75,8 @@ mounted.
 2. **Run the APK on a real Android phone (ideally a Seeker)** before submitting, and record the demo there
    (`clockin/DEMO-SCRIPT.md`). Install a wallet if the phone has none. Check: *Connect wallet* opens the
    wallet, the grant and clock-in sign, and *Test the cap* shows a refused devnet transaction.
-3. Host the APK as a direct download (for example a GitHub Release asset on `nickthelegend/xorr-clockin`) and put the
-   URL in the submission form. The file is at `/Volumes/Extreme SSD/Projects/clockin/apks/xorr-clockin.apk`. Its sha256
+3. The APK is hosted at https://github.com/nickthelegend/xorr-clockin/releases/download/clockin-v1/xorr-clockin.apk
+   (the repo is public). Put that URL in the submission form. The file is at `/Volumes/Extreme SSD/Projects/clockin/apks/xorr-clockin.apk`. Its sha256
    is in `clockin/SUBMISSION.md`.
 4. Render the deck from `clockin/PITCH.md` (Google Slides or a Drive PDF) and record a **narrated** demo of about 3 minutes.
 5. Keep the release keystore safe: `/Volumes/Extreme SSD/Projects/clockin/.keys/xorr-clockin-release.keystore`, with its
@@ -126,6 +126,38 @@ tools/clockin/build-apk.sh
 - **Ports used:** 4400–4403 and 4410–4499 (local validator), 4405 (dev remote), 8481 (Metro). Simulator:
   B60FAA19-1F14-4F56-BCA9-263D22A2046F.
 
+## Android audit (Oct 7, static: no device or emulator was used)
+
+Checked against the release APK `xorr-clockin.apk`. Its sha256 is `5396e26ab9eab02143ab6fc3f74e9e0557b01518faa78b31456668f0c6a87d57`.
+It is version 1.1.0, versionCode 2, built from `dcbe14a`, and the same file is the `clockin-v1` release asset (download
+hash checked). Tools used: `aapt2 dump badging/xmltree`, `apksigner`, `unzip`, a string scan of the Hermes bundle, and
+reading the source.
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Package and version | `finance.xorr.app`, **versionCode 2** / 1.1.0. The version was bumped from 1 so the APK upgrades over the first clockin-v1 upload, which used the same key |
+| 1 | minSdk / targetSdk | **24 / 36** (compileSdk 36) |
+| 1 | Permissions | `INTERNET` and `POST_NOTIFICATIONS` are present. **Fixed:** `SYSTEM_ALERT_WINDOW`, `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_STORAGE` leaked in from dependencies and are now blocked (`android.blockedPermissions`). Still present from libraries: `USE_BIOMETRIC`/`USE_FINGERPRINT` (expo-local-authentication), `VIBRATE` (haptics), `RECEIVE_BOOT_COMPLETED`/`WAKE_LOCK`/c2dm/badge permissions (expo-notifications) |
+| 1 | Cleartext / debuggable | No `usesCleartextTraffic` and not debuggable. Every endpoint is https |
+| 1 | `allowBackup` | **Fixed: false**, so the MWA session token and the local state are not copied off the phone. Keys are in the Android Keystore through SecureStore |
+| 1 | `<queries>` for wallets | `solana-wallet` VIEW/BROWSABLE intent is present (merged from the MWA library), so wallets can be found on Android 11+ |
+| 2 | MWA native module | `com/solanamobile/mobilewalletadapter` is in the dex. `transact()` → `authorize({ chain: 'solana:devnet', identity: { name, uri: https://xorr.finance, icon: favicon.ico } })`; the icon resolves (200) |
+| 2 | Auth token and reauthorize | The token is cached in the session and passed as `auth_token`. **Fixed:** a token the wallet no longer honours now falls back to a fresh `authorize`, unless the person declined |
+| 2 | No wallet installed | `ERROR_WALLET_NOT_FOUND` reads "No Mobile Wallet Adapter wallet on this phone… or try xorr with the devnet guest wallet below". The guest wallet link is on the welcome screen |
+| 3 | JS bundle | `assets/index.android.bundle` is Hermes bytecode (magic `c61f bc03`), so the release does not load from Metro. `api.devnet.solana.com` is present. **Fixed:** the dev remote is now env-only, and the build names an unresolvable executor (`executor.clockin.invalid`), so the app's own `localhost:8788` default is gone. The local addresses still in the string table come from libraries: viem's EVM chain list (`127.0.0.1:8545`, `localhost:15xxx` …), the Solana cluster enum (`LOCALHOST 127.0.0.1`) and a colour `#E4405F`. None is reachable from CLOCK IN code. No `10.0.2.2` or `192.168.` |
+| 4 | Polyfills | `index.js` imports `react-native-get-random-values`, `fast-text-encoding` (TextEncoder) and the Buffer global before `expo-router/entry` and before anything Solana |
+| 5 | Back button | expo-router handles the stack screens. **Fixed:** on the welcome screen the email step closes on back instead of leaving the app |
+| 5 | Notifications | **Fixed:** channels `daily-brief` and `agent-trades` are created before the permission request. Android 8+ shows nothing without a channel, and Android 13+ only shows the prompt once one exists. The prompt is only raised by Profile's switch, never by a clock-in |
+| 5 | Deep links | `xorr://` scheme. **Fixed:** a route guard sends any route outside the CLOCK IN screens to Home, so no deep link reaches a hosted-app screen |
+| 5 | WebView | Not used by the CLOCK IN screens |
+| 5 | Keyboard / edge-to-edge | targetSdk 36 forces edge to edge, and `adjustResize` no longer resizes the window. **Fixed:** Home's ask flow, Ask and Profile lift their inputs with `KeyboardAvoidingView` (Android `height`). The safe-area insets come from `react-native-safe-area-context` throughout. **Not verified on a device** |
+| 5 | Fonts | Inter and Baloo2 load from bundled assets (`useFonts`), with the splash held until they are ready |
+| 6 | Signing | `apksigner`: `CN=xorr CLOCK IN, O=xorr, C=IN`, cert SHA-256 `854facad063895137afeea0bde4fb9f9974c9d6d5920e0e0afb70ac3309fb02e`. This is the **same keystore** as clockin-v1 (`clockin/.keys/xorr-clockin-release.keystore`) |
+| 7 | ABIs and size | `arm64-v8a` (Seeker) and `x86_64`, 77 MB |
+
+Still unknown without a device: the MWA / Seed Vault round trip, the notification delivery, the keyboard behaviour under
+edge to edge, and real-device performance.
+
 ## Incident to know about
 
 On Oct 6 around 20:17 IST, while the emulator lock was held by xorv, a script of mine ran `adb install` and `am start`
@@ -139,5 +171,8 @@ since.
   Gradle daemons are stopped after each build.
 - Kept, gitignored, for `scripts/devnet-go.sh`'s rebuild: `android/` (1.0 GB) and `ios/` (1.2 GB). The iOS build
   products in `/Volumes/Extreme SSD/Projects/clockin/.cache/derived/xorr` (2.8 GB) can be deleted when you are done.
-- Release APK: `/Volumes/Extreme SSD/Projects/clockin/apks/xorr-clockin.apk` (copy in `clockin/apk/`, gitignored),
-  sha256 `a65b0c1f15a0fc1ae06d851e353bbfa16cdce3ba04bedddbd7ae1af91162fea6`, built from 522b07c.
+- Release APK: `/Volumes/Extreme SSD/Projects/clockin/apks/xorr-clockin.apk` (copy in `clockin/apk/`, gitignored, and the
+  `clockin-v1` release asset), sha256 `5396e26ab9eab02143ab6fc3f74e9e0557b01518faa78b31456668f0c6a87d57`, version 1.1.0
+  (versionCode 2), built from dcbe14a.
+- Native builds take the shared `.gradle.lock` (it covers Gradle and Xcode). `tools/clockin/build-apk.sh` takes it with a
+  trap.

@@ -57,9 +57,9 @@ pool with the issuer's own mark for the share and holds when they have come apar
 
 ## Install the APK
 
-- File: `xorr-clockin.apk`, a release build signed with xorr's own key (`CN=xorr CLOCK IN`), for arm64-v8a and x86_64.
-- sha256: `a65b0c1f15a0fc1ae06d851e353bbfa16cdce3ba04bedddbd7ae1af91162fea6` (77 MB, built 2026-10-06 from commit 522b07c)
-- Download: **APK URL (to be added: a GitHub Release asset)**
+- File: `xorr-clockin.apk`, a release build signed with xorr's own key (`CN=xorr CLOCK IN`), for arm64-v8a and x86_64, Android 7.0+ (minSdk 24).
+- sha256: `5396e26ab9eab02143ab6fc3f74e9e0557b01518faa78b31456668f0c6a87d57` (77 MB, version 1.1.0 / versionCode 2, built 2026-10-07 from commit dcbe14a)
+- Download: https://github.com/nickthelegend/xorr-clockin/releases/download/clockin-v1/xorr-clockin.apk
 - Install: allow installs from your browser or file manager, open the APK, then launch **xorr**. On a Seeker, tap
   *Connect wallet* (Seed Vault). On another phone, install Phantom or Solflare, or tap *No wallet? Try it with a devnet guest wallet*.
 - Everything runs on Solana devnet with test tokens. No real money is involved.

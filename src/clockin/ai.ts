@@ -8,7 +8,8 @@ import { deleteSecret, getSecret, setSecret } from './secret';
 import { openRouterChat } from '@/data/openrouter';
 import type { Brief, Decision, Quote, Holding } from './engine';
 
-const KEY = 'xorr.clockin.openrouter';
+export const AI_KEY = 'xorr.clockin.openrouter';
+const KEY = AI_KEY;
 
 export const getAiKey = () => getSecret(KEY);
 export const setAiKey = (k: string) => setSecret(KEY, k.trim());

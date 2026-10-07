@@ -9,7 +9,7 @@ import { ScrollView, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Icon, type IconName } from '@/design/Icon';
-import { quantity, BackButton, Button, ConsequenceCard, Eyebrow, Field, Press, Row, Screen, SwitchRow, Tag, Text, TransactionRef, colors, radius, size, space } from '@/ui';
+import { quantity, BackButton, Button, ConsequenceCard, Eyebrow, Field, Press, Row, Screen, SheetCard, SwitchRow, Tag, Text, TransactionRef, colors, radius, size, space } from '@/ui';
 import { FailureNote } from '@/ui/States';
 import { Rise } from '@/ui/Rise';
 import { selectionTick, successTap, warningTap } from '@/ui/haptics';
@@ -18,7 +18,9 @@ import { DEVNET, DEVNET_RPC, STOCKS, explorerAddress, explorerTx } from '@/clock
 import { feeMode, friendlyError, getDevnetSol, syncRemindersNow, useLive } from '@/clockin/desk';
 import { clearAiKey, getAiKey, setAiKey } from '@/clockin/ai';
 import { useAutopilot, useScrollAutopilot } from '@/clockin/autopilot';
+import { forgetDevice } from '@/clockin/forget';
 import { mwaDisconnect } from '@/clockin/mwa';
+import { usePrivySolana } from '@/clockin/privySign';
 import { scheduledReminders } from '@/clockin/notify';
 import { useClockin } from '@/clockin/session';
 import { useDesk } from '@/clockin/useDesk';
@@ -59,6 +61,10 @@ export default function Me() {
   const [copied, setCopied] = useState(false);
   const [scheduled, setScheduled] = useState<{ brief: boolean; streakAt: Date | null }>({ brief: false, streakAt: null });
   const [msg, setMsg] = useState<{ text: string; tone: 'up' | 'down' | 'warn'; sig?: string } | null>(null);
+  const [confirmingDisconnect, setConfirmingDisconnect] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [disconnectError, setDisconnectError] = useState<unknown>(null);
+  const privy = usePrivySolana();
 
   useEffect(() => {
     void getAiKey().then((k) => setHasKey(!!k));
@@ -80,13 +86,27 @@ export default function Me() {
   }
 
   async function onDisconnect() {
-    if (wallet?.mwa) await mwaDisconnect(wallet.mwa);
-    useLive.setState({ view: null, mainnetSkr: null, sgt: undefined });
-    disconnect();
-    router.replace('/start');
+    setDisconnecting(true);
+    setDisconnectError(null);
+    try {
+      const mwa = wallet?.mwa;
+      await forgetDevice({
+        deauthorizeWallet: mwa ? () => mwaDisconnect(mwa) : undefined,
+        privyLogout: privy.signedIn ? privy.logout : undefined,
+      });
+      useLive.setState({ view: null, mainnetSkr: null, sgt: undefined });
+      disconnect();
+      router.replace('/start');
+    } catch (e) {
+      warningTap();
+      setDisconnectError(new Error(`Couldn’t finish disconnecting: ${friendlyError(e)}`));
+    } finally {
+      setDisconnecting(false);
+    }
   }
   useAutopilot({
     disconnect: onDisconnect,
+    'disconnect-confirm': () => setConfirmingDisconnect(true),
     advanced: () => setAdvanced(true),
     reminders: () => setReminders(true),
     'reminders-force': async () => {
@@ -399,7 +419,52 @@ export default function Me() {
           <Eyebrow small style={{ marginTop: space.s26 }}>
             Session
           </Eyebrow>
-          <Row title="Disconnect" secondary="Forget this wallet on this phone. Nothing on chain changes." height={size.rowLg} divider={false} onPress={() => void onDisconnect()} testID="disconnect" />
+          {confirmingDisconnect ? (
+            <SheetCard borderRadius={radius.panel} padding={space.s16} style={{ marginTop: space.s8 }} testID="disconnect-confirm">
+              <Text variant="cardTitle" accessibilityRole="header">
+                Disconnect and delete this phone’s keys?
+              </Text>
+              <View style={{ gap: space.s6, marginTop: space.s10 }}>
+                {[
+                  wallet?.kind === 'guest'
+                    ? 'Deletes the guest wallet’s key. Its devnet tokens can’t be reached again from any phone.'
+                    : wallet?.kind === 'privy'
+                      ? 'Signs you out of Privy. Your Privy wallet stays yours; sign in again with your email.'
+                      : 'Ends this app’s session with your wallet app. Your wallet and its keys are untouched.',
+                  'Deletes your agent’s key. A permission you granted stays on chain, but nothing can spend under it any more.',
+                  'Deletes this phone’s devnet venue key and stand-in tokens, and your OpenRouter key if you added one.',
+                  'Clears your streak and activity on this phone. Transactions already on chain stay there.',
+                ].map((line) => (
+                  <Text key={line} variant="bodySm" color={colors.ink55}>
+                    {`· ${line}`}
+                  </Text>
+                ))}
+              </View>
+              {disconnectError ? <FailureNote error={disconnectError} style={{ marginTop: space.s10 }} /> : null}
+              <Button
+                label={disconnecting ? 'Disconnecting…' : 'Disconnect and delete keys'}
+                variant="destructive"
+                loading={disconnecting}
+                disabled={disconnecting}
+                onPress={() => void onDisconnect()}
+                style={{ marginTop: space.s14 }}
+                testID="disconnect-go"
+              />
+              <Button label="Keep everything" variant="ghost" disabled={disconnecting} onPress={() => setConfirmingDisconnect(false)} style={{ marginTop: space.s6 }} />
+            </SheetCard>
+          ) : (
+            <Row
+              title="Disconnect"
+              secondary="Sign out and delete this phone’s keys. You’ll confirm first."
+              height={size.rowLg}
+              divider={false}
+              onPress={() => {
+                selectionTick();
+                setConfirmingDisconnect(true);
+              }}
+              testID="disconnect"
+            />
+          )}
         </View>
       </ScrollView>
     </Screen>

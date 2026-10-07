@@ -80,14 +80,17 @@ async function deviceKeypair(name: string): Promise<Keypair> {
   return kp;
 }
 
+export const AGENT_KEY = 'xorr.clockin.agent';
+export const GUEST_KEY = 'xorr.clockin.guest';
+
 /** The agent's own key — the SPL delegate. One per device, made on first use. */
 export function agentKeypair(): Promise<Keypair> {
-  return deviceKeypair('xorr.clockin.agent');
+  return deviceKeypair(AGENT_KEY);
 }
 
 /** The devnet guest wallet — for iOS, emulators and anyone without an MWA wallet. Devnet only. */
 export function guestKeypair(): Promise<Keypair> {
-  return deviceKeypair('xorr.clockin.guest');
+  return deviceKeypair(GUEST_KEY);
 }
 
 /* ------------------------------------------------------------------------------------------------------- reading */

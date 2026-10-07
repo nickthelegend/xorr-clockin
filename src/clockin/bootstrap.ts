@@ -15,8 +15,8 @@ import { airdropSol, connection, send, setDeviceVenue } from './chain';
 import { getSecret, setSecret } from './secret';
 import type { Owner } from './useOwner';
 
-const SET_KEY = 'xorr.clockin.mintset.v1';
-const VENUE_KEY = 'xorr.clockin.venue';
+export const SET_KEY = 'xorr.clockin.mintset.v1';
+export const VENUE_KEY = 'xorr.clockin.venue';
 
 let checked: 'shared' | 'device' | null = null;
 
@@ -98,6 +98,17 @@ export async function createDeviceSet(owner: Owner): Promise<MintSet> {
   applyMintSet(set, 'device');
   checked = 'device';
   return set;
+}
+
+/**
+ * Forget this phone's own stand-in set (on Disconnect, once the venue key that is its mint authority is deleted): the
+ * next session checks the shared set again, or creates a fresh device set with a new venue key.
+ */
+export async function forgetDeviceSet(): Promise<void> {
+  await AsyncStorage.removeItem(SET_KEY);
+  setDeviceVenue(null);
+  checked = null;
+  if (DEVNET.source === 'device') applyMintSet(SHARED_SET, 'shared');
 }
 
 export function mintSource(): 'shared' | 'device' {

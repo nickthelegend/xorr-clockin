@@ -102,7 +102,7 @@ The Publisher Policy prohibits "Content that infringes on intellectual property 
 - **A private key ships in the APK.** The devnet faucet key (`EXPO_PUBLIC_CLOCKIN_FAUCET_SECRET`) is devnet only and documented in HANDOFF.md, but a reviewer who unpacks the APK will find a private key. Consider leaving it out of the store build.
 - **The in-app Privacy text was written for the hosted xorr.** It disagrees with this build (see the end of `PRIVACY.md`). Developer Agreement §2.1 requires an in-app link to a privacy policy that is accurate.
 - **The model only answers questions.** README and Profile copy say a model writes the morning brief, but in this build it only answers "Ask your agent", and only with the user's own OpenRouter key. The listing copy follows the code.
-- **"Disconnect" leaves keys on the phone.** It does not delete the agent, guest, venue or OpenRouter keys from SecureStore, and does not sign out of Privy.
+- **"Disconnect" leaves keys on the phone.** Fixed in 1.2.1: after a confirmation, Disconnect deletes the agent, guest, venue and OpenRouter keys from SecureStore, signs out of Privy and deauthorizes the MWA session (`src/clockin/forget.ts`, with a test).
 
 ## Known gaps
 

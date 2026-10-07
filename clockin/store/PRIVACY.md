@@ -82,11 +82,11 @@ xorr shows tokenized US stocks. Real tokenized stocks (such as xStocks) are not 
 
 ## Your choices
 
-- **Disconnect** (Profile) clears the app's session data on this phone.
+- **Disconnect** (Profile), after a confirmation that lists what it deletes, deletes the guest wallet, agent and venue keys and your OpenRouter key from the keystore, signs you out of Privy, ends the wallet app's Mobile Wallet Adapter session, and clears the app's session data on this phone.
 - **Remove** (Profile → Advanced) deletes your OpenRouter key.
 - **Uninstalling, or clearing the app's storage**, deletes everything the app keeps on the phone.
 - On-chain transactions cannot be erased by anyone.
-- ⚠ Disconnect does **not** currently delete the guest wallet, agent or venue keys from SecureStore, and it does not sign you out of Privy. Uninstall or clear storage to remove them. If you used Privy, contact Privy to delete that account.
+- If you used Privy, contact Privy to delete that account.
 - For questions or requests under GDPR, UK GDPR, CCPA or similar laws, write to `<SUPPORT_EMAIL>`.
 
 ## Changes

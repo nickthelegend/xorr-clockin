@@ -100,7 +100,7 @@ export async function refresh(owner: PublicKey, opts: { mainnet?: boolean } = {}
 /** Re-align the morning brief and the evening streak reminder with the session (no permission prompt). */
 export function syncRemindersNow(ask = false, devForce = false): Promise<boolean> {
   const s = useClockin.getState();
-  return syncReminders({ on: s.remindersOn, briefAt: s.briefAt, streak: currentStreak(s.streak), checkedInToday: checkedInToday(s.streak) }, ask, devForce);
+  return syncReminders({ on: s.remindersOn, streakOn: s.streakReminderOn ?? s.remindersOn, briefAt: s.briefAt, streak: currentStreak(s.streak), checkedInToday: checkedInToday(s.streak) }, ask, devForce);
 }
 
 /* ---------------------------------------------------------------------------------------------------- derived */

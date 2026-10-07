@@ -46,7 +46,8 @@ const STREAK_ID = 'xorr-clockin-streak-at-risk';
 /** The evening nudge, local time: late enough to be useful, early enough to act before the UTC day ends for most. */
 export const STREAK_REMINDER_HOUR = 20;
 
-export type ReminderPlan = { on: boolean; briefAt: { hour: number; minute: number }; streak: number; checkedInToday: boolean };
+/** `on` is the morning brief; `streakOn` the evening streak reminder. */
+export type ReminderPlan = { on: boolean; streakOn: boolean; briefAt: { hour: number; minute: number }; streak: number; checkedInToday: boolean };
 
 /** When the evening reminder should fire: tonight if the streak is still open and 20:00 is ahead, else tomorrow night. */
 export function streakReminderAt(plan: ReminderPlan, now = new Date()): Date {
@@ -68,8 +69,8 @@ export async function syncReminders(plan: ReminderPlan, ask = false, devForce = 
     await Notifications.cancelScheduledNotificationAsync(STREAK_ID).catch(() => undefined);
     // `devForce` (development builds only) schedules without the permission, to read the schedule back on a simulator
     // nobody can tap the iOS prompt on. iOS accepts the request; it only withholds the banner.
-    if (!plan.on || (!(__DEV__ && devForce) && !(await allowed(ask)))) return false;
-    await Notifications.scheduleNotificationAsync({
+    if ((!plan.on && !plan.streakOn) || (!(__DEV__ && devForce) && !(await allowed(ask)))) return false;
+    if (plan.on) await Notifications.scheduleNotificationAsync({
       identifier: DAILY_ID,
       content: {
         title: "Your agent's morning brief is ready",
@@ -82,7 +83,7 @@ export async function syncReminders(plan: ReminderPlan, ask = false, devForce = 
       },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: plan.briefAt.hour, minute: plan.briefAt.minute, channelId: CHANNEL_BRIEF },
     });
-    await Notifications.scheduleNotificationAsync({
+    if (plan.streakOn) await Notifications.scheduleNotificationAsync({
       identifier: STREAK_ID,
       content: {
         title: plan.streak > 0 ? `Your ${plan.streak + (plan.checkedInToday ? 1 : 0)}-day streak is at risk` : 'Start a streak today',

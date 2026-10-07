@@ -52,9 +52,11 @@ type State = {
   firstRunDone: boolean;
   /** When the owner last opened Home — what "since your last visit" counts from. */
   lastSeenAt: number | null;
-  /** Morning brief time, local, and whether it and the evening streak reminder are on. */
+  /** Morning brief time, local, and whether it is on. */
   briefAt: { hour: number; minute: number };
   remindersOn: boolean;
+  /** The evening streak reminder, a switch of its own. Unset on a session saved before 1.2.1: it then follows the brief. */
+  streakReminderOn?: boolean;
   /** Strategy shifts paid for in SKR, with the paying transaction. */
   passes: Passes;
   /** The model used when the owner adds their own OpenRouter key (kept in the keystore, not here). */
@@ -97,7 +99,7 @@ const fresh = (): State => ({
 });
 
 /** What a device keeps across wallets: the intro was seen, and how the person likes to be reminded. */
-const kept = (s: State) => ({ aiModel: s.aiModel, introSeen: s.introSeen, briefAt: s.briefAt, remindersOn: s.remindersOn });
+const kept = (s: State) => ({ aiModel: s.aiModel, introSeen: s.introSeen, briefAt: s.briefAt, remindersOn: s.remindersOn, streakReminderOn: s.streakReminderOn });
 
 export const useClockin = create<State & Actions>()(
   persist(

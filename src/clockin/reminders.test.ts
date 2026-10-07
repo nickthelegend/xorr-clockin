@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { streakReminderAt } from './notify';
 
-const plan = (checkedInToday: boolean) => ({ on: true, briefAt: { hour: 8, minute: 30 }, streak: 3, checkedInToday });
+const plan = (checkedInToday: boolean) => ({ on: true, streakOn: true, briefAt: { hour: 8, minute: 30 }, streak: 3, checkedInToday });
 
 describe('the evening streak reminder', () => {
   it('fires tonight at 20:00 while today is still open', () => {

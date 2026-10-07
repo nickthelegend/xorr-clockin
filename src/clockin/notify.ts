@@ -1,6 +1,7 @@
 /** Web/test: no local notifications. */
 export const STREAK_REMINDER_HOUR = 20;
-export type ReminderPlan = { on: boolean; briefAt: { hour: number; minute: number }; streak: number; checkedInToday: boolean };
+/** `on` is the morning brief; `streakOn` the evening streak reminder. */
+export type ReminderPlan = { on: boolean; streakOn: boolean; briefAt: { hour: number; minute: number }; streak: number; checkedInToday: boolean };
 export function streakReminderAt(plan: ReminderPlan, now = new Date()): Date {
   const at = new Date(now);
   at.setHours(STREAK_REMINDER_HOUR, 0, 0, 0);

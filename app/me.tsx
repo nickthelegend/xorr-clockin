@@ -14,7 +14,7 @@ import { FailureNote } from '@/ui/States';
 import { Rise } from '@/ui/Rise';
 import { selectionTick, successTap, warningTap } from '@/ui/haptics';
 import { useGoBack } from '@/nav/useGoBack';
-import { DEVNET, DEVNET_RPC, STOCKS, explorerAddress, explorerTx } from '@/clockin/config';
+import { DEVNET, STOCKS, explorerAddress, explorerTx } from '@/clockin/config';
 import { feeMode, friendlyError, getDevnetSol, syncRemindersNow, useLive } from '@/clockin/desk';
 import { clearAiKey, getAiKey, setAiKey } from '@/clockin/ai';
 import { useAutopilot, useScrollAutopilot } from '@/clockin/autopilot';
@@ -52,11 +52,13 @@ export default function Me() {
   const aiModel = useClockin((s) => s.aiModel);
   const remindersOn = useClockin((s) => s.remindersOn);
   const briefAt = useClockin((s) => s.briefAt);
+  const streakReminderOn = useClockin((s) => s.streakReminderOn ?? s.remindersOn);
   const set = useClockin((s) => s.set);
   const disconnect = useClockin((s) => s.disconnect);
   const [hasKey, setHasKey] = useState(false);
   const [key, setKey] = useState('');
   const [advanced, setAdvanced] = useState(false);
+  const [tokensOpen, setTokensOpen] = useState(false);
   const [allActivity, setAllActivity] = useState(false);
   const [copied, setCopied] = useState(false);
   const [scheduled, setScheduled] = useState<{ brief: boolean; streakAt: Date | null }>({ brief: false, streakAt: null });
@@ -74,8 +76,18 @@ export default function Me() {
   }, []);
   useFocusEffect(readScheduled);
 
+  async function setStreakReminder(on: boolean) {
+    set({ streakReminderOn: on });
+    const ok = await syncRemindersNow(on);
+    if (on && !ok) {
+      set({ streakReminderOn: false });
+      warningTap();
+      setMsg({ tone: 'warn', text: 'Notifications are off for xorr. Turn them on in Settings → Notifications, then try again.' });
+    } else if (on) successTap();
+    readScheduled();
+  }
   async function setReminders(on: boolean, at = briefAt) {
-    set({ remindersOn: on, briefAt: at });
+    set({ remindersOn: on, briefAt: at, streakReminderOn: useClockin.getState().streakReminderOn ?? on });
     const ok = await syncRemindersNow(on);
     if (on && !ok) {
       set({ remindersOn: false });
@@ -108,6 +120,7 @@ export default function Me() {
     disconnect: onDisconnect,
     'disconnect-confirm': () => setConfirmingDisconnect(true),
     advanced: () => setAdvanced(true),
+    tokens: () => setTokensOpen(true),
     reminders: () => setReminders(true),
     'reminders-force': async () => {
       set({ remindersOn: true, briefAt: { hour: 8, minute: 30 } });
@@ -127,9 +140,10 @@ export default function Me() {
         ? 'Privy’s embedded wallet, unlocked by your email. xorr never sees its key.'
         : 'A devnet-only key kept in this phone’s keystore. Use Seed Vault for anything real.';
   const shown = allActivity ? activity.slice(0, 40) : activity.slice(0, 5);
-  const streakLine = scheduled.streakAt
-    ? `${scheduled.streakAt.toDateString() === new Date().toDateString() ? 'Tonight' : 'Tomorrow'} ${scheduled.streakAt.getHours()}:00`
-    : 'Off';
+  // What the OS actually holds: "Tonight at 20:00" or "Tomorrow at 20:00" (tomorrow once today's clock-in is done).
+  const streakWhen = scheduled.streakAt
+    ? `${scheduled.streakAt.toDateString() === new Date().toDateString() ? 'Tonight' : 'Tomorrow'} at ${scheduled.streakAt.getHours()}:00`
+    : 'At 20:00';
 
 
   return (
@@ -242,16 +256,13 @@ export default function Me() {
               })}
             </View>
           ) : null}
-          <Row
-            title="Streak reminder"
-            secondary="20:00 local, only while today’s clock-in is open"
-            value={
-              <Text variant="rowPrimary" color={scheduled.streakAt ? colors.ink : colors.ink45}>
-                {streakLine}
-              </Text>
-            }
+          <SwitchRow
+            label="Streak reminder"
+            caption={(on) => (on ? `${streakWhen}, only if today’s clock-in is still open` : 'Off — no evening nudge before your streak lapses')}
+            on={streakReminderOn}
+            onChange={(v) => void setStreakReminder(v)}
             height={size.rowLg}
-            divider={false}
+            testID="streak-switch"
           />
 
           <Eyebrow small style={{ marginTop: space.s26 }}>
@@ -334,22 +345,49 @@ export default function Me() {
           <Eyebrow small style={{ marginTop: space.s26 }}>
             About this build
           </Eyebrow>
-          <Text variant="bodySm" color={colors.ink55}>
-            Solana devnet ({DEVNET_RPC.replace('https://', '')}). dUSDC, dSKR and the five xStock stand-ins are test tokens
-            {DEVNET.source === 'shared' ? ' minted by xorr’s devnet faucet' : ' this phone created for itself'}, filled at Jupiter’s
-            live prices for the real xStocks. Nothing here is real money.
-          </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.s8, marginTop: space.s10 }}>
-            {[
-              { label: 'dUSDC', addr: DEVNET.usdcMint },
-              { label: 'dSKR', addr: DEVNET.skrMint },
-              ...STOCKS.map((s) => ({ label: s.symbol, addr: s.devnetMint })),
-            ].map((m) => (
-              <Press key={m.label} onPress={() => openUrl(explorerAddress(m.addr))} accessibilityRole="link" accessibilityLabel={`${m.label} mint, opens Solana Explorer`} hitHeight={size.hit}>
-                <Tag label={m.label} small />
-              </Press>
-            ))}
-          </View>
+          <Row
+            title="Network"
+            secondary="Test tokens only. Nothing here is real money."
+            value={
+              <Text variant="rowPrimary" color={colors.ink55}>
+                Devnet · Solana
+              </Text>
+            }
+            height={size.rowLg}
+            divider
+          />
+          <Row
+            title="Test tokens"
+            secondary={`dUSDC, dSKR and ${STOCKS.length} stock stand-ins`}
+            onPress={() => setTokensOpen(!tokensOpen)}
+            right={
+              <View style={{ transform: [{ rotate: tokensOpen ? '90deg' : '0deg' }] }}>
+                <Icon name="chevron" size={16} color={colors.ink28} />
+              </View>
+            }
+            height={size.rowLg}
+            divider={false}
+            testID="test-tokens"
+          />
+          {tokensOpen ? (
+            <View style={{ gap: space.s10, paddingBottom: space.s6 }}>
+              <Text variant="bodySm" color={colors.ink55}>
+                {DEVNET.source === 'shared' ? 'Minted by xorr’s devnet faucet' : 'Created by this phone for itself'}, and filled at Jupiter’s live
+                prices for the real xStocks. Tap one to see its mint on Solana Explorer.
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 }}>
+                {[
+                  { label: 'dUSDC', addr: DEVNET.usdcMint },
+                  { label: 'dSKR', addr: DEVNET.skrMint },
+                  ...STOCKS.map((s) => ({ label: s.symbol, addr: s.devnetMint })),
+                ].map((m) => (
+                  <Press key={m.label} onPress={() => openUrl(explorerAddress(m.addr))} accessibilityRole="link" accessibilityLabel={`${m.label} mint, opens Solana Explorer`} hitHeight={size.hit}>
+                    <Tag label={m.label} small />
+                  </Press>
+                ))}
+              </View>
+            </View>
+          ) : null}
 
           <Eyebrow small style={{ marginTop: space.s26 }}>
             Legal

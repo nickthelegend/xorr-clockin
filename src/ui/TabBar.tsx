@@ -117,11 +117,13 @@ export interface TabBarProps {
   unread?: number;
   /** The Messages drawer is up: the bar goes down out of its way, and comes back when this turns false. */
   hidden?: boolean;
+  /** The two action items' labels, where a build gives them other jobs (the CLOCK IN build: Trade, Ask). */
+  labels?: { swap?: string; messages?: string };
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }
 
-export function TabBar({ active, onHome, onSwap, onMessages, unread = 0, hidden = false, style, testID }: TabBarProps) {
+export function TabBar({ active, onHome, onSwap, onMessages, unread = 0, hidden = false, labels, style, testID }: TabBarProps) {
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
   const home = active === 'home';
@@ -168,10 +170,10 @@ export function TabBar({ active, onHome, onSwap, onMessages, unread = 0, hidden 
         <Item label="Home" place selected={home} onPress={onHome} reduced={reduced}>
           <HomeGlyph color={home ? colors.ink : colors.ink55} />
         </Item>
-        <Item label={isSolana ? "Trade" : "Swap"} onPress={onSwap}>
+        <Item label={labels?.swap ?? (isSolana ? 'Trade' : 'Swap')} onPress={onSwap}>
           <SwapGlyph color={colors.ink55} />
         </Item>
-        <Item label="Messages" onPress={onMessages} badge={unread > 0 ? (unread > 9 ? '9+' : String(unread)) : undefined}>
+        <Item label={labels?.messages ?? 'Messages'} onPress={onMessages} badge={unread > 0 ? (unread > 9 ? '9+' : String(unread)) : undefined}>
           <ChatGlyph color={colors.ink55} />
         </Item>
       </View>

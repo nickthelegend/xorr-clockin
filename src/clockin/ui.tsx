@@ -3,12 +3,10 @@
  */
 import React from 'react';
 import { Linking, View, type StyleProp, type ViewStyle } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { Icon, type IconName } from '@/design/Icon';
-import { Press, Text, colors, radius, space } from '@/ui';
+import { Icon } from '@/design/Icon';
+import { AssetMark, Press, Text, colors, radius, size, space } from '@/ui';
 import { selectionTick } from '@/ui/haptics';
-import { explorerAddress, explorerTx } from './config';
+import { LOGOS, explorerAddress, explorerTx } from './config';
 import { weekStrip, type StreakState } from './streak';
 
 export const SKR_GOLD = colors.goldFill;
@@ -89,27 +87,9 @@ export function Banner({ text, tone = 'warn' }: { text: string; tone?: 'warn' | 
   );
 }
 
-/** A stock's mark: its gradient disc with the ticker's first letter. */
-export function StockMark({ symbol, c1, c2, size = 34 }: { symbol: string; c1: string; c2: string; size?: number }) {
-  const id = `g-${symbol}`;
-  return (
-    <View style={{ width: size, height: size }}>
-      <Svg width={size} height={size}>
-        <Defs>
-          <RadialGradient id={id} cx="32%" cy="26%" r="74%">
-            <Stop offset="0" stopColor={c1} />
-            <Stop offset="1" stopColor={c2} />
-          </RadialGradient>
-        </Defs>
-        <Rect width={size} height={size} rx={size / 2} fill={`url(#${id})`} />
-      </Svg>
-      <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
-        <Text variant="value" color={colors.bg}>
-          {symbol.charAt(0)}
-        </Text>
-      </View>
-    </View>
-  );
+/** A token's mark: its logo where the issuer publishes one, over its gradient (the app's AssetMark). */
+export function TokenMark({ symbol, c1, c2, size: px = size.mark }: { symbol: string; c1: string; c2: string; size?: number }) {
+  return <AssetMark gradient={{ c1, c2 }} uri={LOGOS[symbol] ?? null} size={px} />;
 }
 
 const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -140,58 +120,6 @@ export function WeekStrip({ streak }: { streak: StreakState }) {
           </Text>
         </View>
       ))}
-    </View>
-  );
-}
-
-export type ClockinTab = 'today' | 'desk' | 'skr' | 'me';
-
-const TABS: { key: ClockinTab; label: string; icon: IconName }[] = [
-  { key: 'today', label: 'Today', icon: 'sun' },
-  { key: 'desk', label: 'Agent', icon: 'bot' },
-  { key: 'skr', label: 'SKR', icon: 'sparkle' },
-  { key: 'me', label: 'Me', icon: 'gear' },
-];
-
-export function ClockinTabBar({ active, onSelect }: { active: ClockinTab; onSelect: (t: ClockinTab) => void }) {
-  const insets = useSafeAreaInsets();
-  return (
-    <View style={{ paddingHorizontal: space.s16, paddingTop: space.s6, paddingBottom: Math.max(insets.bottom, space.s12), backgroundColor: colors.bg }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          height: 60,
-          borderRadius: 30,
-          paddingHorizontal: space.s6,
-          alignItems: 'center',
-          backgroundColor: colors.surfaceAlt,
-          borderWidth: 1,
-          borderColor: colors.ghostBorder,
-        }}
-      >
-        {TABS.map((t) => {
-          const on = t.key === active;
-          return (
-            <Press
-              key={t.key}
-              testID={`tab-${t.key}`}
-              onPress={() => {
-                selectionTick();
-                onSelect(t.key);
-              }}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: on }}
-              accessibilityLabel={t.label}
-              style={{ flex: 1, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', gap: 2, backgroundColor: on ? colors.control : 'transparent' }}
-            >
-              <Icon name={t.icon} size={22} color={on ? colors.ink : colors.ink55} />
-              <Text variant="tabLabel" color={on ? colors.ink : colors.ink55}>
-                {t.label}
-              </Text>
-            </Press>
-          );
-        })}
-      </View>
     </View>
   );
 }

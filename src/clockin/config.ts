@@ -115,4 +115,15 @@ export const APP_IDENTITY = {
 
 /** Starter balances the devnet faucet hands a new wallet — no signature needed, test money only. */
 export const STARTER_USDC = 1_000;
+
+/** Logos, from the issuers' own public metadata (Backed for xStocks, Solana Mobile for SKR). Images only, no API. */
+export const LOGOS: Record<string, string> = {
+  NVDAx: 'https://xstocks-metadata.backed.fi/logos/tokens/NVDAx.png',
+  TSLAx: 'https://xstocks-metadata.backed.fi/logos/tokens/TSLAx.png',
+  AAPLx: 'https://xstocks-metadata.backed.fi/logos/tokens/AAPLx.png',
+  MSFTx: 'https://xstocks-metadata.backed.fi/logos/tokens/MSFTx.png',
+  SPYx: 'https://xstocks-metadata.backed.fi/logos/tokens/SPYx.png',
+  SKR: 'https://r2.solanamobiledappstore.com/skr/seeker.png',
+  USDC: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+};
 export const STARTER_SKR = 250;

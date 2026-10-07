@@ -61,7 +61,7 @@ pool with the issuer's own mark for the share and holds when they have come apar
 - sha256: `a65b0c1f15a0fc1ae06d851e353bbfa16cdce3ba04bedddbd7ae1af91162fea6` (77 MB, built 2026-10-06 from commit 522b07c)
 - Download: **APK URL (to be added: a GitHub Release asset)**
 - Install: allow installs from your browser or file manager, open the APK, then launch **xorr**. On a Seeker, tap
-  *Connect wallet · Seed Vault*. On another phone, install Phantom or Solflare, or use *Try with a devnet guest wallet*.
+  *Connect wallet* (Seed Vault). On another phone, install Phantom or Solflare, or tap *No wallet? Try it with a devnet guest wallet*.
 - Everything runs on Solana devnet with test tokens. No real money is involved.
 - **If the app says "Devnet's free faucet is busy":** devnet's public faucet rate-limits test SOL per IP. Tap **Try
   again** after a minute. This only happens while xorr's shared devnet faucet is unfunded, when each phone sets up its

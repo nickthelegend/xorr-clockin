@@ -6,7 +6,7 @@ Each slide has a title, its on-slide content and speaker notes. Judges read the 
 
 ## 1. xorr: an AI stock agent you clock in with every morning
 
-**On slide:** the XORR wordmark, a phone showing Today (the agent's face, the morning brief, the gold *Clock in* button),
+**On slide:** the XORR wordmark, a phone showing Home (the total balance, the gold *Clock in* card, the agents),
 and the tagline "Tokenized US stocks on Solana, traded inside a permission you can revoke in one tap."
 
 **Notes:** xorr is an AI agent that trades tokenized US stocks for you on Solana and never holds your money. On Seeker it
@@ -30,7 +30,7 @@ cap* has the agent try to overspend, and devnet refuses it on screen with an exp
 
 ## 4. Why you open it every day
 
-**On slide:** the Today screen: the brief ("Your agent's book is up $0.09… Since your last clock-in: MSFTx +0.74%…"), a
+**On slide:** Home's clock-in card and Brief tab: the brief ("Your agent's book is up $0.09… Since your last clock-in: MSFTx +0.74%…"), a
 7-day streak strip, "+23 dSKR tomorrow" and the 8:30 notification.
 
 **Notes:** The brief is written from that morning's prices and from what changed since your last clock-in. Clocking in is
@@ -51,7 +51,7 @@ stand-in mint, labelled everywhere.
 
 ## 6. Seeker-native
 
-**On slide:** "Connect wallet · Seed Vault" as the first button, a Seed Vault signing sheet, and a "Seeker verified ·
+**On slide:** "Connect wallet" (Seed Vault) as the first button, a Seed Vault signing sheet, and a "Seeker verified ·
 1.5×" badge.
 
 **Notes:** Mobile Wallet Adapter 2.3 is the primary path. Each signature caches its auth token, so later ones need no
@@ -60,7 +60,7 @@ local notifications for the brief and for each agent trade.
 
 ## 7. The agent, honestly
 
-**On slide:** the Agent tab's "Look now" list: BUY / HOLD per stock, each with its reason ("Guard: the pool is +1.8% from
+**On slide:** Your agent's "Look now" list: BUY / HOLD per stock, each with its reason ("Guard: the pool is +1.8% from
 the issuer's mark…").
 
 **Notes:** The agent's decisions are rules you can read: exits first, then a guard comparing the Solana pool with the

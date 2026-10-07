@@ -6,7 +6,7 @@ Deadline: **2026-10-09 06:59 UTC** (Oct 8, 23:59 PDT).
 ## What this is
 
 A Seeker-first, devnet-only build of xorr for Solana Mobile CLOCK IN. Everything new is in `src/clockin/`,
-`app/(clockin)/`, `app/start.tsx`, `tools/clockin/` and `plugins/with-release-signing.js`. Setting
+`app/start.tsx`, `app/desk.tsx`, `app/skr.tsx`, `app/me.tsx`, `app/ask.tsx`, `tools/clockin/` and `plugins/with-release-signing.js`. Setting
 `EXPO_PUBLIC_CLOCKIN=1` selects it. Without that, the app builds as the hosted STOCKLANA mainnet app, unchanged.
 In this build the root and the hosted tab shell redirect to `/today`, and nothing that talks to the hosted executor is
 mounted.
@@ -18,7 +18,8 @@ mounted.
 | Unit rules: streak, tiers and shifts, the agent engine (exits, guard, pacing, allowance, DST-aware Nasdaq session), the brief, *Ask your agent* answers without a model, the faucet-busy wording | `npx vitest run src/clockin`: 19 passed (the on-chain suites skip without `CLOCKIN_LIVE`) |
 | The whole permission loop **on chain**: fund with no owner signature → clock-in memo and reward → SKR shift payment → `ApproveChecked` grant → agent buy as delegate (allowance falls by exactly the spend) → over-cap transfer **refused by the token program** → agent sale through its approval → `Revoke` → buy after revoke **refused** | `CLOCKIN_LIVE=1 npx vitest run src/clockin/chain.devnet.test.ts` against a local `solana-test-validator`: 8/8 |
 | The same loop when xorr's faucet has no SOL: owner pays fees and rent, the agent receives 0.03 SOL with the grant and pays for its own trades | same file, `CLOCKIN_SELFPAY=1`: 9/9 |
-| The app on **iPhone 17 Pro Max simulator** (debug build, Metro 8481), against a local validator on :4400: Start → guest wallet → funded (1,000 dUSDC, 250 dSKR) → grant 100 → agent bought NVDAx/TSLAx/MSFTx at live Jupiter prices → *Test the cap* refused on chain → clock-in day 1 (+15 dSKR) → agent bought SPYx → Night Shift paid with 20 dSKR → revoke | Signatures in the JS log; screenshots `clockin/screens/01…12`. Taps were driven by a dev-only remote (`src/clockin/autopilot.ts`, `tools/clockin/remote.mjs`, compiled out of release builds) because nobody was at the simulator |
+| The app on **iPhone 17 Pro Max simulator** (debug build, Metro 8481), against a local validator on :4400: Start → guest wallet → funded (1,000 dUSDC, 250 dSKR) → grant 100 → agent bought NVDAx/TSLAx/MSFTx at live Jupiter prices → *Test the cap* refused on chain → clock-in day 1 (+15 dSKR) → agent bought SPYx → Night Shift paid with 20 dSKR → revoke | Signatures in the JS log; screenshots (Oct 6 UI, since replaced). Taps were driven by a dev-only remote (`src/clockin/autopilot.ts`, `tools/clockin/remote.mjs`, compiled out of release builds) because nobody was at the simulator |
+| **Oct 7: the UI is xorr's own** (the xorr-xlayer design: welcome, Home with balance + live line + sheet of tabs + ARMED chip, Safety layout for the permission, TabBar Home/Trade/Ask). Re-verified from a fresh install on the iPhone 17 Pro Max simulator (local validator, per-phone mints, self-paid fees): connect (guest) → grant 100 → agent bought SPYx → cap refused on chain → clock-in day 1 (+15 dSKR) → Night Shift paid 20 dSKR → revoke; an unknown deep link lands on Home | Side by side with the xorr-xlayer reference: `clockin/screens/xlayer-ui/01…05`; new screens `clockin/screens/01…13` and `xlayer-ui/10…18` |
 | **Device-mint bootstrap** (no shared stand-in set on the cluster): the phone created its own 7 mints, funded the wallet, granted with agent gas, the agent bought TSLAx paying its own fee, and the cap held | same simulator session, after emptying `devnet.json` |
 | Live prices | Jupiter `price/v3` (lite-api, then api.jup.ag on 429), 20 s cache, 60 s back-off. Seen live in the app |
 | Release APK builds and is signed with xorr's own release key (not the debug key) | `tools/clockin/build-apk.sh`. `apksigner verify --print-certs` → `CN=xorr CLOCK IN, O=xorr, C=IN`. The MWA native module (`com.solanamobile.mobilewalletadapter.reactnative`) is in the dex |
@@ -48,13 +49,13 @@ mounted.
 1. If the shared stand-in set in `src/clockin/devnet.json` exists on devnet **and** xorr's faucet key holds ≥ 0.02 SOL,
    the faucet pays every fee and rent. A judge needs nothing.
 2. If the shared set exists but the faucet is dry, the owner pays fees from devnet SOL. The app asks devnet's own faucet
-   on the owner's behalf, and *Get devnet SOL* on Today and Me retries. The agent gets 0.03 SOL with the grant.
+   on the owner's behalf, and *Get devnet SOL* on Home and Profile retries. The agent gets 0.03 SOL with the grant.
 3. If there is no shared set (the **current state** of the committed `devnet.json`), the phone creates its own seven
    mints on first run (about 0.011 SOL of rent, paid from a 1 SOL devnet airdrop to the owner), and then case 2 applies.
    **The risk:** this path depends on devnet's public faucet granting an airdrop to the judge's phone, and that faucet
    rate-limits per IP. When it refuses, the app does not dead-end. Start shows "Devnet's free faucet is busy (it
    rate-limits test SOL). Nothing is wrong with your wallet — try again in a minute or two." with a **Try again** button,
-   and Today shows **Try setting up again** and **Get devnet SOL**. A smaller 0.05 SOL request is tried automatically
+   and Home shows **Try setting up again** and **Get devnet SOL**. A smaller 0.05 SOL request is tried automatically
    after a refused 1 SOL one. Funding the shared faucet (step 1 below) removes the risk entirely.
 
 ## What the user must do
@@ -72,7 +73,7 @@ mounted.
    Without funding, the APK still works: each phone creates its own set (see above), but every judge then needs a
    devnet airdrop to succeed from their phone.
 2. **Run the APK on a real Android phone (ideally a Seeker)** before submitting, and record the demo there
-   (`clockin/DEMO-SCRIPT.md`). Install a wallet if the phone has none. Check: *Connect wallet · Seed Vault* opens the
+   (`clockin/DEMO-SCRIPT.md`). Install a wallet if the phone has none. Check: *Connect wallet* opens the
    wallet, the grant and clock-in sign, and *Test the cap* shows a refused devnet transaction.
 3. Host the APK as a direct download (for example a GitHub Release asset on `nickthelegend/xorr-clockin`) and put the
    URL in the submission form. The file is at `/Volumes/Extreme SSD/Projects/clockin/apks/xorr-clockin.apk`. Its sha256

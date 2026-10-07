@@ -8,7 +8,7 @@
 that trades tokenized US stocks (Backed's xStocks) on Solana inside an SPL permission you can revoke in one tap. It never
 holds your money. The CLOCK IN build makes it a phone habit:
 
-- **Seeker-first wallet.** *Connect wallet · Seed Vault* is the first button on Android. It uses Mobile Wallet Adapter
+- **Seeker-first wallet.** *Connect wallet* (Seed Vault) is the first button on Android. It uses Mobile Wallet Adapter
   2.3, which is Seed Vault on a Seeker and Phantom, Solflare or Backpack elsewhere. Privy email sign-in and a devnet guest
   wallet are next to it, for iOS and for phones without a wallet.
 - **A morning clock-in.** Open the app and the agent's brief is waiting. It covers what your book did, what moved since
@@ -35,7 +35,7 @@ real xStocks**. No real money moves, and the CLOCK IN app never talks to xorr's 
 
 ## What a day looks like
 
-1. **Open** — Today: the agent's face and its brief, written from live Jupiter prices and the issuer's own mark.
+1. **Open** — Home, in xorr's design: the total balance, the live line, the daily clock-in card, and the sheet of Agents, the morning Brief, Stocks and SKR.
 2. **Clock in** — one signature (Seed Vault sheet on a Seeker). The streak goes up and dSKR lands. The agent looks right
    after: exits first, then the guard, then each strategy. It buys inside your permission and tells you why.
 3. **Check the book** — positions at live prices, P&L against cost, and every action on the trail with an explorer link.
@@ -44,7 +44,7 @@ real xStocks**. No real money moves, and the CLOCK IN app never talks to xorr's 
 
 ## How it is built (the CLOCK IN parts)
 
-Everything new is in [`src/clockin/`](src/clockin) and [`app/(clockin)/`](app/(clockin)), plus [`app/start.tsx`](app/start.tsx).
+Everything new is in [`src/clockin/`](src/clockin) (logic and `screens/ClockinHome.tsx`) and the screens `app/start.tsx`, `app/desk.tsx`, `app/skr.tsx`, `app/me.tsx`, `app/ask.tsx` — all drawn in xorr's own design system (the xorr-xlayer UI: same tab bar, Home sheet, Safety layout, type and colour).
 
 | Piece | What it does |
 |---|---|

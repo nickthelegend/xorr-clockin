@@ -31,7 +31,7 @@ import { STAGGER } from '@/ui/motion';
 import { heavyTap, selectionTick, successTap, warningTap } from '@/ui/haptics';
 import { CLOCKIN_AGENTS } from '../agents';
 import { STOCKS } from '../config';
-import { checkIn, ensureDesk, friendlyError, useLive, type CheckInResult } from '../desk';
+import { checkIn, ensureDesk, feeMode, friendlyError, getDevnetSol, useLive, type CheckInResult } from '../desk';
 import { driftPct, nasdaqOpen } from '../engine';
 import { useAutopilot, useScrollAutopilot } from '../autopilot';
 import { useClockin } from '../session';
@@ -225,6 +225,20 @@ export default function ClockinHome() {
                 testID="retry-setup"
               />
             ) : null}
+          </View>
+        ) : null}
+
+        {live.view && feeMode(live.view) === 'self' && live.view.sol < 0.003 ? (
+          <View style={{ marginTop: space.s12, paddingHorizontal: space.gutter, gap: space.s8 }}>
+            <Banner text="xorr’s devnet faucet is out of SOL right now, so transactions need a little devnet SOL of your own (free, test only)." />
+            <Button
+              label={busy === 'Requesting devnet SOL' ? 'Requesting…' : 'Get devnet SOL'}
+              variant="secondary"
+              loading={busy === 'Requesting devnet SOL'}
+              onPress={() => {
+                if (owner) void getDevnetSol(owner).catch((e) => setError(friendlyError(e)));
+              }}
+            />
           </View>
         ) : null}
 

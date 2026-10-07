@@ -15,6 +15,8 @@
  * can be created, so those two say they have nothing to add. The full list is still one tap away, from
  * the card's own header: this page is how people reach it.
  */
+import { CLOCKIN } from '@/clockin/config';
+import ClockinAgent from '@/clockin/screens/ClockinAgent';
 import React from 'react';
 import { isSolana } from '@/chain';
 import { Linking, ScrollView, View } from 'react-native';
@@ -57,7 +59,10 @@ import { DesktopAgent } from '@/desktop/pages/DesktopAgent';
 const ORB = 84 as const;
 
 /** The desktop web draws its own two-column page at laptop widths (2026-10-01); the phone layout is unchanged. */
-export default function AgentDetail() {
+/** The CLOCK IN build draws its own agentdetail screen over devnet, in this screen's design (`src/clockin/screens/ClockinAgent`). */
+export default CLOCKIN ? ClockinAgent : AgentDetail;
+
+function AgentDetail() {
   return useDesktop() ? <DesktopAgent /> : <MobileAgentDetail />;
 }
 

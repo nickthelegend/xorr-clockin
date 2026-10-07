@@ -13,6 +13,8 @@
  * [G41] The `yield` row was orphaned by the original filter map; state/derived.ts folds it
  * into Trades so every row is reachable from a tab.
  */
+import { CLOCKIN } from '@/clockin/config';
+import ClockinActivity from '@/clockin/screens/ClockinActivity';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -99,7 +101,10 @@ function ExplorerLink({ explorer }: { explorer: string }) {
 }
 
 /** The desktop web draws the trail as a table at laptop widths (2026-10-01); the phone layout is unchanged. */
-export default function Activity() {
+/** The CLOCK IN build draws its own activity screen over devnet, in this screen's design (`src/clockin/screens/ClockinActivity`). */
+export default CLOCKIN ? ClockinActivity : Activity;
+
+function Activity() {
   return useDesktop() ? <DesktopActivity /> : <MobileActivity />;
 }
 

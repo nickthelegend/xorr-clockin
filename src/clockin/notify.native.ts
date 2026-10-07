@@ -42,24 +42,75 @@ async function allowed(ask: boolean): Promise<boolean> {
   return (await Notifications.requestPermissionsAsync()).status === 'granted';
 }
 
-/** (Re)schedule tomorrow-morning's brief, carrying the streak the owner would lose. Returns whether it is scheduled. */
-export async function scheduleDailyBrief(streak: number, ask = false, hour = 8, minute = 30): Promise<boolean> {
+const STREAK_ID = 'xorr-clockin-streak-at-risk';
+/** The evening nudge, local time: late enough to be useful, early enough to act before the UTC day ends for most. */
+export const STREAK_REMINDER_HOUR = 20;
+
+export type ReminderPlan = { on: boolean; briefAt: { hour: number; minute: number }; streak: number; checkedInToday: boolean };
+
+/** When the evening reminder should fire: tonight if the streak is still open and 20:00 is ahead, else tomorrow night. */
+export function streakReminderAt(plan: ReminderPlan, now = new Date()): Date {
+  const at = new Date(now);
+  at.setHours(STREAK_REMINDER_HOUR, 0, 0, 0);
+  if (plan.checkedInToday || at.getTime() <= now.getTime()) at.setDate(at.getDate() + 1);
+  return at;
+}
+
+/**
+ * Make the scheduled reminders match the plan: the morning brief daily at the chosen time, and one evening
+ * "your streak ends at midnight UTC" reminder — tonight if you have not clocked in, otherwise tomorrow night. Called on
+ * launch, after every clock-in and when the settings change. `ask` may raise the permission prompt (the Profile
+ * switch); nothing else does. Returns whether reminders are scheduled.
+ */
+export async function syncReminders(plan: ReminderPlan, ask = false, devForce = false): Promise<boolean> {
   try {
-    if (!(await allowed(ask))) return false;
     await Notifications.cancelScheduledNotificationAsync(DAILY_ID).catch(() => undefined);
+    await Notifications.cancelScheduledNotificationAsync(STREAK_ID).catch(() => undefined);
+    // `devForce` (development builds only) schedules without the permission, to read the schedule back on a simulator
+    // nobody can tap the iOS prompt on. iOS accepts the request; it only withholds the banner.
+    if (!plan.on || (!(__DEV__ && devForce) && !(await allowed(ask)))) return false;
     await Notifications.scheduleNotificationAsync({
       identifier: DAILY_ID,
       content: {
         title: "Your agent's morning brief is ready",
-        body: streak > 0 ? `Clock in to keep your ${streak}-day streak and collect today's SKR.` : "See what your agent did overnight and collect today's SKR.",
+        body:
+          plan.streak > 0
+            ? `Clock in to keep your ${plan.streak}-day streak and collect today's SKR.`
+            : "See what your agent did overnight and collect today's SKR.",
         data: { route: '/' },
         sound: 'default',
       },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: CHANNEL_BRIEF },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: plan.briefAt.hour, minute: plan.briefAt.minute, channelId: CHANNEL_BRIEF },
+    });
+    await Notifications.scheduleNotificationAsync({
+      identifier: STREAK_ID,
+      content: {
+        title: plan.streak > 0 ? `Your ${plan.streak + (plan.checkedInToday ? 1 : 0)}-day streak is at risk` : 'Start a streak today',
+        body: 'Clock in before midnight UTC to keep it — one signature, and the SKR is yours.',
+        data: { route: '/' },
+        sound: 'default',
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: streakReminderAt(plan), channelId: CHANNEL_BRIEF },
     });
     return true;
-  } catch {
+  } catch (e) {
+    if (__DEV__) console.log('[clockin] reminders not scheduled', String(e));
     return false;
+  }
+}
+
+/** What is actually scheduled, read back from the OS — so the Profile can say "next brief 8:30" truthfully. */
+export async function scheduledReminders(): Promise<{ brief: boolean; streakAt: Date | null }> {
+  try {
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    const brief = all.some((n) => n.identifier === DAILY_ID);
+    const streak = all.find((n) => n.identifier === STREAK_ID);
+    // iOS reports a date trigger back as a time interval or a date depending on the OS version; read either.
+    const t = streak?.trigger as { value?: number; date?: number; seconds?: number } | null | undefined;
+    const ms = t?.value ?? t?.date ?? (typeof t?.seconds === 'number' ? Date.now() + t.seconds * 1000 : undefined);
+    return { brief, streakAt: typeof ms === 'number' ? new Date(ms) : null };
+  } catch {
+    return { brief: false, streakAt: null };
   }
 }
 

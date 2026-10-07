@@ -100,8 +100,10 @@ export { Keypad, KEYPAD_KEYS, type KeypadProps, type KeypadKey } from './Keypad'
 export { Tag, DeltaChip, type TagProps, type TagTone } from './Tag';
 export { NoteStrip, noteDotColor, type NoteStripProps, type NoteKind } from './NoteStrip';
 export { StatTile, StatGrid, StatRow, type StatTileProps, type StatGridProps } from './StatTile';
+export { TransactionRef, transactionRef } from './TransactionRef';
 export { TabBar, TAB_ORDER, type TabBarProps, type TabKey } from './TabBar';
 
 export * from './charts';
 export { Ring, type RingProps } from './charts/Ring';
 export { PnlBars } from './charts/PnlBars';
+export { Field } from './Field';

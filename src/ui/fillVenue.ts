@@ -56,6 +56,11 @@ const KNOWN: Readonly<Record<string, VenueNaming>> = {
     detail: 'The venue vault settled this at the Jupiter quote price. No route was executed.',
     routed: false,
   },
+  'devnet-venue': {
+    label: 'Devnet venue',
+    detail: 'xorr’s devnet venue filled this at Jupiter’s live price for the real xStock. Test tokens only.',
+    routed: false,
+  },
   '1inch': { label: '1inch', detail: 'Routed through the 1inch aggregator.', routed: true },
   aqua: { label: 'Aqua book', detail: 'Filled against the Aqua order book.', routed: true },
   swapvm: { label: 'SwapVM', detail: 'Filled by the SwapVM program.', routed: true },

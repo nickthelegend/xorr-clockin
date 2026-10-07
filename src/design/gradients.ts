@@ -23,6 +23,10 @@ export const agentGradients = {
   Crypto: { c1: '#49E39B', c2: '#12A45F' },
   'Drawdown Guard': { c1: '#B58CFF', c2: '#7A45E0' },
   Strategist: { c1: '#C79BFF', c2: '#7B3FE4' },
+  // The CLOCK IN build's strategies, each wearing one of the §1 identities.
+  'Dip Buyer': { c1: '#F0BE55', c2: '#C98518' },
+  'Night Shift': { c1: '#B58CFF', c2: '#7A45E0' },
+  'Index Keeper': { c1: '#49E39B', c2: '#12A45F' },
 } as const satisfies Record<string, GradientPair>;
 
 export type AgentGradientName = keyof typeof agentGradients;

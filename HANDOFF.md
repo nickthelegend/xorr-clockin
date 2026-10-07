@@ -121,6 +121,10 @@ tools/clockin/build-apk.sh
 - **The devnet faucet key ships in the APK** (`EXPO_PUBLIC_CLOCKIN_FAUCET_SECRET`, from `.env.local`, never committed).
   It is a devnet-only key: anyone can extract it and spend its devnet SOL, which is why the app falls back to self-paid
   fees and per-device mints.
+  **Kept on purpose for the hackathon build. The dApp Store build must remove it**: build without
+  `EXPO_PUBLIC_CLOCKIN_FAUCET_SECRET` (the app then runs on self-paid fees and this phone's own stand-in mints) and pay
+  starter tokens and clock-in rewards from a server that holds the mint authority, so no private key ships in the APK
+  a reviewer can unpack (see `clockin/store/README.md`, "Other review risks").
 - **AI:** decisions are the deterministic engine's, with a reason for each. A model is optional, uses the owner's own key,
   and only answers *Ask your agent*; the brief is the engine's. No API key ships.
 - **Ports used:** 4400–4403 and 4410–4499 (local validator), 4405 (dev remote), 8481 (Metro). Simulator:

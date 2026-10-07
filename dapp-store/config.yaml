@@ -1,0 +1,105 @@
+# xorr: Solana dApp Store listing (source of truth for the Publisher Portal form)
+#
+# HOW PUBLISHING WORKS NOW (checked Oct 7, 2026; see clockin/store/STORE-REQUIREMENTS.md)
+#   * New apps are created in the Publisher Portal, https://publish.solanamobile.com
+#     (KYC/KYB, a publisher wallet with about 0.2 SOL, ArDrive storage).
+#   * Updates: @solana-mobile/dapp-store-cli 1.0.1
+#       dapp-store --apk-file <apk> --keypair <signer.json> --whats-new "..."
+#     That CLI does not read this file; the old 0.x YAML flow is legacy.
+#   * This file keeps the old schema so the listing stays structured and diffable.
+#     Step by step: clockin/store/PUBLISH.md
+#
+# FILL IN = the publisher's to complete. Never guess a legal identity here. Paths are relative to this file.
+
+publisher:
+  name: "<PUBLISHER_LEGAL_NAME>"      # FILL IN, exactly as verified in the portal's KYC/KYB
+  address: ""                         # publisher wallet public key (never a secret)
+  website: https://xorr.finance       # live, but it is the hosted xorr, not this devnet build
+  email: "<SUPPORT_EMAIL>"            # FILL IN; review results arrive here
+  media:
+    - purpose: icon
+      uri: ../clockin/store/icon-512.png
+
+app:
+  name: xorr                          # portal limit: 25 characters
+  address: ""                         # App NFT, minted by the portal
+  android_package: finance.xorr.app   # must match the APK
+  category: finance                   # requested; the docs suggest Solana Mobile assigns it
+  urls:
+    website: https://xorr.finance
+    privacy_policy_url: ""            # FILL IN: https://xorr.finance/privacy is 404 today; host clockin/store/PRIVACY.md
+    license_url: ""                   # FILL IN: a Terms/EULA URL (in-app Terms exist at /legal/terms)
+    copyright_url: https://xorr.finance
+  media:
+    - purpose: icon
+      uri: ../clockin/store/icon-512.png
+
+release:
+  address: ""                         # Release NFT, minted on "New Version"
+  version_name: "1.2.0"               # the store build must be higher (e.g. 1.2.1)
+  version_code: 3                     # judges installed 3, so the store build needs 4 or more
+  media:
+    - purpose: icon
+      uri: ../clockin/store/icon-512.png
+    - purpose: banner                 # 1200x600, required by the portal
+      uri: ../clockin/store/banner-1200x600.png
+    # dApp Preview: 1080x2400, at least 4, jpg/png/webp up to 3 MB each
+    - purpose: screenshot
+      uri: ../clockin/store/screenshots/01-welcome.png
+    - purpose: screenshot
+      uri: ../clockin/store/screenshots/02-clock-in-brief.png
+    - purpose: screenshot
+      uri: ../clockin/store/screenshots/03-cap-held.png
+    - purpose: screenshot
+      uri: ../clockin/store/screenshots/04-ask-agent.png
+    - purpose: screenshot
+      uri: ../clockin/store/screenshots/05-skr.png
+    - purpose: screenshot
+      uri: ../clockin/store/screenshots/06-stop-trading.png
+  files:
+    # Signed with xorr's release key (CN=xorr CLOCK IN, cert SHA-256 854facad…fb02e), never the debug key.
+    # Built by tools/clockin/build-apk.sh; the keystore lives outside the repo (PUBLISH.md step 1).
+    - purpose: install
+      uri: "/Volumes/Extreme SSD/Projects/clockin/apks/xorr-clockin.apk"
+  catalog:
+    en-US:
+      name: xorr
+      short_description: An agent for tokenized stocks    # 29 of 30 characters
+      long_description: |
+        xorr is an AI trading agent for Solana Seeker that works inside a limit you sign and can take back in one tap.
+
+        You give your agent one on-chain permission: an SPL token delegate capped at the amount you choose. Solana's token program, not xorr, refuses anything beyond it. Inside that cap the agent buys, takes profit and stops out on tokenized US stocks, and every decision comes with its reason.
+
+        • Clock in every morning: one signature keeps your streak and earns dSKR, and your agent takes its look right after. A morning brief tells you what your book did, what moved, and what it plans next.
+        • The cap holds: try "Test the cap" and watch the chain refuse a transfer above what you approved.
+        • Stop everything in one tap: the permission is revoked on-chain, and your funds never leave your wallet.
+        • Ask your agent what it bought and why. It answers from its own numbers. If you add your own OpenRouter key, a model can phrase the answer, but it never makes the decisions.
+        • Hire strategies for a day with dSKR: Momentum Scout, Dip Buyer, Night Shift and Index Keeper. A higher tier lowers fees and raises rewards. Seeker Genesis Token holders earn 1.5x.
+        • Sign in with Mobile Wallet Adapter (Seed Vault on Seeker), Privy email, or a labelled devnet guest wallet.
+
+        What this build is: a Solana devnet build with test tokens only. No real money moves. The agent trades devnet stand-ins for tokenized stocks at live mainnet prices from Jupiter, so it behaves like the real thing without holding real assets. dSKR is a devnet stand-in for SKR; your real SKR and Seeker Genesis Token are only read on mainnet, never moved. Nothing in xorr is investment advice.
+      new_in_version: |
+        • First run: a three-screen intro and a guided setup. Sign a cap, watch the agent's first $10 buy, then watch the chain refuse an over-cap transfer.
+        • The morning brief arrives at the time you choose, and an evening reminder warns before your streak lapses.
+        • Smoother: a rising-tile motion, counting balances, a stop curtain on revoke, and skeleton placeholders while data loads.
+        • Clear offline, empty and error states, with retries.
+        • Accessibility: larger text support, 44 pt touch targets, and labelled tabs, switches and streak days.
+        • No microphone or foreground-service permissions.
+        Devnet build with test tokens; stand-ins fill at live prices.
+      saga_features: |
+        Mobile Wallet Adapter with Seed Vault: one signature to clock in, one to grant a capped permission, one to revoke it. Seeker Genesis Token holders earn 1.5x dSKR. Real SKR on mainnet is read toward your tier, never moved.
+      images: []
+
+solana_mobile_dapp_publisher_portal:
+  # xorr is not on Google Play.
+  testing_instructions: >
+    Open xorr and tap Get started to see the three-screen intro. Choose Mobile
+    Wallet Adapter (Seed Vault/Phantom/Solflare on devnet), Sign in with Privy
+    email, or the devnet guest wallet. Setup: set a cap, sign the permission (an
+    SPL ApproveChecked on devnet), watch the agent's first $10 buy of a stand-in
+    stock token, then Test the cap; the token program refuses the over-cap
+    transfer, with a transaction link. On Home, Clock in (a devnet memo) to read
+    the brief and earn dSKR. Safety > Stop all trading revokes the permission
+    on-chain. Everything is Solana devnet with test tokens: the stock tokens are
+    devnet stand-ins priced from Jupiter's live mainnet quotes. If devnet's
+    faucet is busy, the app says so and offers a retry.

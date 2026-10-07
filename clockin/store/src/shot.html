@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>xorr store screenshot</title>
+<style>
+  /* xorr's xlayer look: black ground, the faint grid from the README banner, white type in Inter,
+     and the green dot of the XORR. mark as the only accent. */
+  @font-face { font-family: "Inter"; src: url("../../../assets/fonts/Inter-Medium.ttf"); font-weight: 500; }
+  @font-face { font-family: "Inter"; src: url("../../../assets/fonts/Inter-SemiBold.ttf"); font-weight: 600; }
+  @font-face { font-family: "Inter"; src: url("../../../assets/fonts/Inter-Bold.ttf"); font-weight: 700; }
+  @font-face { font-family: "Inter"; src: url("../../../assets/fonts/Inter-ExtraBold.ttf"); font-weight: 800; }
+  :root { --ink: #000; --text: #fff; --dim: #9a9aa2; --line: rgba(255,255,255,.055); --green: #12d77d; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 2400px; overflow: hidden; background: var(--ink); }
+  body { position: relative; color: var(--text); font-family: "Inter", sans-serif; -webkit-font-smoothing: antialiased; }
+  .grid {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 120px 120px; background-position: -1px -1px;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 40%, transparent 85%);
+  }
+  .glow { position: absolute; left: 50%; top: 1500px; width: 1100px; height: 1100px; transform: translate(-50%, -50%);
+          background: radial-gradient(closest-side, rgba(18, 215, 125, .10), transparent 70%); }
+  header { position: absolute; left: 0; right: 0; top: 150px; padding: 0 80px; }
+  .tag { display: inline-flex; align-items: center; gap: 14px; font-weight: 600; font-size: 28px; letter-spacing: 4px;
+         text-transform: uppercase; color: var(--dim); margin-bottom: 30px; }
+  .tag i { width: 14px; height: 14px; border-radius: 50%; background: var(--green); box-shadow: 0 0 18px rgba(18,215,125,.7); }
+  h1 { font-weight: 800; font-size: 108px; line-height: 1.0; letter-spacing: -3px; }
+  h1 .dot { color: var(--green); }
+  p.sub { margin-top: 28px; font-size: 38px; line-height: 1.35; font-weight: 500; color: var(--dim); letter-spacing: -.3px; }
+  p.sub b { color: var(--text); font-weight: 600; }
+  .device {
+    position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+    width: 784px; padding: 22px 22px 0; border-radius: 96px 96px 0 0;
+    background: linear-gradient(180deg, #2a2a2e, #141416 40%, #0b0b0c);
+    box-shadow: 0 0 0 2px #3a3a3f inset, 0 -30px 120px rgba(18, 215, 125, .08);
+  }
+  .screen { border-radius: 76px 76px 0 0; overflow: hidden; background: #000; height: 1600px; }
+  .screen img { display: block; width: 740px; height: auto; }   /* 736 px captures, shown 1:1 (+0.5%) */
+</style>
+</head>
+<body>
+<div class="grid"></div>
+<div class="glow"></div>
+<header>
+  <div class="tag"><i></i><span id="tag"></span></div>
+  <h1 id="title"></h1>
+  <p class="sub" id="sub"></p>
+</header>
+<div class="device" id="device"><div class="screen"><img id="shot" alt=""></div></div>
+<script>
+  // Short, honest captions: devnet build, test tokens, stand-ins that fill at live prices.
+  const D = '<span class="dot">.</span>';
+  const SLIDES = {
+    "1": { shot: "01-welcome",    tag: "Solana Seeker · devnet",
+           title: "Hire an agent.<br>Keep your wallet" + D,
+           sub: "It trades <b>tokenized US stocks</b> inside<br>limits you sign. Devnet, test tokens." },
+    "2": { shot: "18-home-clocked-in-brief", tag: "Clock in daily",
+           title: "One tap. One<br>morning brief" + D,
+           sub: "What your agent did overnight,<br>and why. Your streak earns <b>dSKR</b>." },
+    "3": { shot: "15-safety-cap-refused",   tag: "On-chain cap",
+           title: "The chain holds<br>the line" + D,
+           sub: "Your agent asked for $150 with $100<br>approved. <b>Solana refused it.</b>" },
+    "4": { shot: "23-conversation-what-did-you-buy",        tag: "Ask your agent",
+           title: "Ask what it<br>bought, and why" + D,
+           sub: "Every trade comes with a reason<br>from the strategy's own rules." },
+    "5": { shot: "28-skr",        tag: "SKR tiers",
+           title: "Show up,<br>level up" + D,
+           sub: "Streaks earn <b>dSKR</b>, the devnet stand-in.<br>Real SKR on mainnet is read only." },
+    "6": { shot: "34-stop-curtain-stopped",    tag: "Kill switch",
+           title: "Stop everything<br>in one tap" + D,
+           sub: "The permission is revoked on-chain.<br>Your funds never leave your wallet." },
+  };
+  const s = SLIDES[(location.hash || "#1").slice(1)];
+  document.getElementById("tag").textContent = s.tag;
+  document.getElementById("title").innerHTML = s.title;
+  document.getElementById("sub").innerHTML = s.sub;
+  document.getElementById("shot").src = "../../screens/all/" + s.shot + ".png";
+</script>
+</body>
+</html>

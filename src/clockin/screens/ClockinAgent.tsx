@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { quantity, AgentOrb, BackButton, Button, ConsequenceCard, Price, Row, Screen, Tag, Text, TransactionRef, colors, radius, size, space } from '@/ui';
+import { quantity, AgentOrb, BackButton, Button, ConsequenceCard, Press, Price, Row, Screen, Tag, Text, TransactionRef, colors, radius, size, space } from '@/ui';
 import { Rise } from '@/ui/Rise';
 import { selectionTick, successTap, warningTap } from '@/ui/haptics';
 import { useGoBack } from '@/nav/useGoBack';
@@ -141,7 +141,11 @@ export default function ClockinAgent() {
         <Rise index={2} style={{ flexDirection: 'row', gap: space.s10 }}>
           <Stat label="Shift" value={price ? `${price} SKR` : 'Free'} />
           <Stat label="Fee on fills" value={`${quantity(st.tier.feeBps / 100, 2)}%`} />
-          <Stat label="Left to spend" value={st.permission.live ? usd(st.permission.leftUsd, 0) : '—'} />
+          {st.permission.live ? (
+            <Stat label="Left to spend" value={usd(st.permission.leftUsd, 0)} />
+          ) : (
+            <Stat label="Set one in Safety ›" value="No permission yet" onPress={() => router.push('/desk')} />
+          )}
         </Rise>
 
         <Rise index={3} style={{ borderRadius: radius.panel, backgroundColor: colors.surfaceAlt, padding: space.s16 }}>
@@ -183,9 +187,23 @@ export default function ClockinAgent() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, onPress }: { label: string; value: string; onPress?: () => void }) {
+  const tile = { flex: 1, paddingVertical: space.s14, paddingHorizontal: space.s12, borderRadius: radius.card, backgroundColor: colors.surfaceAlt } as const;
+  // A sentence instead of a figure — "No permission yet" — reads as words, wraps to two lines, and leads somewhere.
+  if (onPress) {
+    return (
+      <Press onPress={onPress} accessibilityRole="link" accessibilityLabel={`${value}. ${label.replace(' ›', '')}`} style={tile}>
+        <Text variant="rowPrimary" numberOfLines={2}>
+          {value}
+        </Text>
+        <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s4 }}>
+          {label}
+        </Text>
+      </Press>
+    );
+  }
   return (
-    <View style={{ flex: 1, paddingVertical: space.s14, paddingHorizontal: space.s12, borderRadius: radius.card, backgroundColor: colors.surfaceAlt }}>
+    <View style={tile}>
       <Price variant="cardTitleLg" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} figure="market">
         {value}
       </Price>

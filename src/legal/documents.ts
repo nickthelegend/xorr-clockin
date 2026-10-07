@@ -13,6 +13,7 @@
  * out what the executor does store, and described crash reports the app does not send.
  */
 import { isSolana } from '@/chain';
+import { CLOCKIN } from '@/clockin/config';
 
 export type LegalDoc = {
   title: string;
@@ -46,6 +47,52 @@ const XSTOCKS_RISK: LegalDoc['sections'] = [
 
 const REVIEW_NOTE =
   'This is xorr’s own draft. It has not yet been reviewed by counsel in every market where the app is available.';
+
+
+/**
+ * The privacy policy of the CLOCK IN build (Solana devnet, no xorr server), written from its code and kept in line with
+ * clockin/store/PRIVACY.md. The hosted policy below talks about a server, push tokens and 1inch, none of which exist here.
+ */
+const CLOCKIN_PRIVACY: LegalDoc = {
+  title: 'Privacy',
+  updated: 'Devnet build 1.2.1 — October 2026',
+  sections: [
+    {
+      heading: 'In short',
+      paragraphs: [
+        'This build of xorr runs without an xorr server. We do not receive your trades, balances or messages. There are no analytics, ads, tracking or crash reports.',
+        'It runs on Solana devnet with test tokens. Transactions you sign are public and permanent on that network.',
+      ],
+    },
+    {
+      heading: 'What stays on this phone',
+      paragraphs: [
+        'In the keystore (SecureStore): the guest wallet’s key if you use one, your agent’s key, this phone’s devnet venue key, and your OpenRouter key if you add one. These secret keys are never sent anywhere.',
+        'In app storage: your wallet type and address, your wallet app’s authorization, your streak, activity, holdings and cost, last prices and brief, reminder settings, SKR shifts and chosen model. Android backup is off for this app.',
+        'Disconnect in Profile deletes the keys above and clears this record. Uninstalling deletes everything.',
+      ],
+    },
+    {
+      heading: 'What leaves this phone, and to whom',
+      paragraphs: [
+        'Solana devnet RPC: your public address and your agent’s public key, to read balances, and the transactions you or your agent sign. Clock-in memos, the permission you grant and trades are public on devnet.',
+        'Solana mainnet RPC, read only: your public address, to read your real SKR balance and check for a Seeker Genesis Token. Nothing is signed or sent on mainnet.',
+        'Jupiter’s price API: a fixed list of token addresses. Nothing about you.',
+        'Privy, only if you sign in with email: your email, the one-time code, your IP address and device details. Privy creates and secures your embedded wallet under its own policy; xorr keeps only the wallet’s public address.',
+        'OpenRouter, only if you add your own key and use Ask your agent: your question, your agent’s brief and decisions, prices, your holdings and cost, your dUSDC cash, tier, streak and recent trades. They go to OpenRouter and the model provider you chose, under their policies. Your wallet address is not sent. Without a key, Ask answers on this phone and sends nothing.',
+        'Image hosts (xstocks-metadata.backed.fi, r2.solanamobiledappstore.com, raw.githubusercontent.com) serve token logos, and see your IP address like any web request.',
+        'Your wallet app, through Mobile Wallet Adapter: xorr’s name and icon, and the transactions you approve.',
+      ],
+    },
+    {
+      heading: 'Notifications',
+      paragraphs: [
+        'The morning brief, the streak reminder and trade alerts are local notifications, scheduled on this phone. xorr asks for permission only when you turn reminders on, and registers no push token.',
+      ],
+    },
+  ],
+  footer: 'This is xorr’s own draft for a devnet test build. It has not been reviewed by counsel. Tokens here are test tokens and nothing here is an offer of any security.',
+};
 
 export const LEGAL: Record<string, LegalDoc> = {
   terms: {
@@ -85,7 +132,7 @@ export const LEGAL: Record<string, LegalDoc> = {
     ],
     footer: REVIEW_NOTE,
   },
-  privacy: {
+  privacy: CLOCKIN ? CLOCKIN_PRIVACY : {
     title: 'Privacy',
     updated: 'Draft — September 2026',
     sections: [

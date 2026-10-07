@@ -335,7 +335,8 @@ export default function Me() {
             Legal
           </Eyebrow>
           <Row title="Terms" height={size.row} divider onPress={() => router.push('/legal/terms' as never)} right={<Icon name="chevron" size={16} color={colors.ink28} />} />
-          <Row title="Privacy policy" height={size.row} divider={false} onPress={() => router.push('/legal/privacy' as never)} right={<Icon name="chevron" size={16} color={colors.ink28} />} />
+          <Row title="Privacy policy" height={size.row} divider onPress={() => router.push('/legal/privacy' as never)} right={<Icon name="chevron" size={16} color={colors.ink28} />} />
+          <Row title="Risk disclosure" height={size.row} divider={false} onPress={() => router.push('/legal/risk' as never)} right={<Icon name="chevron" size={16} color={colors.ink28} />} testID="legal-risk" />
 
           <Press
             onPress={() => setAdvanced(!advanced)}

@@ -8,7 +8,8 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button, ConsequenceCard, Fill, Progress, Screen, SheetCard, Stepper, Text, TransactionRef, colors, money, radius, space } from '@/ui';
+import { Icon } from '@/design/Icon';
+import { Button, ConsequenceCard, Fill, Press, Progress, Screen, SheetCard, Stepper, Text, TransactionRef, colors, money, radius, size, space } from '@/ui';
 import { Rise } from '@/ui/Rise';
 import { selectionTick, successTap, warningTap } from '@/ui/haptics';
 import { FailureNote } from '@/ui/States';
@@ -144,6 +145,19 @@ export default function Setup() {
                   You hold {usd(st.cashUsd)} of test dUSDC.
                 </Text>
               </SheetCard>
+              <Press
+                onPress={() => router.push('/legal/risk' as never)}
+                accessibilityRole="link"
+                accessibilityLabel="Read the risk disclosure before you sign"
+                hitHeight={size.hit}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: space.s4, alignSelf: 'flex-start', marginTop: space.s4 }}
+                testID="setup-risk"
+              >
+                <Text variant="secondarySm" color={colors.ink55}>
+                  Read the risks before you sign
+                </Text>
+                <Icon name="chevron" size={12} color={colors.ink40} />
+              </Press>
             </>
           ) : null}
 

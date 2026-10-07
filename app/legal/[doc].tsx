@@ -71,7 +71,7 @@ export default function LegalDoc() {
           <Text variant="footnote" color={colors.ink55}>
             {entry.updated}
           </Text>
-          {CLOCKIN ? (
+          {CLOCKIN && doc !== 'privacy' ? (
             <NoteStrip kind="acted" style={{ marginTop: space.s16 }}>
               {
                 'This devnet build runs no xorr server. Your session, streak and agent key stay on this phone; prices come from Jupiter; every transaction goes to Solana devnet with test tokens. Where the text below describes the hosted xorr — its server, deposits, or routing through other venues — it does not apply here.'

@@ -40,6 +40,7 @@ import { agentLook, buyShift, friendlyError, grant, revoke, testCap } from '@/cl
 import { useClockin } from '@/clockin/session';
 import { useDesk } from '@/clockin/useDesk';
 import { openUrl, usd } from '@/clockin/ui';
+import { splitNote } from '@/clockin/note';
 
 const CAPS = [25, 50, 100, 250];
 const DOT = 7;
@@ -48,7 +49,7 @@ const SETTING_ROW = 52;
 export default function Desk() {
   const goBack = useGoBack('/');
   const router = useRouter();
-  const { owner, live, st } = useDesk();
+  const { owner, live, st, onPull, pulling } = useDesk();
   const scroller = useScrollAutopilot();
   const activity = useClockin((s) => s.activity);
   const [capIndex, setCapIndex] = useState(2);
@@ -137,7 +138,7 @@ export default function Desk() {
           ? 'The allowance is spent'
           : 'Give your agent a permission';
   const sentence = unreadable
-    ? 'Anything you granted stays in force. Pull to try again.'
+    ? 'Anything you granted stays in force on chain, and your agent keeps to it.'
     : perm.live
       ? `Your agent can spend ${usd(perm.leftUsd)} more, and sell what it bought. Nothing past that.`
       : lastPermissionEvent === 'revoke'
@@ -180,6 +181,14 @@ export default function Desk() {
 
       <Fill style={{ marginTop: space.s20 }}>
         <ScrollView ref={scroller} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: space.s16, gap: space.s12 }}>
+          {unreadable ? (
+            <ConsequenceCard
+              tone="warn"
+              {...splitNote(live.error ?? 'Can’t reach Solana devnet right now.')}
+              action={<Button label="Try again" variant="secondary" height={size.ghost} loading={pulling} onPress={() => void onPull()} testID="desk-retry" />}
+              testID="desk-note"
+            />
+          ) : null}
           {failure ? <FailureNote error={failure} /> : null}
           {outcome ? (
             <View style={{ gap: space.s4 }}>

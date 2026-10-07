@@ -30,6 +30,7 @@ import {
   quantity,
   radius,
   size,
+  ConsequenceCard,
   space,
   typeScale,
 } from '@/ui';
@@ -51,6 +52,7 @@ import { checkInReward, checkedInToday, currentStreak, streakAfterCheckIn, weekS
 import { rewardMultiplier } from '../tiers';
 import { useDesk } from '../useDesk';
 import { TokenMark, signedPct, usd, whole } from '../ui';
+import { splitNote } from '../note';
 
 const AVATAR = 40;
 const GRABBER_W = 36;
@@ -227,26 +229,31 @@ export default function ClockinHome() {
           ) : (
             <Placeholder width={190} height={46} style={{ marginTop: space.s8, borderRadius: radius.tile }} />
           )}
-          {live.error ? (
-            <Text variant="footnote" color={colors.warn} style={{ marginTop: space.s6 }} accessibilityLiveRegion="polite">
-              {live.error}
-            </Text>
-          ) : null}
         </Rise>
 
         {live.error || live.setupFailed || faucetDry ? (
-          <View style={{ marginTop: space.s12, paddingHorizontal: space.gutter }}>
-            <Button
-              label={busy ?? (faucetDry && !live.setupFailed ? 'Get devnet SOL' : 'Try again')}
-              variant="secondary"
-              loading={!!busy}
-              onPress={() => {
-                if (!owner) return;
-                if (live.setupFailed) void ensureDesk(owner).catch((e) => useLive.setState({ error: friendlyError(e), setupFailed: true }));
-                else if (faucetDry) void getDevnetSol(owner).catch((e) => setError(friendlyError(e)));
-                else void onPull();
-              }}
-              testID="retry"
+          <View style={{ marginTop: space.s14, paddingHorizontal: space.gutter }} accessibilityLiveRegion="polite">
+            <ConsequenceCard
+              tone="warn"
+              {...(live.error
+                ? splitNote(live.error)
+                : { label: 'You need a little devnet SOL', detail: 'xorr’s devnet faucet is dry, so you pay the network fees. Devnet SOL is free test money.' })}
+              action={
+                <Button
+                  label={busy ?? (faucetDry && !live.setupFailed && !live.error ? 'Get devnet SOL' : 'Try again')}
+                  variant="secondary"
+                  height={size.ghost}
+                  loading={!!busy}
+                  onPress={() => {
+                    if (!owner) return;
+                    if (live.setupFailed) void ensureDesk(owner).catch((e) => useLive.setState({ error: friendlyError(e), setupFailed: true }));
+                    else if (faucetDry && !live.error) void getDevnetSol(owner).catch((e) => setError(friendlyError(e)));
+                    else void onPull();
+                  }}
+                  testID="retry"
+                />
+              }
+              testID="home-note"
             />
           </View>
         ) : null}

@@ -117,12 +117,18 @@ export function ConsequenceCard({
   tone,
   label,
   detail,
+  action,
   style,
   testID,
 }: {
   tone: 'up' | 'down' | 'warn';
   label: string;
   detail: string;
+  /**
+   * The one next step, inside the card it belongs to — a retry under "Can't reach Solana devnet", not a separate button
+   * floating under a footnote.
+   */
+  action?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }) {
@@ -141,7 +147,8 @@ export function ConsequenceCard({
         />
         <View style={{ flex: 1, gap: space.s4 }}>
           <Text variant="rowPrimary">{label}</Text>
-          <Text variant="secondarySm">{detail}</Text>
+          {detail ? <Text variant="secondarySm">{detail}</Text> : null}
+          {action ? <View style={{ marginTop: space.s8, alignSelf: 'flex-start' }}>{action}</View> : null}
         </View>
       </View>
     </SheetCard>

@@ -71,6 +71,11 @@ export default function LegalDoc() {
           <Text variant="footnote" color={colors.ink55}>
             {entry.updated}
           </Text>
+          {entry.summary ? (
+            <Text variant="bodyLg" style={{ marginTop: space.s12 }}>
+              {entry.summary}
+            </Text>
+          ) : null}
           {CLOCKIN && doc !== 'privacy' ? (
             <NoteStrip kind="acted" style={{ marginTop: space.s16 }}>
               {
@@ -79,7 +84,7 @@ export default function LegalDoc() {
             </NoteStrip>
           ) : null}
           {entry.sections.map((s) => (
-            <View key={s.heading} style={{ marginTop: space.s22, gap: space.s8 }}>
+            <View key={s.heading} style={{ marginTop: space.s30, gap: space.s12 }}>
               <Text variant="cardTitle">{s.heading}</Text>
               {s.paragraphs.map((p, i) => (
                 // Legal prose is read in long passes, so it takes a looser leading than the

@@ -18,6 +18,8 @@ import { CLOCKIN } from '@/clockin/config';
 export type LegalDoc = {
   title: string;
   updated: string;
+  /** One or two sentences that say what the document comes to, read before the sections. */
+  summary?: string;
   sections: { heading: string; paragraphs: string[] }[];
   footer: string;
 };
@@ -56,6 +58,7 @@ const REVIEW_NOTE =
 const CLOCKIN_PRIVACY: LegalDoc = {
   title: 'Privacy',
   updated: 'Devnet build 1.2.1 — October 2026',
+  summary: 'No xorr server, no analytics, no tracking. Your keys stay on this phone. A few services see a little, and each one is named below.',
   sections: [
     {
       heading: 'In short',
@@ -98,6 +101,7 @@ export const LEGAL: Record<string, LegalDoc> = {
   terms: {
     title: 'Terms',
     updated: 'Draft — September 2026',
+    summary: 'xorr is software that trades for you inside a permission you sign and can take back. It never holds your funds.',
     sections: [
       {
         heading: 'What xorr is',
@@ -162,6 +166,7 @@ export const LEGAL: Record<string, LegalDoc> = {
   risk: {
     title: 'Risk disclosure',
     updated: 'Draft — September 2026',
+    summary: 'You can lose money. The cap limits what your agent spends, not what you can lose, and a confirmed trade is final.',
     sections: [
       {
         heading: 'You can lose money',

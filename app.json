@@ -28,7 +28,8 @@
       "package": "finance.xorr.app",
       "userInterfaceStyle": "dark",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/adaptive-foreground.png",
+        "monochromeImage": "./assets/adaptive-monochrome.png",
         "backgroundColor": "#000000"
       },
       "versionCode": 3,
@@ -60,7 +61,14 @@
       "expo-image",
       "expo-font",
       "./plugins/with-spaces-in-project-path",
-      "./plugins/with-release-signing"
+      "./plugins/with-release-signing",
+      [
+        "./plugins/with-android-notification-icon",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#12D77D"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

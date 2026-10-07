@@ -7,7 +7,7 @@
 > - Make the in-app Privacy page say the same thing (see "In-app policy" at the end).
 >
 > It describes the Android build `finance.xorr.app` 1.2.0, built with `tools/clockin/build-apk.sh`
-> (`EXPO_PUBLIC_CLOCKIN=1`, Solana devnet), and was written from that code at commit 96818b9. It does **not** cover the
+> (`EXPO_PUBLIC_CLOCKIN=1`, Solana devnet), and was written from that code at commit 96818b9 and re-checked against 83fc2a0. It does **not** cover the
 > hosted xorr web app at xorr.finance, which has a server.
 > Items marked ⚠ are behaviours the publisher may want to change before release. They are not promises.
 
@@ -105,4 +105,4 @@ The app's own Privacy page (`src/legal/documents.ts`) was written for the hosted
 - It says the language model does not receive balances. In this build it does receive holdings, costs and cash.
 - It doesn't mention the mainnet read, the image hosts, or what the public memos record.
 
-The builder has an uncommitted CLOCK IN note on that page. The Developer Agreement (§2.1) requires a privacy policy to be linked in the app, so the in-app text should match this policy before you submit. That file belongs to the app's builder, not this kit.
+Since 640ca65 the page opens with a CLOCK IN note ("This devnet build runs no xorr server… Where the text below describes the hosted xorr… it does not apply here"). That note helps, but the text under it still says the model never receives balances, which is wrong for this build, and it leaves out the mainnet read, Privy's role, OpenRouter and the image hosts. The Developer Agreement (§2.1) requires an in-app link to a privacy policy, so either link this policy from the app or bring the in-app text in line with it before you submit. That file belongs to the app's builder, not this kit.

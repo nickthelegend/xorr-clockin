@@ -53,22 +53,22 @@
   // Short, honest captions: devnet build, test tokens, stand-ins that fill at live prices.
   const D = '<span class="dot">.</span>';
   const SLIDES = {
-    "1": { shot: "welcome",    tag: "Solana Seeker · devnet",
+    "1": { shot: "01-welcome",    tag: "Solana Seeker · devnet",
            title: "Hire an agent.<br>Keep your wallet" + D,
            sub: "It trades <b>tokenized US stocks</b> inside<br>limits you sign. Devnet, test tokens." },
-    "2": { shot: "home-brief", tag: "Clock in daily",
+    "2": { shot: "18-home-clocked-in-brief", tag: "Clock in daily",
            title: "One tap. One<br>morning brief" + D,
            sub: "What your agent did overnight,<br>and why. Your streak earns <b>dSKR</b>." },
-    "3": { shot: "cap-held",   tag: "On-chain cap",
+    "3": { shot: "15-safety-cap-refused",   tag: "On-chain cap",
            title: "The chain holds<br>the line" + D,
            sub: "Your agent asked for $150 with $100<br>approved. <b>Solana refused it.</b>" },
-    "4": { shot: "ask",        tag: "Ask your agent",
+    "4": { shot: "23-conversation-what-did-you-buy",        tag: "Ask your agent",
            title: "Ask what it<br>bought, and why" + D,
            sub: "Every trade comes with a reason<br>from the strategy's own rules." },
-    "5": { shot: "skr",        tag: "SKR tiers",
+    "5": { shot: "28-skr",        tag: "SKR tiers",
            title: "Show up,<br>level up" + D,
            sub: "Streaks earn <b>dSKR</b>, the devnet stand-in.<br>Real SKR on mainnet is read only." },
-    "6": { shot: "stopped",    tag: "Kill switch",
+    "6": { shot: "34-stop-curtain-stopped",    tag: "Kill switch",
            title: "Stop everything<br>in one tap" + D,
            sub: "The permission is revoked on-chain.<br>Your funds never leave your wallet." },
   };
@@ -76,7 +76,7 @@
   document.getElementById("tag").textContent = s.tag;
   document.getElementById("title").innerHTML = s.title;
   document.getElementById("sub").innerHTML = s.sub;
-  document.getElementById("shot").src = "shots/" + s.shot + ".png";
+  document.getElementById("shot").src = "../../screens/all/" + s.shot + ".png";
 </script>
 </body>
 </html>

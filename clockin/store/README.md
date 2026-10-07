@@ -31,7 +31,7 @@ Everything needed to list xorr (`finance.xorr.app`) on the Solana dApp Store.
 
 ### Which screenshots were used
 
-The builder's newest set, **`clockin/screens/all/`**, captured Oct 7 at 17:26 on the iPhone simulator with the xlayer UI and 1.2.0 polish. It was untracked in the builder's working copy when I rendered.
+The builder's newest set, **`clockin/screens/all/`**, captured Oct 7 at 17:26 on the iPhone simulator with the xlayer UI and 1.2.0 polish. It is committed on `main` since e8a552c.
 
 | Slide | File in `all/` |
 |---|---|
@@ -42,7 +42,7 @@ The builder's newest set, **`clockin/screens/all/`**, captured Oct 7 at 17:26 on
 | 5 | `28-skr` |
 | 6 | `34-stop-curtain-stopped` |
 
-- The copies are in `src/shots/`. Each 736×1600 capture is shown at its own size, not upscaled, and is otherwise unedited.
+- The templates read them straight from `clockin/screens/all/`. Each 736×1600 capture is shown at its own size, not upscaled, and is otherwise unedited.
 - They are **iOS simulator captures**, because there is no Android device. They show a guest wallet on devnet.
 - They were chosen so that **no screenshot shows a company logo** (see below).
 

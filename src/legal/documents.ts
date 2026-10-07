@@ -58,15 +58,9 @@ const REVIEW_NOTE =
 const CLOCKIN_PRIVACY: LegalDoc = {
   title: 'Privacy',
   updated: 'Devnet build 1.2.1 — October 2026',
-  summary: 'No xorr server, no analytics, no tracking. Your keys stay on this phone. A few services see a little, and each one is named below.',
+  summary:
+    'This build runs without an xorr server: we never receive your trades, balances or messages, and there are no analytics, ads or crash reports. Your keys stay on this phone. What you sign is public on Solana devnet. The few services that see anything are named below.',
   sections: [
-    {
-      heading: 'In short',
-      paragraphs: [
-        'This build of xorr runs without an xorr server. We do not receive your trades, balances or messages. There are no analytics, ads, tracking or crash reports.',
-        'It runs on Solana devnet with test tokens. Transactions you sign are public and permanent on that network.',
-      ],
-    },
     {
       heading: 'What stays on this phone',
       paragraphs: [

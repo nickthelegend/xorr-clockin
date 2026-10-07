@@ -354,8 +354,10 @@ export default function Me() {
           {advanced ? (
             <View style={{ gap: space.s10 }}>
               <Text variant="bodySm" color={colors.ink55}>
-                AI narration: your agent decides on its own rules. With your own OpenRouter key a model also writes the morning
-                brief and answers in Ask. The key stays in this phone’s keystore and is never sent anywhere else.
+                Ask your agent: without a key, your agent answers from its own rules and numbers, on this phone. With your own
+                OpenRouter key, a model you choose answers instead. Each question then goes to OpenRouter with your agent’s brief,
+                prices, holdings, cost, dUSDC cash and recent trades (not your wallet address). The morning brief and every trade
+                decision stay on the agent’s own rules. The key itself stays in this phone’s keystore.
               </Text>
               {hasKey ? (
                 <Row

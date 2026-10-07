@@ -65,8 +65,8 @@ the issuer's mark…").
 
 **Notes:** The agent's decisions are rules you can read: exits first, then a guard comparing the Solana pool with the
 issuer's own mark for the share, then the strategies your tier and shifts allow, paced to one entry per stock per day.
-Every decision comes with its reason. Optionally, your own OpenRouter key lets a model narrate the brief and answer
-questions. It explains decisions; it doesn't make them.
+Every decision comes with its reason. Optionally, your own OpenRouter key lets a model you choose answer
+questions; the brief stays the agent's own. It explains decisions; it doesn't make them.
 
 ## 8. Built and proven
 

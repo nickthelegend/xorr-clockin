@@ -42,7 +42,7 @@ mounted.
   correctly returned none and 0. They have not been seen returning a positive result.
 - Notifications: the morning-brief scheduling code ran (the iOS permission prompt appeared). No delivered notification
   was observed.
-- The optional OpenRouter narration (`src/clockin/ai.ts`) was not run (no key, and none must ship).
+- The optional OpenRouter answers in *Ask your agent* (`src/clockin/ai.ts`) were not run (no key, and none must ship).
 
 ## How the APK behaves on devnet
 
@@ -121,8 +121,8 @@ tools/clockin/build-apk.sh
 - **The devnet faucet key ships in the APK** (`EXPO_PUBLIC_CLOCKIN_FAUCET_SECRET`, from `.env.local`, never committed).
   It is a devnet-only key: anyone can extract it and spend its devnet SOL, which is why the app falls back to self-paid
   fees and per-device mints.
-- **AI:** decisions are the deterministic engine's, with a reason for each. A model is optional, uses the owner's own key
-  and only narrates. No API key ships.
+- **AI:** decisions are the deterministic engine's, with a reason for each. A model is optional, uses the owner's own key,
+  and only answers *Ask your agent*; the brief is the engine's. No API key ships.
 - **Ports used:** 4400–4403 and 4410–4499 (local validator), 4405 (dev remote), 8481 (Metro). Simulator:
   B60FAA19-1F14-4F56-BCA9-263D22A2046F.
 

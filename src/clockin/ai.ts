@@ -1,8 +1,8 @@
 /**
- * Optional AI narration for the agent — the owner's OWN OpenRouter key, kept in the device keystore, never shipped in
- * the APK. Without a key the agent still decides and explains every trade itself (`engine.ts`); with one, a model
- * rewrites the morning brief in a voice and answers questions about the book. The numbers it is given are the
- * engine's, so it narrates decisions — it never makes them.
+ * Ask your agent — answered on the phone from the engine's own numbers (`localAnswer`), or, with the owner's OWN
+ * OpenRouter key (kept in the device keystore, never shipped in the APK), by a model they choose. The model is used for
+ * Ask only: the morning brief and every decision are the engine's (`engine.ts`). The numbers it is given are the
+ * engine's, so it explains decisions — it never makes them.
  */
 import { deleteSecret, getSecret, setSecret } from './secret';
 import { openRouterChat } from '@/data/openrouter';
@@ -37,11 +37,6 @@ async function chat(model: string, system: string, user: string): Promise<string
 
 const VOICE =
   "You are xorr, a careful trading agent that buys tokenized US stocks (xStocks) for its owner inside an on-chain SPL permission they can revoke. You speak in short, plain sentences, never hype, never invent a number: use only the JSON you are given. Mention that this is devnet test money only if asked.";
-
-export async function narrateBrief(model: string, c: AiContext): Promise<string[]> {
-  const text = await chat(model, VOICE, `Write this morning's brief for the owner in at most 4 short lines, one per line, no bullets. Data: ${context(c)}`);
-  return text.split('\n').map((l) => l.replace(/^[-•*\d.\s]+/, '').trim()).filter(Boolean).slice(0, 5);
-}
 
 /**
  * The agent answering from its own numbers, with no model: a stock named in the question gets its decision, reason,

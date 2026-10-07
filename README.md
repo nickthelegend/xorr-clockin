@@ -62,7 +62,7 @@ drawer, which is where you talk to your agents. Before-and-after screens are in 
 | `tiers.ts` / `streak.ts` | The SKR loop (earn, spend, hold) and the daily streak |
 | `desk.ts` | Runs the actions, picks who pays devnet fees (xorr's faucet while it has SOL, otherwise the owner and the agent), and keeps the trail |
 | `notify.native.ts` | The 8:30 morning-brief notification and one per agent trade (local, no push server) |
-| `ai.ts` | Optional: your own OpenRouter key (stored in the keystore, never shipped) lets a model narrate the brief and answer *Ask your agent*. Decisions stay the engine's |
+| `ai.ts` | Optional: your own OpenRouter key (stored in the keystore, never shipped) lets a model you choose answer *Ask your agent*. The morning brief and every decision stay the engine's |
 
 **Why a delegate, not custody.** The agent key lives on your phone and is only an SPL delegate. The token program caps
 what it can move at what you approved, and `Revoke` ends it. That is the same model as the hosted xorr, where the

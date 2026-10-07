@@ -41,8 +41,8 @@ pool with the issuer's own mark for the share and holds when they have come apar
   multiplies rewards. **Real SKR** (`SKRbvo6Gf7GondiT3BbTfuRDPqLWei4j2Qy2NPGZhW3`) held on mainnet counts toward the
   tier; it is read and never moved. On devnet the loop runs on **dSKR, a stand-in mint labelled as such everywhere**.
 - **AI agent:** the agent decides, executes and explains on its own. It runs on the phone, from live Jupiter prices and
-  the issuer's mark, through rules you can read. Optionally, your own OpenRouter key lets a model narrate the brief and
-  answer "Ask your agent". Without a key, the agent answers from its own numbers (a stock's decision, reason, price
+  the issuer's mark, through rules you can read. Optionally, your own OpenRouter key lets a model
+  answer "Ask your agent"; the morning brief stays the agent's own. Without a key, the agent answers from its own numbers (a stock's decision, reason, price
   and position). Either way, the model explains decisions and never makes them.
 
 ## Devnet addresses and transactions

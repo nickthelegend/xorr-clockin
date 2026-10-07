@@ -144,7 +144,7 @@ The UI stays xorr-xlayer's: everything below is built only from xorr's own compo
 | 4 | States | Loading (skeletons), empty (EmptyState on Stocks/Activity, "it held" notes), errors (offline: "Can't reach Solana devnet… Try again"; prices down: holding on last prices; faucet busy: retry / Get devnet SOL; setup failed: Try setting up again; no MWA wallet: install one or use the guest wallet). No dead ends | Offline and faucet copy reviewed; the paths are the same code that ran on Oct 6 |
 | 5 | Accessibility | Font scaling capped per variant by xorr's Text; ≥44pt targets (TransactionRef, chips, links); labels with state on tabs, switches, the streak days ("Today, not yet"), the clock-in confirmation (live region); Safety/agent titles are headers | Code review; not run with VoiceOver |
 | 6 | Permissions hygiene | The APK has no RECORD_AUDIO or FOREGROUND_SERVICE. Dictation in the drawer is web-only, so no mic is shown on a phone. SYSTEM_ALERT_WINDOW and storage are blocked (round 2) | `aapt2 dump badging` on the 1.2.0 APK |
-| — | Tests | 1,344 app unit tests pass (`npx vitest run --exclude "server/**"`), including the repository-boundary and design-audit suites, which caught three issues fixed here (network calls moved into `src/data`, no `toFixed` on money, `/ask` renders a Screen). `src/audit/anchorCheck.test.ts` cannot load without the server's `pg` (pre-existing; server deps are not installed) | `tsc` clean; eslint has no errors |
+| — | Tests | 1,348 app unit tests pass (1.2.1) (`npx vitest run --exclude "server/**"`), including the repository-boundary and design-audit suites, which caught three issues fixed here (network calls moved into `src/data`, no `toFixed` on money, `/ask` renders a Screen). `src/audit/anchorCheck.test.ts` cannot load without the server's `pg` (pre-existing; server deps are not installed) | `tsc` clean; eslint has no errors |
 
 ## Screen census (Oct 7)
 
@@ -175,12 +175,13 @@ From the store-kit audit (`clockin/store/README.md`) and the coordinator's revie
 | 4 | Android icons | Notification small icon (white XORR mark on transparent, #12D77D accent), monochrome themed icon, and a transparent adaptive foreground. `aapt2` shows `drawable/notification_icon`, `mipmap/ic_launcher_monochrome`, an `<adaptive-icon>` with a `<monochrome>` layer, and the `default_notification_icon` metadata |
 | 5 | Stand-in logos | The stock stand-ins and dUSDC show neutral ticker marks (xorr's monogram mark). Only SKR keeps its logo. Backed's and GitHub's image hosts are no longer contacted |
 | 6 | Faucet key | Left in for the hackathon build. The note under "Decisions" says the store build must remove it and pay rewards server-side |
+| — | Found on the simulator | An offline cold start said "Setting up the stand-in tokens" (now: can't reach devnet). A new guest after Disconnect hit "Still working on…" (setup is now single-flight). Disconnect now waits for setup in flight before deleting keys; checked that the next guest wallet gets a new address |
 | — | Census leftovers | Profile: a streak-reminder switch, a Network row and folded test tokens in place of the RPC paragraph. Agent pages: "No permission yet", linking to Safety, instead of "—". Offline: a result card with Try again inside it, on Home and Safety. Legal: a one-line summary and more space between sections |
 
 ## Android audit (Oct 7, static: no device or emulator was used)
 
 Checked first against 1.1.0 (versionCode 2, sha256 `5396e26a…7d57`, built from `dcbe14a`); re-checked on 1.2.0 (versionCode 3) and on 1.2.1 (versionCode 4, sha256
-`d3d953cf2b29a93c1c9231966ba3d25384c2cbf5820e93281893728ffef0203c`, built from `b993576`): no RECORD_AUDIO, FOREGROUND_SERVICE, SYSTEM_ALERT_WINDOW or storage permission. The same file is the `clockin-v1` release asset (download
+`f7edc7fd1d4432a59336b219cd03069ebad3662a4ee71ed6e2b0839c6c957f20`, built from `5337c25`): no RECORD_AUDIO, FOREGROUND_SERVICE, SYSTEM_ALERT_WINDOW or storage permission. The same file is the `clockin-v1` release asset (download
 hash checked). Tools used: `aapt2 dump badging/xmltree`, `apksigner`, `unzip`, a string scan of the Hermes bundle, and
 reading the source.
 
@@ -223,7 +224,7 @@ since.
 - Kept, gitignored, for `scripts/devnet-go.sh`'s rebuild: `android/` (1.0 GB) and `ios/` (1.2 GB). The iOS build
   products in `/Volumes/Extreme SSD/Projects/clockin/.cache/derived/xorr` (2.8 GB) can be deleted when you are done.
 - Release APK: `/Volumes/Extreme SSD/Projects/clockin/apks/xorr-clockin.apk` (copy in `clockin/apk/`, gitignored, and the
-  `clockin-v1` release asset), sha256 `d3d953cf2b29a93c1c9231966ba3d25384c2cbf5820e93281893728ffef0203c`, version 1.2.1
-  (versionCode 4), built from b993576.
+  `clockin-v1` release asset), sha256 `f7edc7fd1d4432a59336b219cd03069ebad3662a4ee71ed6e2b0839c6c957f20`, version 1.2.1
+  (versionCode 4), built from 5337c25.
 - Native builds take the shared `.gradle.lock` (it covers Gradle and Xcode). `tools/clockin/build-apk.sh` takes it with a
   trap.

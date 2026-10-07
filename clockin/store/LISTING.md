@@ -45,7 +45,7 @@ What this build is: a Solana devnet build with test tokens only. No real money m
 
 ### 1.2.1 (versionCode 4, current `main`)
 
-APK sha256: `d3d953cf2b29a93c1c9231966ba3d25384c2cbf5820e93281893728ffef0203c`
+APK sha256: `f7edc7fd1d4432a59336b219cd03069ebad3662a4ee71ed6e2b0839c6c957f20`
 
 ```
 • Privacy page rewritten for this build: what stays on your phone, and exactly what each service sees.

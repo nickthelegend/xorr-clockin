@@ -31,7 +31,7 @@ real xStocks**. No real money moves, and the CLOCK IN app never talks to xorr's 
 | Android APK | `xorr-clockin.apk`, a release build signed with xorr's own key. See [clockin/SUBMISSION.md](clockin/SUBMISSION.md) for the download link and sha256 |
 | Submission | [clockin/SUBMISSION.md](clockin/SUBMISSION.md) · pitch [clockin/PITCH.md](clockin/PITCH.md) · demo script [clockin/DEMO-SCRIPT.md](clockin/DEMO-SCRIPT.md) |
 | Status and how to run | [HANDOFF.md](HANDOFF.md) |
-| Screens | [clockin/screens/](clockin/screens/) |
+| Screens | [clockin/screens/](clockin/screens/) · every screen and state: [clockin/screens/all/](clockin/screens/all/INDEX.md) · before and after polish: [clockin/screens/polish/](clockin/screens/polish/) |
 
 ## What a day looks like
 

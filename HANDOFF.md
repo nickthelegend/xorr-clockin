@@ -140,12 +140,29 @@ The UI stays xorr-xlayer's: everything below is built only from xorr's own compo
 | 4 | States | Loading (skeletons), empty (EmptyState on Stocks/Activity, "it held" notes), errors (offline: "Can't reach Solana devnet… Try again"; prices down: holding on last prices; faucet busy: retry / Get devnet SOL; setup failed: Try setting up again; no MWA wallet: install one or use the guest wallet). No dead ends | Offline and faucet copy reviewed; the paths are the same code that ran on Oct 6 |
 | 5 | Accessibility | Font scaling capped per variant by xorr's Text; ≥44pt targets (TransactionRef, chips, links); labels with state on tabs, switches, the streak days ("Today, not yet"), the clock-in confirmation (live region); Safety/agent titles are headers | Code review; not run with VoiceOver |
 | 6 | Permissions hygiene | The APK has no RECORD_AUDIO or FOREGROUND_SERVICE. Dictation in the drawer is web-only, so no mic is shown on a phone. SYSTEM_ALERT_WINDOW and storage are blocked (round 2) | `aapt2 dump badging` on the 1.2.0 APK |
-| — | Tests | 1,343 app unit tests pass (`npx vitest run --exclude "server/**"`), including the repository-boundary and design-audit suites, which caught three issues fixed here (network calls moved into `src/data`, no `toFixed` on money, `/ask` renders a Screen). `src/audit/anchorCheck.test.ts` cannot load without the server's `pg` (pre-existing; server deps are not installed) | `tsc` clean; eslint has no errors |
+| — | Tests | 1,344 app unit tests pass (`npx vitest run --exclude "server/**"`), including the repository-boundary and design-audit suites, which caught three issues fixed here (network calls moved into `src/data`, no `toFixed` on money, `/ask` renders a Screen). `src/audit/anchorCheck.test.ts` cannot load without the server's `pg` (pre-existing; server deps are not installed) | `tsc` clean; eslint has no errors |
+
+## Screen census (Oct 7)
+
+All 46 reachable screens and states are captured in flow order in `clockin/screens/all/`. `INDEX.md` there gives each
+one's route, what it shows, how to reach it and any known issue, and lists the 83 hosted-app routes that the route guard
+sends to Home. The census turned up these issues, all fixed and recaptured:
+
+- An offline Home showed a raw `TypeError: Network request failed`. `friendlyError` now maps it to "Can't reach Solana
+  devnet right now. Your tokens are safe on chain…", with a test.
+- The offline retry button said "Try setting up again" after a setup that had worked. It now says "Try again", or "Get
+  devnet SOL" when the faucet is dry. The unknown balance dash is dimmed.
+- The legal documents describe the hosted xorr. Each now opens with a CLOCK IN note: this build runs no xorr server,
+  the session and agent key stay on the phone, and the hosted-only parts do not apply.
+- The brief said "Give me one in the Me tab". It now says Safety, and the leftover "Me tab" strings say Profile.
+
+Not captured: the Android-only MWA states (iOS has no MWA, and the emulator is off-limits), the faucet-dry state, the
+notification prompt and delivery, and the sub-second first-load skeleton.
 
 ## Android audit (Oct 7, static: no device or emulator was used)
 
 Checked first against 1.1.0 (versionCode 2, sha256 `5396e26a…7d57`, built from `dcbe14a`); re-checked on 1.2.0 (versionCode 3, sha256
-`b2908d4a1f0b47bdc877549a7d38c348c8f7d134731fb01373c2fcb7fe712b0c`, built from `802920c`): no RECORD_AUDIO, FOREGROUND_SERVICE, SYSTEM_ALERT_WINDOW or storage permission. It is and the same file is the `clockin-v1` release asset (download
+`c81028b9a3412e248bd879ceea4d597dcc020ee8431b00b6707c4d39b4a58f28`, rebuilt from `e8a552c` after the census fixes): no RECORD_AUDIO, FOREGROUND_SERVICE, SYSTEM_ALERT_WINDOW or storage permission. The same file is the `clockin-v1` release asset (download
 hash checked). Tools used: `aapt2 dump badging/xmltree`, `apksigner`, `unzip`, a string scan of the Hermes bundle, and
 reading the source.
 
@@ -188,7 +205,7 @@ since.
 - Kept, gitignored, for `scripts/devnet-go.sh`'s rebuild: `android/` (1.0 GB) and `ios/` (1.2 GB). The iOS build
   products in `/Volumes/Extreme SSD/Projects/clockin/.cache/derived/xorr` (2.8 GB) can be deleted when you are done.
 - Release APK: `/Volumes/Extreme SSD/Projects/clockin/apks/xorr-clockin.apk` (copy in `clockin/apk/`, gitignored, and the
-  `clockin-v1` release asset), sha256 `b2908d4a1f0b47bdc877549a7d38c348c8f7d134731fb01373c2fcb7fe712b0c`, version 1.2.0
-  (versionCode 3), built from 802920c.
+  `clockin-v1` release asset), sha256 `c81028b9a3412e248bd879ceea4d597dcc020ee8431b00b6707c4d39b4a58f28`, version 1.2.0
+  (versionCode 3), built from e8a552c (the census fixes).
 - Native builds take the shared `.gradle.lock` (it covers Gradle and Xcode). `tools/clockin/build-apk.sh` takes it with a
   trap.

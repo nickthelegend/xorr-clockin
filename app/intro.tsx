@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AgentOrb, Button, ConsequenceCard, Fill, Progress, Screen, Text, colors, space } from '@/ui';
+import { AgentOrb, Button, ConsequenceCard, Fill, Progress, Screen, Text, colors, size, space } from '@/ui';
 import { Rise } from '@/ui/Rise';
 import { selectionTick } from '@/ui/haptics';
 import { CLOCKIN_AGENTS } from '@/clockin/agents';
@@ -76,7 +76,7 @@ export default function Intro() {
         {page === 0 ? (
           <View style={{ flexDirection: 'row', gap: space.s10, marginTop: space.s26 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
             {CLOCKIN_AGENTS.map((a) => (
-              <AgentOrb key={a.id} gradient={a.gradient} size={52} face />
+              <AgentOrb key={a.id} gradient={a.gradient} size={size.orb52} face />
             ))}
           </View>
         ) : null}

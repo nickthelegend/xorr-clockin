@@ -364,7 +364,6 @@ export default function Me() {
                     <Button
                       label="Remove"
                       variant="ghost"
-                      height={36}
                       onPress={async () => {
                         await clearAiKey();
                         setHasKey(false);

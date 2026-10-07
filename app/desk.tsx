@@ -117,6 +117,7 @@ export default function Desk() {
       grant: () => owner && doGrant(),
       cap: () => owner && doCap(),
       revoke: () => doRevoke(),
+      'curtain-done': () => setStopping(undefined),
       // Kept for the screenshot runs that drive the agent from here.
       look: () => owner && agentLook(owner),
       'shift-dip': () => owner && buyShift(owner, 'dip'),

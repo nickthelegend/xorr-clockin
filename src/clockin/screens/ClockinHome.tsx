@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Share, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Icon } from '@/design/Icon';
+import { assetGradient } from '@/design/gradients';
 import {
   AgentOrb,
   Button,
@@ -519,7 +520,7 @@ export default function ClockinHome() {
                 </Eyebrow>
                 <Row
                   height={size.rowLg}
-                  left={<TokenMark symbol="USDC" c1="#2775CA" c2="#1A4F8A" />}
+                  left={<TokenMark symbol="USDC" c1={assetGradient('USDC').c1} c2={assetGradient('USDC').c2} />}
                   title="dUSDC"
                   secondary="Devnet stand-in for USDC"
                   value={usd(st.cashUsd)}

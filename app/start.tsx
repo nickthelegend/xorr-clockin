@@ -6,12 +6,12 @@
  * and hands it test dUSDC and a welcome grant of dSKR, so the first thing a person signs is something that matters.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { BackHandler, Platform, TextInput, View } from 'react-native';
+import { BackHandler, Platform, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Redirect, useRouter } from 'expo-router';
 import { brand } from '@/design/brand';
 import { CoinHero } from '@/design/CoinHero';
-import { Button, Fill, Press, Screen, Text, colors, radius, size, space } from '@/ui';
+import { Button, Fill, Field, Press, Screen, Tag, Text, colors, size, space } from '@/ui';
 import { Rise } from '@/ui/Rise';
 import { successTap, warningTap } from '@/ui/haptics';
 import { useAuth, useEmailLogin } from '@/auth/useAuth';
@@ -21,7 +21,7 @@ import { MWA_AVAILABLE, mwaConnect } from '@/clockin/mwa';
 import { PRIVY_IN_CLOCKIN, usePrivySolana } from '@/clockin/privySign';
 import { useClockin, useClockinHydrated, type ConnectedWallet } from '@/clockin/session';
 import { useOwner } from '@/clockin/useOwner';
-import { Banner, DevnetPill } from '@/clockin/ui';
+import { FailureNote } from '@/ui/States';
 import { useAutopilot } from '@/clockin/autopilot';
 
 const WORDMARK = require('../assets/brand/xorr-wordmark.png');
@@ -38,7 +38,6 @@ export default function Start() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState(false);
-  const [busyFaucet, setBusyFaucet] = useState(false);
 
   // Once a wallet is connected, set it up (no signature) and go to Today. Once per connection.
   const settingUp = useRef(false);
@@ -49,11 +48,11 @@ export default function Start() {
       try {
         await ensureDesk(owner);
         successTap();
-        router.replace('/');
+        const s = useClockin.getState();
+        router.replace(!s.introSeen ? '/intro' : !s.firstRunDone ? '/setup' : '/');
       } catch (e) {
         warningTap();
         if (__DEV__) console.log('[clockin] setup failed', e);
-        setBusyFaucet(isFaucetBusy(e));
         setError(isFaucetBusy(e) ? friendlyError(e) : `Connected, but setting up your devnet desk failed: ${(e as Error).message}`);
         setBusy(null);
       } finally {
@@ -99,9 +98,8 @@ export default function Start() {
       <Fill>
         <Rise index={0} style={{ flex: 1 }}>
           <CoinHero style={{ flex: 1 }} />
-          <View style={{ position: 'absolute', top: space.s8, left: 0, right: 0, alignItems: 'center', gap: space.s8 }}>
+          <View style={{ position: 'absolute', top: space.s8, left: 0, right: 0, alignItems: 'center' }}>
             <Image source={WORDMARK} accessibilityLabel={brand.WORDMARK} style={{ width: WORDMARK_W, height: WORDMARK_H }} contentFit="contain" />
-            <DevnetPill />
           </View>
         </Rise>
       </Fill>
@@ -112,20 +110,19 @@ export default function Start() {
           </Text>
         </Rise>
         <Rise index={2} style={{ marginTop: space.s26 }}>
-          {error ? <Banner text={error} tone={busyFaucet ? 'warn' : 'down'} /> : null}
+          {error ? <FailureNote error={new Error(error)} style={{ marginBottom: space.s10 }} /> : null}
           {error && wallet ? (
             <Button
               label="Try again"
               onPress={() => {
                 setError(null);
-                setBusyFaucet(false);
                 setBusy('Setting up your devnet desk…');
               }}
               style={{ marginTop: space.s10 }}
               testID="retry-setup"
             />
           ) : null}
-          {missing ? <Banner text={`${missing} See HANDOFF.md.`} /> : null}
+          {missing ? <FailureNote error={new Error(missing)} style={{ marginBottom: space.s10 }} /> : null}
           {email && PRIVY_IN_CLOCKIN ? (
             <PrivyEmail onWallet={(address) => go('Connecting your Privy wallet…', async () => ({ kind: 'privy', address }))} onCancel={() => setEmail(false)} />
           ) : Platform.OS === 'android' && MWA_AVAILABLE ? (
@@ -170,6 +167,9 @@ export default function Start() {
               .
             </Text>
           </View>
+          <View style={{ alignItems: 'center', marginTop: space.s8 }}>
+            <Tag label="Devnet · test tokens" tone="warn" small />
+          </View>
         </Rise>
       </View>
     </Screen>
@@ -206,12 +206,11 @@ function PrivyEmail({ onWallet, onCancel }: { onWallet: (address: string) => voi
     }
   }, [auth, privy.address, onWallet]);
 
-  const input = { backgroundColor: colors.inputBg, borderRadius: radius.tile, borderWidth: 1, borderColor: colors.inputBorder, color: colors.ink, paddingHorizontal: 14, height: 50, fontSize: 16 } as const;
   return (
     <View style={{ gap: space.s10 }}>
-      {err ? <Banner text={err} tone="down" /> : null}
-      <TextInput style={input} placeholder="you@example.com" placeholderTextColor={colors.ink38} autoCapitalize="none" keyboardType="email-address" value={addr} onChangeText={setAddr} editable={!sent} />
-      {sent ? <TextInput style={input} placeholder="6-digit code" placeholderTextColor={colors.ink38} keyboardType="number-pad" value={code} onChangeText={setCode} /> : null}
+      {err ? <FailureNote error={new Error(err)} /> : null}
+      <Field label="Email" placeholder="you@example.com" keyboard="email-address" value={addr} onChange={setAddr} editable={!sent} />
+      {sent ? <Field label="Code" placeholder="6-digit code" keyboard="number-pad" value={code} onChange={setCode} /> : null}
       <Button
         label={sent ? 'Verify code' : 'Email me a code'}
         loading={busy}

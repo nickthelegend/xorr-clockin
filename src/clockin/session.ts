@@ -47,6 +47,14 @@ type State = {
   funded: boolean;
   starterSkr: boolean;
   lastLookAt: number | null;
+  /** First run: the three-screen intro was seen (or skipped), and the guided first grant was finished (or skipped). */
+  introSeen: boolean;
+  firstRunDone: boolean;
+  /** When the owner last opened Home — what "since your last visit" counts from. */
+  lastSeenAt: number | null;
+  /** Morning brief time, local, and whether it and the evening streak reminder are on. */
+  briefAt: { hour: number; minute: number };
+  remindersOn: boolean;
   /** Strategy shifts paid for in SKR, with the paying transaction. */
   passes: Passes;
   /** The model used when the owner adds their own OpenRouter key (kept in the keystore, not here). */
@@ -78,10 +86,18 @@ const fresh = (): State => ({
   funded: false,
   starterSkr: false,
   lastLookAt: null,
+  introSeen: false,
+  firstRunDone: false,
+  lastSeenAt: null,
+  briefAt: { hour: 8, minute: 30 },
+  remindersOn: false,
   passes: {},
   lastBrief: null,
   aiModel: 'anthropic/claude-haiku-4.5',
 });
+
+/** What a device keeps across wallets: the intro was seen, and how the person likes to be reminded. */
+const kept = (s: State) => ({ aiModel: s.aiModel, introSeen: s.introSeen, briefAt: s.briefAt, remindersOn: s.remindersOn });
 
 export const useClockin = create<State & Actions>()(
   persist(
@@ -89,14 +105,14 @@ export const useClockin = create<State & Actions>()(
       ...fresh(),
       connect: (w) => {
         // A different wallet is a different person's devnet book: start it clean.
-        if (get().wallet?.address !== w.address) set({ ...fresh(), aiModel: get().aiModel, wallet: w });
+        if (get().wallet?.address !== w.address) set({ ...fresh(), ...kept(get()), wallet: w });
         else set({ wallet: w });
       },
       updateMwa: (auth) => {
         const w = get().wallet;
         if (w?.kind === 'mwa') set({ wallet: { ...w, mwa: auth } });
       },
-      disconnect: () => set({ ...fresh(), aiModel: get().aiModel }),
+      disconnect: () => set({ ...fresh(), ...kept(get()) }),
       log: (a) => {
               if (__DEV__) console.log(`[clockin] ${a.ok ? 'ok' : 'FAIL'} ${a.kind}: ${a.title}${a.sig ? ` sig=${a.sig}` : ''}${a.detail ? ` — ${a.detail}` : ''}`);
         set({

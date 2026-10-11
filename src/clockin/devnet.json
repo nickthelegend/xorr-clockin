@@ -1,7 +1,14 @@
 {
-  "faucet": "",
-  "usdc": "",
-  "skr": "",
-  "stocks": {},
-  "createdAt": ""
+  "faucet": "GwayahZaN7rMXK5jkNXKu7ndHRw2mcXbbq1qEPJiEeAe",
+  "usdc": "28rxoR97Lu6FYpCMhFMxERaERCHGaVTHcpMnGxi39y6F",
+  "skr": "8x4NqhFYqCo8bJzKQdkEhGxiUfuiKZbGahSt6jAyxRDU",
+  "stocks": {
+    "NVDAx": "FWnkDtRxtVASARFNR9HPCkYLKt7wxWWgBYGDxn9vHTFL",
+    "TSLAx": "EXT8k2BmgGVMP1ofuaMQbSibD5SiDvwk4JKxDWTBQVHW",
+    "AAPLx": "319NHJkRPxtU8tV9piBXD97WZ4ARAJxkg4Vz6PkC5CG8",
+    "MSFTx": "3tuB24aYTxREg1VdeaLXZEejMWaifjJ6FGBgznQxvdpM",
+    "SPYx": "DeqB5pPVW41MtsYzWgqiR2RTn5kkxJicpaRfg6mCvhaa"
+  },
+  "createdAt": "2026-10-11T16:53:38.254Z",
+  "cluster": "https://api.devnet.solana.com"
 }

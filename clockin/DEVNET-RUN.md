@@ -1,0 +1,16 @@
+# The CLOCK IN loop on Solana devnet
+
+Run 2026-10-11T16:54Z by `scripts/devnet-go.sh` (`src/clockin/chain.devnet.test.ts`). Explorer links:
+
+- fund: [5sgE7efb3mhzaP1jYthTjQ4PRRJa89rtJ45MVhjjYnywWVnESzjVFmgtiwuteoHNizDiFVwVuDt73nna3m6L4V2F](https://explorer.solana.com/tx/5sgE7efb3mhzaP1jYthTjQ4PRRJa89rtJ45MVhjjYnywWVnESzjVFmgtiwuteoHNizDiFVwVuDt73nna3m6L4V2F?cluster=devnet)
+- starter dSKR: [4SsJU73L8WNCDcouoLHGpMYGMJF3Ef2fj16B3atP97o5eeSK5nxM17ZMsdGduNYVnEAUDWVEJVs5sY4hcYughtZd](https://explorer.solana.com/tx/4SsJU73L8WNCDcouoLHGpMYGMJF3Ef2fj16B3atP97o5eeSK5nxM17ZMsdGduNYVnEAUDWVEJVs5sY4hcYughtZd?cluster=devnet)
+- check-in: [L9x2ns4jHWhnEzGA7MZ6c1AS9qVhpa4E6Ki9FeET5EUAg8tWqz8QiuJdk2QwSFSQmyx5k5z6f7tEjny3Ew9Q2fp](https://explorer.solana.com/tx/L9x2ns4jHWhnEzGA7MZ6c1AS9qVhpa4E6Ki9FeET5EUAg8tWqz8QiuJdk2QwSFSQmyx5k5z6f7tEjny3Ew9Q2fp?cluster=devnet)
+- shift: [22ZxMpSxXLcJqZddsqJeFxN48xJr77dnV8UdfqjamMZ4VsYjVTriZCVPY3TGHcyRPVNH1V6gaX4vEmGCGWT6eYRc](https://explorer.solana.com/tx/22ZxMpSxXLcJqZddsqJeFxN48xJr77dnV8UdfqjamMZ4VsYjVTriZCVPY3TGHcyRPVNH1V6gaX4vEmGCGWT6eYRc?cluster=devnet)
+- grant: [34NTRh9cCJsxPpi8XY5LXsw9A6o2141WkRfQVRVmtKbDUi4fJKtHDK6MvpgsXCBT8tycWvWruz8ZemQJdG2XpJqo](https://explorer.solana.com/tx/34NTRh9cCJsxPpi8XY5LXsw9A6o2141WkRfQVRVmtKbDUi4fJKtHDK6MvpgsXCBT8tycWvWruz8ZemQJdG2XpJqo?cluster=devnet)
+- agent buy: [42VJwD67K5qGdJdrr1gEmRdvipcv8AmLdPqjZkRPVwS42W6PnSwb1EpCUBwW3GcokNFgJRz78eAVRrVaFtsjXgdR](https://explorer.solana.com/tx/42VJwD67K5qGdJdrr1gEmRdvipcv8AmLdPqjZkRPVwS42W6PnSwb1EpCUBwW3GcokNFgJRz78eAVRrVaFtsjXgdR?cluster=devnet)
+- over-cap (refused): [2CgkWhobQeMX6UKikmMnyZX5S73otrKPRCQi4wkBHjXJdr3GQccJP8Y9MnFbuY2c2aE9NowUnYPsQiPYTFfMvdt](https://explorer.solana.com/tx/2CgkWhobQeMX6UKikmMnyZX5S73otrKPRCQi4wkBHjXJdr3GQccJP8Y9MnFbuY2c2aE9NowUnYPsQiPYTFfMvdt?cluster=devnet)
+- agent sell: [9pGEqMoziZY83e5UtKHWE3aoTUJ1NpDtdvd7CWHHM12TuHTokuoqbr8ymKRpzFVVVYAXQP5rrxZLBagotEaxsLc](https://explorer.solana.com/tx/9pGEqMoziZY83e5UtKHWE3aoTUJ1NpDtdvd7CWHHM12TuHTokuoqbr8ymKRpzFVVVYAXQP5rrxZLBagotEaxsLc?cluster=devnet)
+- revoke: [46d7PBQ2nCBVudA65kbpBncJuDGS1L367TKfSo4JuuPDT2CtN4kDmL8nbqTvaj7RpzpVzci17VSahunQe6kS7syh](https://explorer.solana.com/tx/46d7PBQ2nCBVudA65kbpBncJuDGS1L367TKfSo4JuuPDT2CtN4kDmL8nbqTvaj7RpzpVzci17VSahunQe6kS7syh?cluster=devnet)
+- buy after revoke: [59YnoRUcNDPZsSCU43DeQm2npRYVufZQvVzMSLsHVEucALyKN4ZScUcoJogjKRr8goE7ABnXBLZowit2rsUykdkU](https://explorer.solana.com/tx/59YnoRUcNDPZsSCU43DeQm2npRYVufZQvVzMSLsHVEucALyKN4ZScUcoJogjKRr8goE7ABnXBLZowit2rsUykdkU?cluster=devnet)
+
+Mints: see `src/clockin/devnet.json`.

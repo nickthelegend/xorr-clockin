@@ -105,7 +105,7 @@ export default function Setup() {
   const lead = {
     grant: 'One signature. The token program stops the agent at this amount — whatever xorr does.',
     buy: `A small one, so you can see a real receipt: ${usd(FIRST_BUY_USD, 0)} of today’s strongest mover.`,
-    cap: 'Ask the agent to move more than you approved. Devnet should refuse it.',
+    cap: 'Ask the agent to move more than you approved. Solana should refuse it.',
     done: 'Clock in every morning: read the brief, keep the streak, collect SKR.',
   }[step];
 
@@ -127,9 +127,9 @@ export default function Setup() {
 
           {step === 'grant' ? (
             <>
-              <ConsequenceCard tone="up" label="It can buy up to your cap" detail="Tokenized US stocks — devnet stand-ins at live prices." />
+              <ConsequenceCard tone="up" label="It can buy up to your cap" detail="Tokenized US stocks at live prices, with test money." />
               <ConsequenceCard tone="down" label="It cannot withdraw" detail="Only buys and sells, from your own wallet." />
-              <ConsequenceCard tone="up" label="You can take it back in one tap" detail="Hold Stop all trading on Your agent." />
+              <ConsequenceCard tone="up" label="You can take it back in one tap" detail="Hold Stop all trading on the Agent tab. The approval is revoked on chain." />
               <SheetCard borderRadius={radius.panel} padding={space.s16} style={{ marginTop: space.s8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s12 }}>
                   <Text variant="rowPrimary">Most it can spend</Text>
@@ -163,7 +163,7 @@ export default function Setup() {
 
           {grantSig ? (
             <Rise index={1}>
-              <ConsequenceCard tone="up" label={`Permission signed · ${usd(cap, 0)}`} detail="An SPL ApproveChecked on your dUSDC, on Solana devnet." />
+              <ConsequenceCard tone="up" label={`Permission signed · ${usd(cap, 0)}`} detail="One token approval on your test dollars, recorded on Solana." />
               <View style={{ alignSelf: 'flex-end', marginTop: space.s4 }}>
                 <TransactionRef explorer={explorerTx(grantSig)} />
               </View>
@@ -181,7 +181,7 @@ export default function Setup() {
 
           {buy?.sig ? (
             <Rise index={1}>
-              <ConsequenceCard tone="up" label={`Bought ${usd(buy.decision.usd ?? 0)} of ${buy.decision.symbol}`} detail="The agent moved dUSDC as your delegate; the stand-in landed in your wallet." />
+              <ConsequenceCard tone="up" label={`Bought ${usd(buy.decision.usd ?? 0)} of ${buy.decision.symbol}`} detail="The agent spent inside your cap, and the shares landed in your own wallet." />
               <View style={{ alignSelf: 'flex-end', marginTop: space.s4 }}>
                 <TransactionRef explorer={explorerTx(buy.sig)} />
               </View>

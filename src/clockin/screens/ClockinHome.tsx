@@ -110,7 +110,7 @@ export default function ClockinHome() {
   const standing = perm.live ? 'live' : lastPermissionEvent === 'revoke' ? 'revoked' : 'none';
 
   const title = owner?.kind === 'guest' ? 'Guest wallet' : (owner?.label ?? 'Wallet');
-  const subtitle = owner ? `Devnet · ${owner.address.slice(0, 4)}…${owner.address.slice(-4)}` : 'Devnet';
+  const subtitle = owner ? 'Test account · Solana' : 'Solana';
   const initial = owner?.kind === 'mwa' ? 'S' : owner?.kind === 'privy' ? 'P' : 'G';
 
   // The ticker: what is happening right now, in one line — and, on tap, the one thing to do next.
@@ -529,7 +529,7 @@ export default function ClockinHome() {
                   height={size.rowLg}
                   left={<TokenMark symbol="USDC" c1={assetGradient('USDC').c1} c2={assetGradient('USDC').c2} />}
                   title="dUSDC"
-                  secondary="Devnet stand-in for USDC"
+                  secondary="Test dollars your agent trades with"
                   value={usd(st.cashUsd)}
                   figure="own"
                 />

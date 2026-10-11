@@ -228,3 +228,22 @@ since.
   (versionCode 4), built from 5337c25.
 - Native builds take the shared `.gradle.lock` (it covers Gradle and Xcode). `tools/clockin/build-apk.sh` takes it with a
   trap.
+
+## 2026-10-12 polish round, 1.2.4 (versionCode 7)
+
+Release build (`xcodebuild -configuration Release`, devnet RPC, `EXPO_PUBLIC_CLOCKIN=1`) on the iPhone 17 Pro Max
+simulator, fresh install, guest wallet, **Solana devnet**: welcome → setting up the devnet desk (funded $1,000 dUSDC,
+250 dSKR) → intro 1–3 → grant $100 → agent bought $10.00 of NVDAx → over-cap $140 refused on chain → Home → clock-in
+day 1 (+15 dSKR) → Brief, Stocks, SKR tabs → Momentum Scout "Look now" → Ask (Dip Buyer answered without a model) →
+Profile. No crash, no red box. UI is still xorr-xlayer's.
+
+Copy fixes: setup receipts no longer say "SPL ApproveChecked", "delegate" or "stand-in"; Home's header reads
+"Test account · Solana" instead of a truncated address; the cash row reads "Test dollars your agent trades with".
+SKR rows keep the "devnet stand-in" label on purpose (the brief asks for it to be clearly labelled).
+
+Screenshots: `clockin/screens/polish-*.png`. APK: `tools/clockin/build-apk.sh` under the shared lock, same keystore
+(cert `854facad…fb02e`), `aapt2`: `finance.xorr.app` 1.2.4 (7), arm64-v8a + x86_64, sha256
+`06120d60d1bf0180929110d8475869da8a45668339354023f117d8e418e4280e`, uploaded to `clockin-v1` with `--clobber`, the
+download re-hashes the same. The APK and the simulator build include the uncommitted Oct 8–9 hardening in
+`src/clockin/` (bootstrap, chain, desk, engine, pendingReceipt), which was left uncommitted because it is not this
+round's work. Not run on an Android device.

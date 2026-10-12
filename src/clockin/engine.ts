@@ -97,8 +97,9 @@ export function decide(input: EngineInput): Decision[] {
   const out: Decision[] = [];
   const open = nasdaqOpen(input.now);
   const guard = open ? 1.2 : 1.5;
-  let allowance = input.allowanceUsd;
-  let cash = input.cashUsd;
+  const budget = (value: number) => Number.isFinite(value) && value >= 0 ? value : 0;
+  let allowance = budget(input.allowanceUsd);
+  let cash = budget(input.cashUsd);
   let entries = 0;
 
   const bookValue = Object.values(input.holdings).reduce((s, h) => s + h.qty * (input.quotes[h.symbol]?.usd ?? 0), 0);
@@ -106,6 +107,12 @@ export function decide(input: EngineInput): Decision[] {
 
   for (const q of Object.values(input.quotes)) {
     const h = input.holdings[q.symbol];
+    if (!Number.isFinite(q.usd) || q.usd <= 0 ||
+        (q.mark !== null && (!Number.isFinite(q.mark) || q.mark <= 0)) ||
+        (q.change24h !== null && !Number.isFinite(q.change24h))) {
+      out.push({ symbol: q.symbol, action: 'hold', reason: 'Price data is unavailable or invalid. Waiting for a fresh quote.' });
+      continue;
+    }
 
     // Exits first: a position that hit its level is closed before anything new is opened.
     if (h && h.qty > 0) {
@@ -162,7 +169,7 @@ export function decide(input: EngineInput): Decision[] {
       out.push({ symbol: q.symbol, action: 'hold', strategy: want.strategy, reason: `Three entries this look already; ${q.symbol} waits for the next one.` });
       continue;
     }
-    const usd = Math.floor(Math.min(input.perTradeUsd, allowance, cash) * 100) / 100;
+    const usd = Math.floor(Math.min(budget(input.perTradeUsd), allowance, cash) * 100) / 100;
     if (usd < MIN_TRADE_USD) {
       const short = allowance < cash ? 'the permission has nothing left' : 'the wallet is out of dUSDC';
       out.push({ symbol: q.symbol, action: 'hold', strategy: want.strategy, reason: `${STRATEGY_INFO[want.strategy].name} likes it, but ${short}.` });
@@ -193,7 +200,7 @@ export type BriefInput = {
 /** The day's brief, written from the numbers — the first thing the owner reads when they clock in. */
 export function brief(input: BriefInput): Brief {
   const lines: string[] = [];
-  const qs = Object.values(input.quotes);
+  const qs = Object.values(input.quotes).filter((q) => Number.isFinite(q.usd) && q.usd > 0);
   const open = nasdaqOpen(input.now);
 
   const value = Object.values(input.holdings).reduce((s, h) => s + h.qty * (input.quotes[h.symbol]?.usd ?? 0), 0);
@@ -202,11 +209,15 @@ export function brief(input: BriefInput): Brief {
 
   let headline: string;
   let mood: Brief['mood'] = 'flat';
-  if (cost > 0) {
+  const missing = Object.values(input.holdings).filter((h) => h.qty > 0 &&
+    (!Number.isFinite(input.quotes[h.symbol]?.usd) || (input.quotes[h.symbol]?.usd ?? 0) <= 0));
+  if (missing.length) {
+    headline = `Waiting for ${missing.map((h) => h.symbol).join(', ')} prices. Your book's change is unavailable until every position has a quote.`;
+  } else if (cost > 0) {
     mood = pnl > 0.005 ? 'up' : pnl < -0.005 ? 'down' : 'flat';
     headline = `Your agent's book is ${pnl >= 0 ? 'up' : 'down'} $${Math.abs(pnl).toFixed(2)} (${pct((pnl / cost) * 100)}) on $${cost.toFixed(2)} in.`;
   } else {
-    const best = [...qs].filter((q) => q.change24h !== null).sort((a, b) => (b.change24h ?? 0) - (a.change24h ?? 0))[0];
+    const best = [...qs].filter((q) => q.change24h !== null && Number.isFinite(q.change24h)).sort((a, b) => (b.change24h ?? 0) - (a.change24h ?? 0))[0];
     headline = best ? `No positions yet. ${best.symbol} leads the day at ${pct(best.change24h!)}.` : 'No positions yet, and no prices to read.';
   }
 
@@ -214,12 +225,12 @@ export function brief(input: BriefInput): Brief {
 
   if (input.previous) {
     const moves = qs
-      .map((q) => ({ s: q.symbol, d: input.previous![q.symbol] ? ((q.usd - input.previous![q.symbol]!) / input.previous![q.symbol]!) * 100 : null }))
+      .map((q) => ({ s: q.symbol, d: Number.isFinite(input.previous![q.symbol]) && input.previous![q.symbol]! > 0 ? ((q.usd - input.previous![q.symbol]!) / input.previous![q.symbol]!) * 100 : null }))
       .filter((m): m is { s: string; d: number } => m.d !== null)
       .sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
     if (moves[0]) lines.push(`Since your last clock-in: ${moves.slice(0, 3).map((m) => `${m.s} ${pct(m.d)}`).join(', ')}.`);
   } else {
-    const movers = qs.filter((q) => q.change24h !== null).sort((a, b) => Math.abs(b.change24h!) - Math.abs(a.change24h!));
+    const movers = qs.filter((q) => q.change24h !== null && Number.isFinite(q.change24h)).sort((a, b) => Math.abs(b.change24h!) - Math.abs(a.change24h!));
     if (movers[0]) lines.push(`Biggest moves today: ${movers.slice(0, 3).map((m) => `${m.symbol} ${pct(m.change24h!)}`).join(', ')}.`);
   }
 

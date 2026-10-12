@@ -229,6 +229,18 @@ since.
 - Native builds take the shared `.gradle.lock` (it covers Gradle and Xcode). `tools/clockin/build-apk.sh` takes it with a
   trap.
 
+## Codex continuation — Oct 8 (source changes, unreleased)
+
+Agent decisions now wait when quote price, issuer mark or daily change is invalid/nonfinite. Unknown/nonfinite allowance, cash and per-trade amounts cannot produce a NaN buy decision. Invalid pool prices also cannot trigger a stop-loss sale. Added 11 decision cases.
+
+Validation: CLOCK IN tests 38 passed, 9 chain tests skipped (no live chain runs requested). Installed the server's existing lockfile dependencies with `npm ci --ignore-scripts`; full app and server TypeScript now pass. Server offline suite: 1,471 passed, 4 live-chain cases skipped. No release build or chain write was performed.
+
+## Codex development phase 2 — Oct 8
+
+The morning brief now treats a missing held-stock price as an unavailable portfolio change, instead of valuing that position at zero and reporting a total loss. Nonfinite daily changes never become the biggest mover. Valid, complete quotes retain the existing book-change calculation.
+
+Checks: CLOCK IN suite 41 passed, 9 public/local-chain cases skipped; app TypeScript and edited-file lint; Android Hermes JS export with `EXPO_PUBLIC_CLOCKIN=1`. This is packaging verification, not a device run or signed APK.
+
 ## 2026-10-12 polish round, 1.2.4 (versionCode 7)
 
 Release build (`xcodebuild -configuration Release`, devnet RPC, `EXPO_PUBLIC_CLOCKIN=1`) on the iPhone 17 Pro Max

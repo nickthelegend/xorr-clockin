@@ -1,3 +1,4 @@
+import { createReceiptJournal } from './pendingReceipt';
 /**
  * Solana devnet for the CLOCK IN build: the connection, the keys this app holds, reads, and the transactions it sends.
  *
@@ -7,7 +8,8 @@
  *   - the AGENT key is generated on this device and kept in the OS keystore. It is the SPL delegate: it can move only
  *     what the owner approved to it, and nothing at all after a revoke. The chain enforces both.
  *   - the devnet FAUCET key is the mint authority of the devnet stand-ins and pays network fees, so a judge needs no
- *     devnet SOL. It is a devnet-only key shipped in the APK on purpose; it can mint test tokens, nothing else.
+ *     devnet SOL. Corrected release packaging excludes the legacy configured faucet secret; device setup uses only
+ *     its retained device venue key. Previously exposed legacy authorities require owner-managed rotation.
  */
 import {
   Connection,
@@ -32,7 +34,13 @@ import {
 } from '@solana/spl-token';
 import bs58 from 'bs58';
 import { DEVNET, devnetReady, DEVNET_RPC, MAINNET_READ_RPC, SKR_MAINNET_MINT, STOCKS, stockBySymbol } from './config';
-import { getSecret, setSecret } from './secret';
+import { getSecret, setSecret, deleteSecret } from './secret';
+const PENDING_RECEIPT = 'xorr.clockin.pending.receipt.v1';
+const receiptJournal = createReceiptJournal({
+  get: () => getSecret(PENDING_RECEIPT),
+  set: (value) => setSecret(PENDING_RECEIPT, value),
+  clear: () => deleteSecret(PENDING_RECEIPT),
+});
 
 export const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 const U64_MAX = 18_446_744_073_709_551_615n;
@@ -136,12 +144,9 @@ export async function readOwner(owner: PublicKey, agent?: PublicKey): Promise<Ch
   const infos = await conn.getMultipleAccountsInfo(keys, 'confirmed');
   const unpack = (i: number) => {
     const info = infos[i];
-    if (!info || !info.owner.equals(TOKEN_PROGRAM_ID)) return null;
-    try {
-      return unpackAccount(keys[i]!, info, TOKEN_PROGRAM_ID);
-    } catch {
-      return null;
-    }
+    if (!info) return null;
+    if (!info.owner.equals(TOKEN_PROGRAM_ID)) throw new Error(`Token account has an unexpected owner: ${keys[i]!.toBase58()}`);
+    return unpackAccount(keys[i]!, info, TOKEN_PROGRAM_ID);
   };
   const stocks: Record<string, TokenView> = {};
   STOCKS.forEach((s, j) => {
@@ -207,12 +212,19 @@ export type FeePayer = { kind: 'faucet' } | { kind: 'owner'; pubkey: PublicKey }
 
 export async function send(
   ixs: TransactionInstruction[],
-  opts: { owner?: { sign: OwnerSign }; signers?: Signer[]; skipPreflight?: boolean; payer?: FeePayer } = {},
+  opts: { owner?: { sign: OwnerSign }; signers?: Signer[]; skipPreflight?: boolean; payer?: FeePayer; onSigned?: (signature: string, message: string) => Promise<void>; onNoBroadcast?: () => Promise<void> } = {},
 ): Promise<string> {
   const conn = connection();
   const faucet = requireFaucet();
   const payer = opts.payer ?? { kind: 'faucet' };
   const feePayer = payer.kind === 'faucet' ? faucet.publicKey : payer.kind === 'owner' ? payer.pubkey : payer.signer.publicKey;
+  let callbackStarted=false;
+  try { return await receiptJournal.run(conn.rpcEndpoint, feePayer.toBase58(), async (signature) => {
+    const { value } = await conn.getSignatureStatuses([signature], { searchTransactionHistory: true });
+    return value[0] ?? null;
+  }, async (saveReceipt, submission) => {
+      callbackStarted=true;
+      try {
   const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
   let tx = new Transaction({ feePayer, blockhash, lastValidBlockHeight }).add(...ixs);
   if (opts.owner) tx = await opts.owner.sign(tx);
@@ -229,13 +241,20 @@ export async function send(
   );
   if (cosigners.length) tx.partialSign(...cosigners);
   const raw = tx.serialize({ requireAllSignatures: true, verifySignatures: true });
+  if (!tx.signature) throw new Error('Signed transaction has no fee-payer signature.');
+  await saveReceipt(bs58.encode(tx.signature));
+  await opts.onSigned?.(bs58.encode(tx.signature), Buffer.from(tx.serializeMessage()).toString("base64"));
+  submission.beginBroadcast();
   const sig = await conn.sendRawTransaction(raw, { skipPreflight: !!opts.skipPreflight, preflightCommitment: 'confirmed' });
+  await saveReceipt(sig);
   const err = await confirmByPolling(conn, sig, lastValidBlockHeight);
   if (err) {
     const t = await conn.getTransaction(sig, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 }).catch(() => null);
     throw new ChainRefused(`The chain refused it: ${JSON.stringify(err)}`, sig, t?.meta?.logMessages ?? []);
   }
   return sig;
+  } catch (error) { if(await submission.abortBeforeBroadcast())await opts.onNoBroadcast?.(); throw error; }
+  }); } catch(error) { if(!callbackStarted)await opts.onNoBroadcast?.();throw error; }
 }
 
 /**
@@ -244,16 +263,16 @@ export async function send(
  */
 async function confirmByPolling(conn: Connection, sig: string, lastValidBlockHeight: number): Promise<unknown> {
   for (let i = 0; i < 90; i++) {
-    const { value } = await conn.getSignatureStatuses([sig]);
+    const { value } = await conn.getSignatureStatuses([sig], { searchTransactionHistory: true });
     const st = value[0];
     if (st && (st.confirmationStatus === 'confirmed' || st.confirmationStatus === 'finalized')) return st.err ?? null;
-    if (st?.err) return st.err;
+    // Processed errors are not terminal; retain the original receipt until commitment.
     if (i % 5 === 4 && (await conn.getBlockHeight('confirmed')) > lastValidBlockHeight) {
-      throw new Error('The transaction expired before it landed. Try again.');
+      throw new Error(`Transaction confirmation is unresolved (${sig}) after its block-height window. Check the original receipt; do not submit again.`);
     }
     await new Promise((r) => setTimeout(r, 700));
   }
-  throw new Error('Devnet did not confirm the transaction in time. It may still land — check the trail.');
+  throw new Error(`Devnet did not confirm in time (${sig}). It may still land; check the original receipt before retrying.`);
 }
 
 /* -------------------------------------------------------------------------------------------- the transactions */

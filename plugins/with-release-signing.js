@@ -10,7 +10,7 @@
  *   XORR_RELEASE_KEY_ALIAS=xorr-clockin
  *   XORR_RELEASE_KEY_PASSWORD=…
  *
- * Without them the release build falls back to the debug key, as Expo's template does, and says so in the build log.
+ * Release packaging refuses missing or incomplete credentials; debug development builds remain available.
  */
 const { withAppBuildGradle } = require('expo/config-plugins');
 
@@ -24,10 +24,19 @@ const BLOCK = `
             }
         }`;
 
+const PACKAGER_LIMIT = "\n// clockin-release-packager-single-worker\nreact { extraPackagerArgs = [\"--max-workers\", \"1\"] }\n";
+
+const RELEASE_GUARD = "\n// clockin-release-requires-existing-identity\ngradle.taskGraph.whenReady { graph ->\n    if (graph.allTasks.any { it.name in ['assembleRelease', 'bundleRelease', 'packageRelease'] } && !(['XORR_RELEASE_STORE_FILE','XORR_RELEASE_STORE_PASSWORD','XORR_RELEASE_KEY_ALIAS','XORR_RELEASE_KEY_PASSWORD'].every { project.hasProperty(it) && project.property(it) } && file(project.property('XORR_RELEASE_STORE_FILE')).exists())) {\n        throw new GradleException('Release signing credentials are missing or incomplete; refusing a debug-signed release')\n    }\n}\n";
+
 module.exports = function withReleaseSigning(config) {
   return withAppBuildGradle(config, (cfg) => {
     let g = cfg.modResults.contents;
-    if (g.includes('XORR_RELEASE_STORE_FILE')) return cfg;
+    if (g.includes('XORR_RELEASE_STORE_FILE')) {
+      if (!g.includes('clockin-release-requires-existing-identity')) cfg.modResults.contents += RELEASE_GUARD;
+      if (!cfg.modResults.contents.includes('clockin-release-requires-existing-identity')) cfg.modResults.contents += RELEASE_GUARD;
+    if (!cfg.modResults.contents.includes('// clockin-release-packager-single-worker')) cfg.modResults.contents += PACKAGER_LIMIT;
+    return cfg;
+    }
     // Add a `release` signing config next to Expo's `debug` one.
     g = g.replace(/signingConfigs\s*\{/, (m) => `${m}${BLOCK}`);
     // The release build type uses it when the key is configured, else the debug key.
@@ -36,6 +45,8 @@ module.exports = function withReleaseSigning(config) {
       `$1signingConfig project.hasProperty('XORR_RELEASE_STORE_FILE') ? signingConfigs.release : signingConfigs.debug`,
     );
     cfg.modResults.contents = g;
+    if (!cfg.modResults.contents.includes('clockin-release-requires-existing-identity')) cfg.modResults.contents += RELEASE_GUARD;
+    if (!cfg.modResults.contents.includes('// clockin-release-packager-single-worker')) cfg.modResults.contents += PACKAGER_LIMIT;
     return cfg;
   });
 };

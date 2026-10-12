@@ -17,6 +17,7 @@ mkdir -p "${TMPDIR:-/tmp}"
 SIGNING="${SIGNING:-$CLOCKIN/.keys/xorr-clockin.signing.properties}"
 OUT="${OUT:-$CLOCKIN/apks/xorr-clockin.apk}"
 ARCHS="${ARCHS:-arm64-v8a,x86_64}"
+[ -f "$SIGNING" ] || { echo "Missing release signing properties; refusing debug-signed APK" >&2; exit 1; }
 
 cd "$ROOT"
 # One Gradle build at a time across all CLOCK IN agents (shared machine memory): take the lock, always release it.
@@ -43,14 +44,17 @@ PROPS=()
 if [ -f "$SIGNING" ]; then
   while IFS= read -r l; do [ -n "$l" ] && PROPS+=("-P$l"); done < "$SIGNING"
 else
-  echo "WARNING: no signing properties at $SIGNING — the APK will be signed with the debug key." >&2
+  echo "Missing release signing properties; refusing debug-signed APK" >&2
+  exit 1
 fi
 # One daemon, 3 GB heap at most (shared machine), stopped when done.
 (cd android && ./gradlew assembleRelease -PreactNativeArchitectures="$ARCHS" "${PROPS[@]}" \
-  -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m" -Dorg.gradle.workers.max=4 --console=plain)
-mkdir -p "$(dirname "$OUT")"
-cp android/app/build/outputs/apk/release/app-release.apk "$OUT"
+  -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m" --no-daemon --max-workers=1 -Dorg.gradle.parallel=false --console=plain)
+BUILT_APK=android/app/build/outputs/apk/release/app-release.apk
 BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
-"$BT/apksigner" verify --print-certs "$OUT" | grep -E "Signer #1 certificate DN|SHA-256" || true
+"$BT/apksigner" verify "$BUILT_APK"
+mkdir -p "$(dirname "$OUT")"
+cp "$BUILT_APK" "$OUT"
+"$BT/apksigner" verify --print-certs "$OUT" | grep -E "Signer #1 certificate DN|SHA-256"
 shasum -a 256 "$OUT"
 ls -lh "$OUT"

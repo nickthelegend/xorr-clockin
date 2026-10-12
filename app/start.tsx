@@ -39,14 +39,17 @@ export default function Start() {
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState(false);
 
-  // Once a wallet is connected, set it up (no signature) and go to Today. Once per connection.
+  // Resolve or reconcile setup once per connection. New funded mint setup needs wallet approval; retained batches
+  // remain read-only unless the person explicitly requests resume.
   const settingUp = useRef(false);
+  const resumeOriginal = useRef(false);
   useEffect(() => {
     if (!owner || !busy?.startsWith('Setting up') || settingUp.current) return;
     settingUp.current = true;
     void (async () => {
       try {
-        await ensureDesk(owner);
+        const resume=resumeOriginal.current;resumeOriginal.current=false;
+        await ensureDesk(owner,resume);
         successTap();
         const s = useClockin.getState();
         router.replace(!s.introSeen ? '/intro' : !s.firstRunDone ? '/setup' : '/');
@@ -113,8 +116,9 @@ export default function Start() {
           {error ? <FailureNote error={new Error(error)} style={{ marginBottom: space.s10 }} /> : null}
           {error && wallet ? (
             <Button
-              label="Try again"
+              label="Review / resume original setup"
               onPress={() => {
+                resumeOriginal.current=true;
                 setError(null);
                 setBusy('Setting up your devnet desk…');
               }}

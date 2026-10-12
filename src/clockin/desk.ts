@@ -81,7 +81,7 @@ export async function refresh(owner: PublicKey, opts: { mainnet?: boolean } = {}
   try {
     mints = await resolveMints();
   } catch {
-    useLive.setState({ loading: false, error: 'Can’t reach Solana devnet right now. Your tokens are safe on chain — pull down or try again.' });
+    useLive.setState({ view: null, loading: false, error: 'Can’t reach Solana devnet right now. Your tokens are safe on chain — pull down or try again.' });
     return;
   }
   if (mints === 'missing') {
@@ -92,7 +92,7 @@ export async function refresh(owner: PublicKey, opts: { mainnet?: boolean } = {}
   const a = await agent();
   const [view, prices] = await Promise.allSettled([readOwner(owner, a.publicKey), fetchPrices()]);
   useLive.setState({
-    view: view.status === 'fulfilled' ? view.value : useLive.getState().view,
+    view: view.status === 'fulfilled' ? view.value : null,
     prices: prices.status === 'fulfilled' ? prices.value : useLive.getState().prices,
     loading: false,
     error:
@@ -234,7 +234,7 @@ const AGENT_GAS_SOL = 0.03;
 
 /**
  * Who pays devnet fees and rent right now. The faucet, while it has SOL — a judge needs nothing. If it runs dry (devnet
- * faucets are rate-limited, and the faucet key ships in the APK), the owner pays from devnet SOL they airdrop to
+ * faucets are rate-limited), the owner pays from devnet SOL they obtain for
  * themselves, and the agent pays for its own trades from SOL the owner gives it with the permission.
  */
 export function feeMode(view: ChainView | null = useLive.getState().view): 'faucet' | 'self' {
@@ -267,14 +267,15 @@ async function guarded<T>(label: string, fn: () => Promise<T>): Promise<T> {
 const log = (...a: Parameters<ReturnType<typeof useClockin.getState>['log']>) => useClockin.getState().log(...a);
 
 /**
- * Make sure there are stand-in mints: the shared set if it is on devnet, else this phone's own (created once, paid by
- * the owner from an airdrop). Then the wallet's starter funds. Safe to call on every launch.
+ * Resolve shared mints or this phone's original retained setup. New setup requires existing owner SOL; interrupted
+ * operations reconcile read-only on launch. Only explicit resume may submit their never-submitted batches.
+ * Existing wallet starter-fund handling runs after a usable set is resolved.
  */
-export function ensureDesk(owner: Owner): Promise<void> {
+export function ensureDesk(owner: Owner, resumeOriginal = false): Promise<void> {
   // Single flight per wallet: the start screen and the tab shell both ask as a new wallet lands, and the second ask
   // must join the first rather than fail on "Still working on: Creating your devnet stand-in tokens".
   if (ensuring?.address === owner.address) return ensuring.p;
-  const p: Promise<void> = ensureDeskOnce(owner).finally(() => {
+  const p: Promise<void> = ensureDeskOnce(owner,resumeOriginal).finally(() => {
     if (ensuring?.p === p) ensuring = null;
   });
   ensuring = { address: owner.address, p };
@@ -288,11 +289,11 @@ export async function settleDesk(): Promise<void> {
   for (let i = 0; i < 60 && useLive.getState().busy; i++) await new Promise((r) => setTimeout(r, 250));
 }
 
-async function ensureDeskOnce(owner: Owner): Promise<void> {
+async function ensureDeskOnce(owner: Owner, resumeOriginal = false): Promise<void> {
   useLive.setState({ setupFailed: false });
   if ((await resolveMints()) === 'missing') {
     await guarded('Creating your devnet stand-in tokens', async () => {
-      const set = await createDeviceSet(owner);
+      const set = await createDeviceSet(owner,resumeOriginal);
       log({ kind: 'fund', title: 'Created this phone’s devnet stand-in tokens', detail: `dUSDC ${set.usdc.slice(0, 6)}…, dSKR ${set.skr.slice(0, 6)}… and five xStock stand-ins; this phone is their mint authority.`, ok: true });
     });
   }

@@ -460,10 +460,15 @@ export default function Me() {
               ) : (
                 <>
                   <Field label="OpenRouter key" placeholder="sk-or-…" secure value={key} onChange={setKey} />
+                  {key.trim() && !/^sk-or-[A-Za-z0-9_-]{20,}$/.test(key.trim()) ? (
+                    <Text variant="bodySm" color={colors.ink55}>
+                      OpenRouter keys start with sk-or-
+                    </Text>
+                  ) : null}
                   <Button
                     label="Save key"
                     variant="secondary"
-                    disabled={key.trim().length < 10}
+                    disabled={!/^sk-or-[A-Za-z0-9_-]{20,}$/.test(key.trim())}
                     onPress={async () => {
                       await setAiKey(key);
                       setKey('');
@@ -522,6 +527,8 @@ export default function Me() {
               onPress={() => {
                 selectionTick();
                 setConfirmingDisconnect(true);
+                // The confirm card opens below the fold; bring its buttons into view.
+                setTimeout(() => scroller.current?.scrollToEnd({ animated: true }), 60);
               }}
               testID="disconnect"
             />

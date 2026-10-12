@@ -59,7 +59,7 @@ The full scripted loop with sale and buy-after-revoke (Oct 11) is in [`DEVNET-RU
 | Ask tab | Theme, search, +, agent rows, chat send | Work | Pass | | Permission question answered from chain |
 | Profile | Sign In With Solana line | Verified proof for this wallet | Pass (1.3.1) | | New |
 | Profile | Copy address chip | Clipboard | Pass | | |
-| Profile | Your agent / SKR / Ask your agent rows | Navigate | Not tapped from Profile (the same screens passed from Home) | | |
+| Profile | Your agent / SKR / Ask your agent rows | Navigate | Pass (1.3.2 final pass: Safety, SKR tier, agent chats) | | |
 | Profile | Morning brief, time chips, Streak reminder | Schedule notifications | Pass (iOS permission granted) | | |
 | Profile | Test tokens (expand), mint chips | Explain + Explorer | Pass | | |
 | Profile | Terms, Privacy, Risk | Legal pages | Pass | | Stale version removed from Privacy |
@@ -91,3 +91,10 @@ every new transaction forever after one dropped transaction was fixed (shared wi
 
 - xStock trades fill against xorr's devnet venue at Jupiter's live price with test tokens; no real xStock moves.
 - "Ask your agent" in words needs the owner's own OpenRouter key; without it the agent answers from its numbers.
+
+## 1.3.2 final pass (Oct 12 evening)
+
+- Profile shortcut rows tapped: Your agent → Safety, SKR → tier screen, Ask your agent → agent chats. Pass.
+- Disconnect → confirmation → "Keep everything": nothing deleted. Fixed: the card opened below the fold; it now scrolls into view.
+- Ask your agent without a key: the first answer of a session says no AI model ran; the allowance question answers from chain.
+- OpenRouter key: Save needs a well-formed `sk-or-` key.

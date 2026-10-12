@@ -4,6 +4,23 @@ Status as of **2026-10-06 (IST)**, written by the build agent. It covers only wh
 Deadline: **2026-10-09 06:59 UTC** (Oct 8, 23:59 PDT).
 
 
+## 2026-10-12 (evening): final pass, 1.3.2 (versionCode 10)
+
+- **Ask your agent, no key:** answers still come from the engine's numbers, and the first answer of a session now says
+  so: "(I answer from my own numbers here, with no AI model. Add your own OpenRouter key in Profile → Advanced to talk
+  in words.)". Checked: "How much can you still spend?" answers from the on-chain allowance ($75.00 left).
+- **Key entry:** Save is enabled only for a well-formed `sk-or-` key; a hint explains the format. No key ships.
+- **Disconnect:** the confirmation card opened below the fold; the screen now scrolls it into view. "Keep everything"
+  (cancel) tapped: nothing deleted.
+- Tapped the last untested controls (Profile → Your agent / SKR / Ask your agent) and swept Home tabs, Safety, chat,
+  Profile again in the Release build.
+- Demo captures on a fresh guest wallet `HEtfCkkd…uLQv`: grant `2DYmu7jW…8ceHBn`, agent buy `37hGjyXJ…hb7pz`, over-cap
+  refused `5SACA6JC…NPPLks` (fails on chain by design), clock-in `2jBgapxf…xzw9vkeK`, agent buys `2pXuJafS…jswv9xJ` and
+  `mSiCXQiE…npbFBay`, revoke `4TZuPJGV…oHopn5K`. All checked with `solana confirm -u devnet`.
+- APK 1.3.2 (10): sha256 `1976836ee7f004d42f8ce3ec0b9257c9edd8377c242079f51ac2f373a27ad485`, signer `854facad…fb02e`
+  (same key), arm64-v8a + x86_64, aapt2/apksigner checked, uploaded to `clockin-v1`, re-download matches.
+  Not run on an Android device. The devnet faucet key still ships in this hackathon build (see below).
+
 ## 2026-10-12: no-mocks pass, 1.3.0 (versionCode 8)
 
 - **The loop re-ran from the app on devnet, signatures recorded** (iPhone 17 Pro Max simulator, Release, guest wallet

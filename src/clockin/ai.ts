@@ -77,7 +77,16 @@ export function localAnswer(question: string, c: AiContext): string {
   return `${c.brief.headline} ${c.brief.lines.slice(0, 2).join(' ')} Ask me about a stock by name — NVDAx, TSLAx, AAPLx, MSFTx or SPYx.`;
 }
 
+// Said once per app session, so the owner knows the answers come from the agent's own numbers and not a model.
+let toldNoModel = false;
+const NO_MODEL_NOTE = '(I answer from my own numbers here, with no AI model. Add your own OpenRouter key in Profile → Advanced to talk in words.)';
+
 export async function askAgent(model: string, question: string, c: AiContext): Promise<string> {
-  if (!(await getAiKey())) return localAnswer(question, c);
+  if (!(await getAiKey())) {
+    const answer = localAnswer(question, c);
+    if (toldNoModel) return answer;
+    toldNoModel = true;
+    return `${answer} ${NO_MODEL_NOTE}`;
+  }
   return chat(model, VOICE, `Owner asks: ${question.slice(0, 500)}\nAnswer in at most 5 sentences from this data: ${context(c)}`);
 }

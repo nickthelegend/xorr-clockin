@@ -282,10 +282,10 @@ export default function Me() {
             divider
           />
           <Row
-            title="Address"
+            title="On Solana Explorer"
             value={
-              <Text variant="rowPrimary" color={colors.ink55} selectable>
-                {short ?? '—'}
+              <Text variant="rowPrimary" color={colors.ink55}>
+                {address ? 'Open' : '—'}
               </Text>
             }
             height={size.row}

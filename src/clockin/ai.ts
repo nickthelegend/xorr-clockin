@@ -15,7 +15,7 @@ export const getAiKey = () => getSecret(KEY);
 export const setAiKey = (k: string) => setSecret(KEY, k.trim());
 export const clearAiKey = () => deleteSecret(KEY);
 
-export type AiContext = { brief: Brief; decisions: Decision[]; quotes: Record<string, Quote>; holdings: Record<string, Holding>; cashUsd: number; tier: string; streak: number; recent?: string[] };
+export type AiContext = { brief: Brief; decisions: Decision[]; quotes: Record<string, Quote>; holdings: Record<string, Holding>; cashUsd: number; tier: string; streak: number; recent?: string[]; permission?: { live: boolean; leftUsd: number } };
 
 function context(c: AiContext): string {
   return JSON.stringify({
@@ -56,6 +56,11 @@ export function localAnswer(question: string, c: AiContext): string {
       d ? `Right now I would ${d.action === 'hold' ? 'hold' : d.action === 'buy' ? `buy $${d.usd?.toFixed(0)}` : 'sell'}: ${d.reason}` : '',
     ];
     return parts.filter(Boolean).join(' ');
+  }
+  if (c.permission && /\b(spend|left|allowance|cap|budget|permission|approved|limit)\b/.test(q)) {
+    return c.permission.live
+      ? `I can still spend $${c.permission.leftUsd.toFixed(2)} of your dUSDC, and sell what I bought. The token program refuses anything past that, and you can revoke it from Safety at any time. You hold $${c.cashUsd.toFixed(2)} in cash.`
+      : 'I can spend nothing right now: there is no permission on chain. Grant one from Safety and I take my next look.';
   }
   if (/\b(buy|bought|trade|trades|traded|sell|sold)\b/.test(q) && !sym) {
     const recent = c.recent ?? [];

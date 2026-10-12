@@ -57,7 +57,7 @@ const REVIEW_NOTE =
  */
 const CLOCKIN_PRIVACY: LegalDoc = {
   title: 'Privacy',
-  updated: 'Devnet build 1.2.1 — October 2026',
+  updated: 'Devnet build — October 2026',
   summary:
     'This build runs without an xorr server: we never receive your trades, balances or messages, and there are no analytics, ads or crash reports. Your keys stay on this phone. What you sign is public on Solana devnet. The few services that see anything are named below.',
   sections: [

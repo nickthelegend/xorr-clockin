@@ -231,7 +231,7 @@ export default function Desk() {
               title="Your wallet"
               value={
                 <Text variant="rowPrimary" color={colors.ink55} selectable>
-                  {owner ? `${owner.address.slice(0, 4)}…${owner.address.slice(-4)}` : '—'}
+                  {owner ? 'Explorer' : '—'}
                 </Text>
               }
               onPress={owner ? () => openUrl(explorerAddress(owner.address)) : undefined}
@@ -246,7 +246,7 @@ export default function Desk() {
               }
               value={
                 <Text variant="rowPrimary" color={colors.ink55} selectable>
-                  {live.agent ? `${live.agent.slice(0, 4)}…${live.agent.slice(-4)}` : '—'}
+                  {live.agent ? 'Explorer' : '—'}
                 </Text>
               }
               onPress={live.agent ? () => openUrl(explorerAddress(live.agent!)) : undefined}

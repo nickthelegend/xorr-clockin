@@ -28,7 +28,9 @@
  * Under reduced motion it is drawn in place, with every word and figure identical.
  */
 import React, { useEffect, useRef } from 'react';
-import { View } from 'react-native';
+import { Linking, View } from 'react-native';
+import { Press } from './Press';
+import { CLOCKIN, explorerTx } from '@/clockin/config';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { shortSignature, slotLabel, venueNaming } from './fillVenue';
 import { arrival, duration, useReducedMotion } from './motion';
@@ -57,7 +59,6 @@ export interface FillReceiptProps {
 export function FillReceipt({ signature, venue, slot, animate = true, testID }: FillReceiptProps) {
   const reduced = useReducedMotion();
   const naming = venueNaming(venue);
-  const slotShown = slotLabel(slot);
 
   /* 0 before it arrives, 1 in place. Seeded at 1 when there is no arrival to play. */
   const landed = useSharedValue(animate ? 0 : 1);
@@ -111,24 +112,17 @@ export function FillReceipt({ signature, venue, slot, animate = true, testID }: 
 
         <View style={{ height: 1, backgroundColor: colors.cardBorder, marginVertical: space.s12 }} />
 
-        <Text variant="footnote" color={colors.ink55}>
-          TRANSACTION
-        </Text>
-        {/* In full — this is the thing a reader takes to an explorer, and a truncation would cost them that. */}
-        <Text variant="footnoteSm" color={colors.ink65} style={{ marginTop: space.s4 }}>
-          {signature}
-        </Text>
-
-        {slotShown ? (
-          <>
-            <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s12 }}>
-              SLOT
-            </Text>
-            <Value variant="footnoteSm" color={colors.ink65} style={{ marginTop: space.s4 }}>
-              {slotShown}
-            </Value>
-          </>
-        ) : null}
+        {/* The proof is one tap away on an explorer; the raw signature and slot are not reader-facing text. */}
+        <Press
+          accessibilityRole="link"
+          accessibilityLabel="Open this transaction on Solana Explorer"
+          onPress={() => void Linking.openURL(CLOCKIN ? explorerTx(signature) : `https://solscan.io/tx/${signature}`)}
+          hitSlop={8}
+        >
+          <Text variant="secondarySm" color={colors.ink65}>
+            View the transaction on Solana Explorer
+          </Text>
+        </Press>
       </SheetCard>
     </Animated.View>
   );

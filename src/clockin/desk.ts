@@ -294,7 +294,7 @@ async function ensureDeskOnce(owner: Owner, resumeOriginal = false): Promise<voi
   if ((await resolveMints()) === 'missing') {
     await guarded('Creating your devnet stand-in tokens', async () => {
       const set = await createDeviceSet(owner,resumeOriginal);
-      log({ kind: 'fund', title: 'Created this phone’s devnet stand-in tokens', detail: `dUSDC ${set.usdc.slice(0, 6)}…, dSKR ${set.skr.slice(0, 6)}… and five xStock stand-ins; this phone is their mint authority.`, ok: true });
+      log({ kind: 'fund', title: 'Created this phone’s devnet stand-in tokens', detail: 'Test dollars, test SKR and five test xStocks, created on Solana devnet for this phone.', ok: true });
     });
   }
   await refresh(owner.pubkey);
@@ -371,7 +371,7 @@ export async function grant(owner: Owner, capUsd: number): Promise<string> {
     const gas = o.payer && agentSol < AGENT_GAS_SOL / 2 ? Math.round(AGENT_GAS_SOL * 1e9) : 0;
     if (o.payer) needOwnerSol(0.003 + gas / 1e9);
     const sig = await send(grantIxs(owner.pubkey, a.publicKey, capUsd, o.rent, gas), { owner, payer: o.payer });
-    log({ kind: 'grant', title: `Permission granted: ${capUsd} dUSDC`, detail: `SPL ApproveChecked to the agent ${a.publicKey.toBase58().slice(0, 6)}…, plus sell approvals so exits can fire.`, sig, ok: true });
+    log({ kind: 'grant', title: `Permission granted: ${capUsd} dUSDC`, detail: 'Your agent key can spend up to this much, and sell what it buys so exits can fire. Nothing more.', sig, ok: true });
     await refresh(owner.pubkey);
     return sig;
   });
@@ -385,7 +385,7 @@ export async function revoke(owner: Owner): Promise<string> {
     if (!view) throw new Error('Devnet could not be read.');
     const o = ownerPays(owner);
     const sig = await send(revokeIxs(owner.pubkey, view), { owner, payer: o.payer });
-    log({ kind: 'revoke', title: 'Permission revoked', detail: 'SPL Revoke on every account. The agent can move nothing now.', sig, ok: true });
+    log({ kind: 'revoke', title: 'Permission revoked', detail: 'Every approval was taken back on chain. The agent can move nothing now.', sig, ok: true });
     await refresh(owner.pubkey);
     return sig;
   });
@@ -471,7 +471,10 @@ export async function testCap(owner: Owner): Promise<{ sig: string; message: str
       return { sig, message: 'Unexpected: the transfer went through.', tried: over, left: st.permission.leftUsd };
     } catch (e) {
       if (!(e instanceof ChainRefused)) throw e;
-      const why = e.logs.find((l) => /insufficient|owner does not match|Error/i.test(l)) ?? e.message;
+      const raw = e.logs.find((l) => /insufficient|owner does not match|Error/i.test(l)) ?? e.message;
+      const why = /insufficient/i.test(raw)
+        ? `The token program refused: only ${Math.floor(st.permission.leftUsd)} dUSDC was approved.`
+        : 'The token program refused the transfer.';
       log({ kind: 'refused', title: `Cap held: agent tried ${over} dUSDC, chain refused`, detail: why, sig: e.signature, ok: true });
       return { sig: e.signature, message: why, tried: over, left: st.permission.leftUsd };
     }
@@ -523,6 +526,7 @@ export async function askNow(question: string): Promise<string> {
     tier: st.tier.name,
     streak: currentStreak(s.streak),
     recent: s.activity.filter((a) => (a.kind === 'buy' || a.kind === 'sell') && a.ok).map((a) => a.title.replace(/^Agent /, '')),
+    permission: { live: st.permission.live, leftUsd: st.permission.leftUsd },
   });
 }
 

@@ -53,12 +53,12 @@ pool with the issuer's own mark for the share and holds when they have come apar
 | Programs used | SPL Token `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`, Associated Token, Memo `MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr`, System. xorr deploys no program of its own: the permission is the token program's delegate |
 | xorr devnet faucet / venue | `GwayahZaN7rMXK5jkNXKu7ndHRw2mcXbbq1qEPJiEeAe` |
 | Shared stand-in mints | Created on devnet on Oct 11 and listed in `src/clockin/devnet.json` (dUSDC `28rxoR97…`, dSKR `8x4NqhFY…`, five xStock stand-ins). If they ever disappear (devnet reset), each phone creates its own set on first run |
-| Devnet transaction links | The full loop (fund, clock-in, shift, grant, agent buy, over-cap refusal, sale, revoke, refused buy after revoke) ran on devnet on Oct 11: links in `clockin/DEVNET-RUN.md`. On Oct 12 the 1.2.4 Release build ran the same onboarding on devnet in the iOS simulator (fund → grant $100 → agent bought $10 NVDAx → $140 over-cap refused → clock-in day 1) |
+| Devnet transaction links | The full loop (fund, clock-in, shift, grant, agent buy, over-cap refusal, sale, revoke, refused buy after revoke) ran on devnet on Oct 11: links in `clockin/DEVNET-RUN.md`. On Oct 12 the 1.3.0 Release build re-ran the loop from the app on devnet (clock-in → agent buy → over-cap refused → revoke → grant → shift paid in dSKR → agent buy → over-cap refused), every signature in `clockin/BUTTON-AUDIT.md` |
 
 ## Install the APK
 
 - File: `xorr-clockin.apk`, a release build signed with xorr's own key (`CN=xorr CLOCK IN`), for arm64-v8a and x86_64, Android 7.0+ (minSdk 24).
-- sha256: `06120d60d1bf0180929110d8475869da8a45668339354023f117d8e418e4280e` (77 MB, version 1.2.4 / versionCode 7, built 2026-10-12 from commit affa815 plus uncommitted Oct 8–9 hardening in `src/clockin/` that is still in the working tree)
+- sha256: `a46932e3cb6ae687447cd8f18d47865172228d3075a1bd90dbde6a2bdfa7aac6` (77 MB, version 1.3.0 / versionCode 8, built 2026-10-12 from the committed tree)
 - Download: https://github.com/nickthelegend/xorr-clockin/releases/download/clockin-v1/xorr-clockin.apk
 - Install: allow installs from your browser or file manager, open the APK, then launch **xorr**. On a Seeker, tap
   *Connect wallet* (Seed Vault). On another phone, install Phantom or Solflare, or tap *No wallet? Try it with a devnet guest wallet*.

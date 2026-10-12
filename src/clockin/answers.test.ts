@@ -33,4 +33,8 @@ describe('Ask your agent, without a model', () => {
     expect(localAnswer("what's the plan today?", ctx)).toMatch(/My plan: buy NVDAx/);
     expect(localAnswer('hello', ctx)).toMatch(/^Book is up \$1\.00\./);
   });
+  it('answers what is left of the permission from the chain', () => {
+    expect(localAnswer('how much can you still spend?', { ...ctx, permission: { live: true, leftUsd: 75 } })).toMatch(/still spend \$75\.00/);
+    expect(localAnswer('what is my cap?', { ...ctx, permission: { live: false, leftUsd: 0 } })).toMatch(/no permission on chain/);
+  });
 });

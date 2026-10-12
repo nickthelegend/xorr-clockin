@@ -3,6 +3,24 @@
 Status as of **2026-10-06 (IST)**, written by the build agent. It covers only what was run and seen working.
 Deadline: **2026-10-09 06:59 UTC** (Oct 8, 23:59 PDT).
 
+
+## 2026-10-12: no-mocks pass, 1.3.0 (versionCode 8)
+
+- **The loop re-ran from the app on devnet, signatures recorded** (iPhone 17 Pro Max simulator, Release, guest wallet
+  `6xSZNsuV…DNbp`): clock-in → agent buy $25 AAPLx → over-cap refused → revoke → grant $100 → Night Shift paid
+  20 dSKR → agent buy $25 MSFTx → over-cap refused again. All in [`clockin/BUTTON-AUDIT.md`](clockin/BUTTON-AUDIT.md),
+  checked with `solana confirm` (the two cap tests fail on chain by design).
+- **Real sources checked:** prices are Jupiter `price/v3` for the mainnet xStock mints (NVDAx matched to the cent);
+  decisions are the engine on those quotes and the on-chain allowance; balances, cap, streak and tier come from devnet
+  token accounts. No fake data was found in the CLOCK IN screens.
+- **Fixed dev text:** raw signature + slot on fill receipts and the hash on the stop curtain (now Explorer links),
+  wallet/agent addresses on Safety and Profile, "SPL ApproveChecked/Revoke" and program-log lines in Activity, mint
+  prefixes, a stale version in Privacy. "How much can you still spend?" now answers from the on-chain allowance.
+- Receipt journal lockout fixed (shared with Polaris and XORV); the Oct 8–9 hardening that APK 1.2.4 shipped is
+  committed. The `pendingReceipt` test now runs under vitest (it used `node:test` and never ran).
+- APK 1.3.0 (8): sha256 `a46932e3cb6ae687447cd8f18d47865172228d3075a1bd90dbde6a2bdfa7aac6`, signer `854facad…fb02e`
+  (same key), arm64-v8a + x86_64. Not run on an Android device. Sign In With Solana is not implemented in XORR.
+
 ## What this is
 
 A Seeker-first, devnet-only build of xorr for Solana Mobile CLOCK IN. Everything new is in `src/clockin/`,

@@ -534,9 +534,9 @@ describe('the fill receipt — a signature is not an event until it says where',
     expect(src).toMatch(/naming \?/);
   });
 
-  /* The signature goes out whole: a truncation is what someone takes to an explorer and fails to find. */
-  it('prints the signature in full', () => {
-    expect(src).toMatch(/\{signature\}/);
+  /* The signature goes out whole, to an explorer: a truncation is what someone takes there and fails to find. */
+  it('links the full signature to an explorer instead of printing a hash', () => {
+    expect(src).toMatch(/explorerTx\(signature\)/);
     expect(src).not.toMatch(/shortSignature\(signature\)/);
   });
 

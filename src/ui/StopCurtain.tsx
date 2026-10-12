@@ -37,7 +37,9 @@
  * the design gives a destructive surface.
  */
 import React, { useEffect } from 'react';
-import { ActivityIndicator, Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Linking, Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { CLOCKIN, explorerTx } from '@/clockin/config';
+import { Press } from './Press';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Icon } from '@/design/Icon';
 import { Button } from './Button';
@@ -198,9 +200,16 @@ export function StopCurtain({ state, onDone, detail, signature, testID }: StopCu
               <Text variant="tagSm" color={colors.ink45}>
                 CONFIRMED ON-CHAIN
               </Text>
-              <Value variant="footnote" color={colors.ink55}>
-                {shortSignature(signature)}
-              </Value>
+              <Press
+                accessibilityRole="link"
+                accessibilityLabel="Open the revoke transaction on Solana Explorer"
+                onPress={() => void Linking.openURL(CLOCKIN ? explorerTx(signature) : `https://solscan.io/tx/${signature}`)}
+                hitSlop={8}
+              >
+                <Text variant="footnote" color={colors.ink55}>
+                  View on Solana Explorer
+                </Text>
+              </Press>
             </View>
           ) : null}
 

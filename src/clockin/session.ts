@@ -7,6 +7,7 @@
  * Secrets are not here: the guest key and the agent key are in the OS keystore (`secret.native.ts`), the MWA auth
  * token is a session token (not a key) and is kept here so the wallet reauthorizes silently.
  */
+import type { SiwsProof } from './siws';
 import { useSyncExternalStore } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
@@ -18,7 +19,7 @@ import { dayKey } from './streak';
 
 export type WalletKind = 'mwa' | 'guest' | 'privy';
 
-export type ConnectedWallet = { kind: WalletKind; address: string; mwa?: MwaAuth; label?: string };
+export type ConnectedWallet = { kind: WalletKind; address: string; mwa?: MwaAuth; label?: string; siws?: SiwsProof | null };
 
 export type ActivityKind = 'fund' | 'checkin' | 'grant' | 'revoke' | 'buy' | 'sell' | 'refused' | 'shift' | 'skr' | 'airdrop' | 'look';
 

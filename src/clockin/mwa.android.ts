@@ -14,7 +14,9 @@ import { APP_IDENTITY } from './config';
 
 export const MWA_AVAILABLE = true;
 
-export type MwaAuth = { address: string; authToken: string; walletName?: string };
+import { buildSignInInput, createSignInMessageText, fromB64, proofOf, utf8, verifySignIn, type SiwsProof } from './siws';
+
+export type MwaAuth = { address: string; authToken: string; walletName?: string; siws?: SiwsProof | null };
 
 function toBase58(b64: string): string {
   return new PublicKey(Buffer.from(b64, 'base64')).toBase58();
@@ -61,8 +63,42 @@ async function friendly<T>(p: Promise<T>): Promise<T> {
   }
 }
 
+/**
+ * Connect = authorize + Sign In With Solana in one wallet sheet (`sign_in_payload`). Seed Vault, Phantom and Solflare
+ * return `sign_in_result`, verified here (ed25519 + our domain, nonce, chain and a fresh time). A wallet that ignores
+ * the payload is asked to sign the same text with `signMessages`; if it declines, the owner is connected without a proof.
+ */
 export async function mwaConnect(): Promise<MwaAuth> {
-  return friendly(transact((wallet) => authorize(wallet)));
+  const input = buildSignInInput();
+  return friendly(
+    transact(async (wallet) => {
+      const res = await wallet.authorize({ chain: 'solana:devnet', identity: APP_IDENTITY, sign_in_payload: input } as Parameters<typeof wallet.authorize>[0]);
+      const account = res.accounts[0];
+      if (!account) throw new Error('The wallet authorized no account.');
+      const address = toBase58(account.address);
+      const signer = account.label ?? 'your wallet';
+      const base = { address, authToken: res.auth_token, walletName: account.label };
+      const sir = (res as { sign_in_result?: { address: string; signed_message: string; signature: string } }).sign_in_result;
+      if (sir) {
+        const signature = fromB64(sir.signature);
+        const v = verifySignIn(input, { address: toBase58(sir.address), signedMessage: fromB64(sir.signed_message), signature });
+        if (!v.ok) throw new Error(`The wallet's sign-in did not verify (${v.reason}).`);
+        return { ...base, siws: proofOf('siws', signer, input, v, signature) };
+      }
+      try {
+        const msg = utf8(createSignInMessageText({ ...input, address }));
+        const [signed] = await wallet.signMessages({ addresses: [account.address], payloads: [msg] });
+        if (!signed) throw new Error('No signature returned.');
+        for (const signature of [signed.slice(-64), signed.slice(0, 64)]) {
+          const v = verifySignIn(input, { address, signedMessage: msg, signature });
+          if (v.ok) return { ...base, siws: proofOf('signMessage', signer, input, v, signature) };
+        }
+      } catch {
+        /* declined: connected without a sign-in proof */
+      }
+      return { ...base, siws: null };
+    }),
+  );
 }
 
 export async function mwaSign(auth: MwaAuth, txs: Transaction[]): Promise<{ signed: Transaction[]; auth: MwaAuth }> {

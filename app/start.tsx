@@ -5,6 +5,7 @@
  * Whichever way in, the new wallet is set up without a single signature: the devnet faucet pays for its token accounts
  * and hands it test dUSDC and a welcome grant of dSKR, so the first thing a person signs is something that matters.
  */
+import { buildSignInInput, proofOf, signInLocally, verifySignIn } from '@/clockin/siws';
 import React, { useEffect, useRef, useState } from 'react';
 import { BackHandler, Platform, View } from 'react-native';
 import { Image } from 'expo-image';
@@ -86,12 +87,16 @@ export default function Start() {
   const mwa = () =>
     go('Opening your wallet…', async () => {
       const auth = await mwaConnect();
-      return { kind: 'mwa', address: auth.address, mwa: auth, label: auth.walletName ?? 'Seed Vault / MWA wallet' };
+      return { kind: 'mwa', address: auth.address, mwa: auth, label: auth.walletName ?? 'Seed Vault / MWA wallet', siws: auth.siws ?? null };
     });
   const guest = () =>
     go('Making a devnet guest wallet…', async () => {
       const kp = await guestKeypair();
-      return { kind: 'guest', address: kp.publicKey.toBase58() };
+      // The guest key signs the same Sign In With Solana message a wallet would, verified the same way.
+      const input = buildSignInInput();
+      const out = signInLocally(input, kp.secretKey);
+      const v = verifySignIn(input, out);
+      return { kind: 'guest', address: kp.publicKey.toBase58(), siws: v.ok ? proofOf('dev-local', 'Guest wallet', input, v, out.signature) : null };
     });
 
   const missing = !faucetKeypair() ? 'This build has no devnet faucet key.' : null;

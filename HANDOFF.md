@@ -19,7 +19,9 @@ Deadline: **2026-10-09 06:59 UTC** (Oct 8, 23:59 PDT).
 - Receipt journal lockout fixed (shared with Polaris and XORV); the Oct 8–9 hardening that APK 1.2.4 shipped is
   committed. The `pendingReceipt` test now runs under vitest (it used `node:test` and never ran).
 - APK 1.3.0 (8): sha256 `a46932e3cb6ae687447cd8f18d47865172228d3075a1bd90dbde6a2bdfa7aac6`, signer `854facad…fb02e`
-  (same key), arm64-v8a + x86_64. Not run on an Android device. Sign In With Solana is not implemented in XORR.
+  (same key), arm64-v8a + x86_64. Not run on an Android device.
+- **1.3.1 (9):** Sign In With Solana on connect (MWA `sign_in_payload` with a `signMessages` fallback; the guest key
+  signs the same message), verified on the phone and shown on Profile. APK sha256 `28e75512246fb88b5f0019ce111185066f2836e41bab26504ec02be770591d2c`, same signer.
 
 ## What this is
 

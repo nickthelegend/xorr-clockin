@@ -1,4 +1,4 @@
-# XORR 1.3.0: every-button audit (no mocks)
+# XORR 1.3.1: every-button audit (no mocks)
 
 Run on 2026-10-12 with a **Release** build (`xcodebuild -configuration Release`, `EXPO_PUBLIC_CLOCKIN=1`, Solana devnet)
 on the iPhone 17 Pro Max simulator (`B60FAA19-…`), guest wallet `6xSZNsuVHBhFCAcS8rMwt4VKJ9GXZTrpZSyL5qpVDNbp`. The UI is
@@ -57,6 +57,7 @@ The full scripted loop with sale and buy-after-revoke (Oct 11) is in [`DEVNET-RU
 | Safety | Agents and shifts, Activity | Navigate | Pass | | Activity details without "SPL ApproveChecked"/program logs |
 | Trade tab (⇅) | Momentum Scout | Agent screen | Pass | | |
 | Ask tab | Theme, search, +, agent rows, chat send | Work | Pass | | Permission question answered from chain |
+| Profile | Sign In With Solana line | Verified proof for this wallet | Pass (1.3.1) | | New |
 | Profile | Copy address chip | Clipboard | Pass | | |
 | Profile | Your agent / SKR / Ask your agent rows | Navigate | Not tapped from Profile (the same screens passed from Home) | | |
 | Profile | Morning brief, time chips, Streak reminder | Schedule notifications | Pass (iOS permission granted) | | |
@@ -82,7 +83,9 @@ every new transaction forever after one dropped transaction was fixed (shared wi
 - **SKR:** dSKR, a labelled devnet stand-in, earned by clock-ins, spent on shifts, and counted for tiers; real SKR on
   mainnet is read (never moved) and counts toward the tier.
 - **Seeker Genesis Token:** read-only mainnet check, 1.5× rewards when present.
-- **Sign In With Solana:** not in XORR (the permission grant is the user's signature); see HANDOFF.
+- **Sign In With Solana** (new in 1.3.1): connecting with MWA asks for `sign_in_payload` (falling back to
+  `signMessages`); the guest key signs the same message. Verified on the phone and re-checked on Profile
+  ("Signed in with Solana · verified on this phone", seen on the iOS guest wallet).
 
 ## Still not real
 

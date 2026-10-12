@@ -6,7 +6,9 @@ import type { Transaction } from '@solana/web3.js';
 
 export const MWA_AVAILABLE = false;
 
-export type MwaAuth = { address: string; authToken: string; walletName?: string };
+import type { SiwsProof } from './siws';
+
+export type MwaAuth = { address: string; authToken: string; walletName?: string; siws?: SiwsProof | null };
 
 export async function mwaConnect(): Promise<MwaAuth> {
   throw new Error('Mobile Wallet Adapter needs Android — on a Seeker it opens Seed Vault. Use the devnet guest wallet here.');

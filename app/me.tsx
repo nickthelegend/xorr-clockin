@@ -4,6 +4,8 @@
  * read back from what the OS actually scheduled), Wallet, Activity, About, Legal — and, folded away under Advanced,
  * the optional AI key.
  */
+import { buildSignInInput, proofOf, recheckProof, signInLocally, verifySignIn } from '@/clockin/siws';
+import { guestKeypair } from '@/clockin/chain';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
@@ -48,6 +50,19 @@ export default function Me() {
   const { owner, live } = useDesk();
   const scroller = useScrollAutopilot();
   const wallet = useClockin((s) => s.wallet);
+  // A guest wallet from before Sign In With Solana signs the message now, on this device, and keeps the proof.
+  useEffect(() => {
+    if (!wallet || wallet.kind !== 'guest' || wallet.siws) return;
+    let live = true;
+    void guestKeypair().then((kp) => {
+      if (!live || kp.publicKey.toBase58() !== wallet.address) return;
+      const input = buildSignInInput();
+      const out = signInLocally(input, kp.secretKey);
+      const v = verifySignIn(input, out);
+      if (v.ok) useClockin.getState().connect({ ...wallet, siws: proofOf('dev-local', 'Guest wallet', input, v, out.signature) });
+    }).catch(() => undefined);
+    return () => { live = false; };
+  }, [wallet]);
   const activity = useClockin((s) => s.activity);
   const aiModel = useClockin((s) => s.aiModel);
   const remindersOn = useClockin((s) => s.remindersOn);
@@ -166,6 +181,11 @@ export default function Me() {
             {name}
           </Text>
           <Tag label="Devnet" tone="warn" small style={{ marginTop: space.s8, alignSelf: 'center' }} />
+          {wallet?.siws && wallet.siws.address === wallet.address && recheckProof(wallet.siws) ? (
+            <Text variant="secondarySm" color={colors.ink55} align="center" style={{ marginTop: space.s8 }}>
+              Signed in with Solana · verified on this phone
+            </Text>
+          ) : null}
           {address && short ? (
             <Press
               onPress={async () => {
